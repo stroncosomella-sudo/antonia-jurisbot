@@ -1,0 +1,35 @@
+# ── Secretos y variables de entorno ──
+.env
+.env.*
+.streamlit/secrets.toml
+
+# ── Python ──
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+venv/
+venv_mac/
+env/
+.venv/
+*.egg-info/
+dist/
+build/
+
+# ── ChromaDB (base de datos local — no subir al repo) ──
+data/chroma/
+
+# ── macOS ──
+.DS_Store
+.AppleDouble
+
+# ── IDEs ──
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# ── Logs ──
+*.log
+logs/
