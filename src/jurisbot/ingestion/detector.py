@@ -4,7 +4,12 @@ from __future__ import annotations
 from enum import Enum, auto
 from pathlib import Path
 
-import magic
+try:
+    import magic as _magic
+    _MAGIC_AVAILABLE = True
+except (ImportError, OSError):
+    _magic = None  # type: ignore
+    _MAGIC_AVAILABLE = False
 import structlog
 
 logger = structlog.get_logger()
@@ -72,7 +77,11 @@ class SmartFormatDetector:
         if not file_path.exists():
             raise FileNotFoundError(f"Archivo no encontrado: {file_path}")
 
-        mime = magic.from_file(str(file_path), mime=True)
+        if _MAGIC_AVAILABLE:
+            mime = _magic.from_file(str(file_path), mime=True)
+        else:
+            # Fallback por extensión cuando libmagic no está disponible
+            mime = self._mime_by_extension(file_path)
         logger.info("format_detected", file=file_path.name, mime=mime)
 
         if mime in self.IMAGE_MIMES:
@@ -94,6 +103,22 @@ class SmartFormatDetector:
             f"Formato no soportado: {mime} ({file_path.name}). "
             f"Formatos aceptados: PDF, DOCX, TXT, RTF, HTML, imágenes."
         )
+
+    def _mime_by_extension(self, file_path: Path) -> str:
+        """Detecta MIME type por extensión cuando libmagic no está disponible."""
+        ext = file_path.suffix.lower()
+        return {
+            ".pdf":  "application/pdf",
+            ".docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            ".doc":  "application/msword",
+            ".txt":  "text/plain",
+            ".rtf":  "application/rtf",
+            ".html": "text/html",
+            ".htm":  "text/html",
+            ".png":  "image/png",
+            ".jpg":  "image/jpeg",
+            ".jpeg": "image/jpeg",
+        }.get(ext, "application/octet-stream")
 
     def _classify_pdf(self, file_path: Path) -> DocumentFormat:
         """Clasifica un PDF en nativo, escaneado o híbrido."""
