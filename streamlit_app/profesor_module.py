@@ -686,7 +686,7 @@ def render_profesor(get_llm_fn=None):
         st.markdown('<div class="prof-sub">Crea, organiza y genera preguntas de examen con IA</div>', unsafe_allow_html=True)
 
         banco = st.session_state.prof_banco
-        tab_b1, tab_b2, tab_b3 = st.tabs(["🤖 Generar con IA", "➕ Agregar manual", "📋 Ver banco"])
+        tab_b1, tab_b2, tab_b3, tab_b4 = st.tabs(["🤖 Generar con IA", "➕ Agregar manual", "📋 Ver banco", "📦 Pre-cargado"])
 
         with tab_b1:
             col_bgen1, col_bgen2 = st.columns([1, 1.4])
@@ -772,6 +772,97 @@ def render_profesor(get_llm_fn=None):
                         if st.button("🗑 Eliminar", key=f"banco_del_{i}"):
                             banco.pop(i)
                             st.rerun()
+
+        with tab_b4:
+            # ── Banco Pre-cargado (evaluaciones_banco.py) ─────────────────────
+            try:
+                from evaluaciones_banco import EVALUACIONES, get_evaluaciones, RAMAS as EB_RAMAS, TIPOS, NIVELES
+                _eb_ok = True
+            except ImportError:
+                _eb_ok = False
+
+            if not _eb_ok:
+                st.warning("No se encontró evaluaciones_banco.py")
+            else:
+                st.markdown(
+                    '<div style="font-size:0.78rem;color:#6a5a3a;margin-bottom:0.8rem;">'
+                    f'<strong>{len(EVALUACIONES)} preguntas pre-cargadas</strong> con fundamento en derecho chileno. '
+                    'Filtra y agrega las que necesites a tu banco personal.</div>',
+                    unsafe_allow_html=True)
+
+                col_pb1, col_pb2, col_pb3 = st.columns(3)
+                with col_pb1:
+                    pb_rama = st.selectbox("Rama", ["Todas"] + sorted(EB_RAMAS), key="pb_rama")
+                with col_pb2:
+                    pb_tipo = st.selectbox("Tipo", ["Todos"] + sorted(TIPOS), key="pb_tipo")
+                with col_pb3:
+                    pb_nivel = st.selectbox("Nivel", ["Todos"] + NIVELES, key="pb_nivel")
+
+                # Filtrar
+                ev_filtradas = EVALUACIONES
+                if pb_rama != "Todas":
+                    ev_filtradas = [e for e in ev_filtradas if e["rama"] == pb_rama]
+                if pb_tipo != "Todos":
+                    ev_filtradas = [e for e in ev_filtradas if e["tipo"] == pb_tipo]
+                if pb_nivel != "Todos":
+                    ev_filtradas = [e for e in ev_filtradas if e["nivel"] == pb_nivel]
+
+                st.markdown(
+                    f'<div style="font-size:0.75rem;color:#9a8a6a;margin-bottom:0.6rem;">'
+                    f'{len(ev_filtradas)} preguntas visibles</div>', unsafe_allow_html=True)
+
+                # Mostrar en expanders con botón "Agregar al banco"
+                _tipo_icon = {
+                    "definicion": "📖", "verdadero_falso": "✅",
+                    "caso_practico": "⚖️", "desarrollo": "📝", "comparacion": "🔄",
+                }
+                _nivel_label = {
+                    "pregrado_basico": "Pregrado básico",
+                    "pregrado_avanzado": "Pregrado avanzado",
+                    "posgrado": "Postgrado",
+                }
+                for ev in ev_filtradas[:60]:  # limitar a 60 en pantalla para performance
+                    icon = _tipo_icon.get(ev["tipo"], "❓")
+                    nivel_str = _nivel_label.get(ev["nivel"], ev["nivel"])
+                    with st.expander(
+                        f'{icon} #{ev["id"]} · {ev["subtema"]} · {nivel_str} · {ev["puntos"]} pts',
+                        expanded=False
+                    ):
+                        st.markdown(f'**Enunciado:** {ev["enunciado"]}')
+                        st.markdown(f'**Pauta:** {ev["pauta"]}')
+                        st.markdown(
+                            f'`{ev["tipo"]}` · `{ev["tiempo_estimado"]}` · `{ev["puntos"]} puntos`')
+                        if st.button(
+                            "📥 Agregar a mi banco", key=f"pb_add_{ev['id']}",
+                            help="Agrega esta pregunta a tu banco personal"
+                        ):
+                            # Verificar que no esté ya en el banco
+                            ya_agregado = any(
+                                e.get("_precargado_id") == ev["id"]
+                                for e in st.session_state.prof_banco
+                            )
+                            if ya_agregado:
+                                st.info("Ya está en tu banco.")
+                            else:
+                                st.session_state.prof_banco.append({
+                                    "ramo": ev["rama"].capitalize(),
+                                    "tema": ev["subtema"],
+                                    "dificultad": nivel_str,
+                                    "tipo": ev["tipo"],
+                                    "contenido": (
+                                        f"PREGUNTA:\n{ev['enunciado']}\n\n"
+                                        f"PAUTA DE CORRECCIÓN:\n{ev['pauta']}\n\n"
+                                        f"Tiempo estimado: {ev['tiempo_estimado']} · "
+                                        f"{ev['puntos']} puntos"
+                                    ),
+                                    "n_pregs": 1,
+                                    "_precargado_id": ev["id"],
+                                })
+                                st.success(f"✓ Pregunta #{ev['id']} agregada al banco")
+                                st.rerun()
+
+                if len(ev_filtradas) > 60:
+                    st.info(f"Mostrando 60 de {len(ev_filtradas)} preguntas. Usa los filtros para ver más.")
 
     # ── RENDIMIENTO ─────────────────────────────────────────────────
     elif tab == "rendimiento":
