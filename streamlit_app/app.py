@@ -646,26 +646,27 @@ with st.sidebar:
     """, unsafe_allow_html=True)
 
     # ══════════════════════════════════════════
-    # ── SELECTOR DE PERFIL ──────────────────
+    # ── SELECTOR DE ÁREA (3 grandes secciones)
     # ══════════════════════════════════════════
     st.markdown("""
     <div style="padding:0.7rem 1rem 0.3rem;">
       <div style="font-size:0.58rem;font-weight:700;color:rgba(201,150,58,0.5);
                   text-transform:uppercase;letter-spacing:0.1em;margin-bottom:0.5rem;">
-        Soy…
+        Área
       </div>
     </div>
     """, unsafe_allow_html=True)
 
-    PERSONAS = [
-        ("consulta", "👤", "Consulta Legal"),
-        ("alumno",   "👨‍🎓", "Alumno"),
-        ("abogado",  "⚖️",  "Abogado"),
-        ("profesor", "👨‍🏫", "Profesor"),
+    persona_actual  = st.session_state.persona
+    en_universidad  = persona_actual in ("alumno", "profesor")
+
+    AREAS = [
+        ("universidad", "🎓", "Universidad",   en_universidad),
+        ("abogado",     "⚖️",  "Abogados",       persona_actual == "abogado"),
+        ("consulta",    "👤", "Consulta Legal", persona_actual == "consulta"),
     ]
-    for pid, picon, plabel in PERSONAS:
-        active_p = st.session_state.persona == pid
-        if active_p:
+    for aid, aicon, alabel, is_active in AREAS:
+        if is_active:
             st.markdown(
                 f'<div style="border-left:2px solid #c9963a;'
                 f'background:linear-gradient(90deg,rgba(201,150,58,0.15),rgba(201,150,58,0.04));'
@@ -673,78 +674,49 @@ with st.sidebar:
                 f'font-size:0.74rem;font-weight:700;color:#c9963a;'
                 f'text-transform:uppercase;letter-spacing:0.04em;'
                 f'font-family:Inter,sans-serif;">'
-                f'{picon} {plabel}</div>', unsafe_allow_html=True)
+                f'{aicon} {alabel}</div>', unsafe_allow_html=True)
         else:
-            st.button(f"{picon}  {plabel}", key=f"persona_{pid}",
+            dest = "alumno" if aid == "universidad" else aid
+            st.button(f"{aicon}  {alabel}", key=f"area_{aid}",
                       use_container_width=True,
-                      on_click=set_persona, args=(pid,))
+                      on_click=set_persona, args=(dest,))
+
+    # ── Sub-selector Universidad: Alumno / Profesor ──────────────
+    if en_universidad:
+        st.markdown('<hr style="border-color:rgba(255,255,255,0.07);margin:0.4rem 0;">', unsafe_allow_html=True)
+        st.markdown("""
+        <div style="padding:0.3rem 1rem 0.2rem;">
+          <div style="font-size:0.58rem;font-weight:700;color:rgba(201,150,58,0.5);
+                      text-transform:uppercase;letter-spacing:0.1em;">Perfil</div>
+        </div>
+        """, unsafe_allow_html=True)
+        col_a, col_p = st.columns(2)
+        with col_a:
+            if persona_actual == "alumno":
+                st.markdown(
+                    '<div style="border:1px solid #c9963a;background:rgba(201,150,58,0.12);'
+                    'border-radius:5px;padding:0.38rem 0.4rem;text-align:center;'
+                    'font-size:0.69rem;font-weight:700;color:#c9963a;">👨‍🎓 Alumno</div>',
+                    unsafe_allow_html=True)
+            else:
+                st.button("👨‍🎓 Alumno", key="sub_alumno", use_container_width=True,
+                          on_click=set_persona, args=("alumno",))
+        with col_p:
+            if persona_actual == "profesor":
+                st.markdown(
+                    '<div style="border:1px solid #c9963a;background:rgba(201,150,58,0.12);'
+                    'border-radius:5px;padding:0.38rem 0.4rem;text-align:center;'
+                    'font-size:0.69rem;font-weight:700;color:#c9963a;">👩‍🏫 Profesor</div>',
+                    unsafe_allow_html=True)
+            else:
+                st.button("👩‍🏫 Profesor", key="sub_profesor", use_container_width=True,
+                          on_click=set_persona, args=("profesor",))
 
     st.markdown('<hr style="border-color:rgba(255,255,255,0.07);margin:0.5rem 0;">', unsafe_allow_html=True)
 
     # ── NAVEGACIÓN (según perfil) ────────────────────────────────
-    persona_actual = st.session_state.persona
-
-    # Solo Alumno y Abogado tienen sub-navegación en el sidebar
-    # Consulta Legal y Profesor son módulos únicos (sin sub-nav)
 
     if persona_actual == "alumno":
-        # ── Carga de documento (solo Alumno) ──
-        st.markdown("""
-        <div style="padding:0.5rem 1rem 0.3rem;">
-          <div style="font-size:0.58rem;font-weight:700;color:rgba(201,150,58,0.55);
-                      text-transform:uppercase;letter-spacing:0.1em;margin-bottom:0.4rem;">
-            Documento
-          </div>
-        </div>
-        """, unsafe_allow_html=True)
-
-        uploaded = st.file_uploader("Subir", type=["pdf","docx","doc","txt","rtf","html","htm"],
-                                      label_visibility="collapsed")
-        if uploaded:
-            if st.button("⬆  Procesar Documento", use_container_width=True, key="proc"):
-                settings.ensure_dirs()
-                tmp = settings.upload_dir / uploaded.name
-                tmp.write_bytes(uploaded.getvalue())
-                for k in ["ingestion_result","classification","chat_history","quiz_data",
-                           "quiz_answers","quiz_submitted","flashcards","fc_idx","fc_show",
-                           "glossary","concept_map","summary_text","jurisprudencia","doctrina"]:
-                    st.session_state[k] = DEFAULTS[k]
-                with st.spinner("Procesando…"):
-                    try:
-                        res = get_orch().ingest(tmp)
-                        st.session_state.ingestion_result = res
-                        cls = get_clf().classify(res.extraction.raw_text, res.extraction.metadata)
-                        st.session_state.classification = cls
-                        try:
-                            rag = get_rag()
-                            rag.delete_collection("current_doc")
-                            rag.index_chunks(res.chunks, "current_doc")
-                        except Exception: pass
-                        st.success("✓ Documento listo")
-                    except Exception as e:
-                        st.error(f"Error: {e}")
-
-        if st.session_state.ingestion_result:
-            r = st.session_state.ingestion_result
-            st.markdown(
-                f'<div style="margin:0.5rem 0.3rem;padding:0.6rem 0.8rem;'
-                f'background:rgba(201,150,58,0.08);border:1px solid rgba(201,150,58,0.2);'
-                f'border-radius:6px;">'
-                f'<div style="font-size:0.77rem;color:#e8d8b8;font-weight:500;'
-                f'overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{r.file_name[:26]}</div>'
-                f'<div style="font-size:0.66rem;color:rgba(201,150,58,0.55);margin-top:2px;">'
-                f'{r.extraction.pages} págs · {len(r.chunks)} fragmentos</div>'
-                f'</div>',
-                unsafe_allow_html=True)
-            if st.session_state.classification:
-                st.markdown(
-                    f'<div style="margin:0 0.3rem 0.2rem;font-size:0.67rem;'
-                    f'color:#c9963a;padding:0 0.5rem;">⚖ {st.session_state.classification.rama_derecho}</div>',
-                    unsafe_allow_html=True)
-
-        st.markdown('<hr style="border-color:rgba(255,255,255,0.07);margin:0.4rem 0;">', unsafe_allow_html=True)
-
-        # Nav Alumno
         st.markdown("""
         <div style="padding:0.3rem 1rem 0.2rem;">
           <div style="font-size:0.58rem;font-weight:700;color:rgba(201,150,58,0.5);
@@ -754,14 +726,16 @@ with st.sidebar:
 
         NAV_ALUMNO = [
             ("🧠", "ENTRENA"),
+            ("📄", "DOCUMENTO"),
             ("📋", "RESUMEN EJECUTIVO"),
             ("🔍", "ANÁLISIS"),
             ("⚖️", "JURISPRUDENCIA RELACIONADA"),
             ("📚", "DOCTRINA RELACIONADA"),
             ("📖", "GLOSARIO LEGAL"),
             ("🗺️", "MAPA CONCEPTUAL"),
+            ("🎤", "PREPARA TU ALEGATO"),
             ("💬", "CONSULTORÍA VIRTUAL"),
-            ("🏛", "BIBLIOTECA DOCTRINA"),
+            ("🏛",  "BIBLIOTECA DOCTRINA"),
         ]
         for icon, label in NAV_ALUMNO:
             active = st.session_state.nav == label
@@ -779,32 +753,17 @@ with st.sidebar:
                           use_container_width=True,
                           on_click=set_nav, args=(label,))
 
-    elif persona_actual == "abogado":
-        st.markdown("""
-        <div style="padding:0.4rem 1rem 0.3rem;">
-          <div style="font-size:0.72rem;color:#c8b890;line-height:1.5;">
-            Gestión profesional para abogados. Todos los módulos están en el área principal →
-          </div>
-        </div>
-        """, unsafe_allow_html=True)
-
-    elif persona_actual == "profesor":
-        st.markdown("""
-        <div style="padding:0.4rem 1rem 0.3rem;">
-          <div style="font-size:0.72rem;color:#c8b890;line-height:1.5;">
-            Herramientas docentes. Todos los módulos están en el área principal →
-          </div>
-        </div>
-        """, unsafe_allow_html=True)
-
-    elif persona_actual == "consulta":
-        st.markdown("""
-        <div style="padding:0.4rem 1rem 0.3rem;">
-          <div style="font-size:0.72rem;color:#c8b890;line-height:1.5;">
-            Orientación legal accesible para todas las personas.
-          </div>
-        </div>
-        """, unsafe_allow_html=True)
+    elif persona_actual in ("abogado", "profesor", "consulta"):
+        _desc = {
+            "abogado":  "Gestión profesional. Casos, plazos, honorarios y más →",
+            "profesor": "Herramientas docentes. Clases, evaluaciones y alumnos →",
+            "consulta": "Orientación legal para todas las personas →",
+        }
+        st.markdown(
+            f'<div style="padding:0.4rem 1rem 0.3rem;">'
+            f'<div style="font-size:0.72rem;color:#c8b890;line-height:1.5;">'
+            f'{_desc[persona_actual]}</div></div>',
+            unsafe_allow_html=True)
 
     st.markdown('<hr style="border-color:rgba(255,255,255,0.07);margin:0.5rem 0;">', unsafe_allow_html=True)
 
@@ -923,7 +882,7 @@ def need_doc():
         Sin documento activo
       </div>
       <div style="color:#9a8e7e;font-size:0.83rem;line-height:1.5;">
-        Suba un archivo PDF, Word o TXT en el panel izquierdo para comenzar.
+        Haz clic en <strong>📄 Documento</strong> en el menú izquierdo para subir un archivo PDF, Word o TXT.
       </div>
     </div>""", unsafe_allow_html=True)
 
@@ -966,6 +925,179 @@ elif persona == "consulta" and nav not in ("QUIÉNES SOMOS", "SUSCRIPCIONES"):
 
 # ── Perfil: ALUMNO + páginas institucionales ────
 # Continúa con la navegación original de Alumno
+
+
+# ═══════════════════════════════════════════════
+# SECCIÓN: DOCUMENTO (carga de archivos)
+# ═══════════════════════════════════════════════
+if nav == "DOCUMENTO":
+    st.markdown(section_header("📄 Mi Documento"), unsafe_allow_html=True)
+    st.markdown("""
+    <div style="font-size:0.88rem;color:#5a4e3e;margin-bottom:1.5rem;line-height:1.6;">
+      Sube un documento jurídico (sentencia, contrato, código, apuntes) y AntonIA lo analizará
+      para que puedas hacer preguntas, obtener resúmenes, jurisprudencia relacionada y más.
+    </div>""", unsafe_allow_html=True)
+
+    col_up, col_info = st.columns([3, 2])
+    with col_up:
+        uploaded = st.file_uploader(
+            "Selecciona tu archivo",
+            type=["pdf", "docx", "doc", "txt", "rtf", "html", "htm"],
+            help="PDF, Word, TXT — máx. 50 MB",
+        )
+        if uploaded:
+            if st.button("⬆  Procesar Documento", use_container_width=True, key="proc_doc"):
+                settings.ensure_dirs()
+                tmp = settings.upload_dir / uploaded.name
+                tmp.write_bytes(uploaded.getvalue())
+                for k in ["ingestion_result", "classification", "chat_history", "quiz_data",
+                           "quiz_answers", "quiz_submitted", "flashcards", "fc_idx", "fc_show",
+                           "glossary", "concept_map", "summary_text", "jurisprudencia", "doctrina"]:
+                    st.session_state[k] = DEFAULTS[k]
+                with st.spinner("Procesando documento…"):
+                    try:
+                        res = get_orch().ingest(tmp)
+                        st.session_state.ingestion_result = res
+                        cls = get_clf().classify(res.extraction.raw_text, res.extraction.metadata)
+                        st.session_state.classification = cls
+                        try:
+                            rag = get_rag()
+                            rag.delete_collection("current_doc")
+                            rag.index_chunks(res.chunks, "current_doc")
+                        except Exception:
+                            pass
+                        st.success("✓ Documento listo — usa el menú izquierdo para analizarlo")
+                    except Exception as e:
+                        st.error(f"Error procesando el documento: {e}")
+
+    with col_info:
+        if st.session_state.ingestion_result:
+            r = st.session_state.ingestion_result
+            st.markdown(f"""
+            <div style="background:#f8f5f0;border:1px solid #e2dbd0;border-left:3px solid #c9963a;
+                        border-radius:0 8px 8px 0;padding:1rem 1.2rem;">
+              <div style="font-size:0.75rem;font-weight:700;color:#9a8e7e;
+                          text-transform:uppercase;letter-spacing:0.06em;margin-bottom:0.5rem;">
+                Documento activo
+              </div>
+              <div style="font-size:0.9rem;font-weight:600;color:#1a1813;margin-bottom:0.4rem;">
+                {r.file_name[:40]}
+              </div>
+              <div style="font-size:0.78rem;color:#5a4e3e;">
+                📄 {r.extraction.pages} páginas &nbsp;·&nbsp; 🔖 {len(r.chunks)} fragmentos
+              </div>
+              {"<div style='font-size:0.75rem;color:#c9963a;margin-top:0.4rem;'>⚖ " + st.session_state.classification.rama_derecho + "</div>" if st.session_state.classification else ""}
+            </div>""", unsafe_allow_html=True)
+            st.markdown("##### ¿Qué puedes hacer ahora?")
+            opciones = [
+                ("📋", "RESUMEN EJECUTIVO",          "Resumen ejecutivo"),
+                ("🔍", "ANÁLISIS",                   "Análisis jurídico"),
+                ("⚖️", "JURISPRUDENCIA RELACIONADA", "Jurisprudencia relacionada"),
+                ("📚", "DOCTRINA RELACIONADA",       "Doctrina relacionada"),
+                ("📖", "GLOSARIO LEGAL",             "Glosario de términos"),
+                ("🗺️", "MAPA CONCEPTUAL",           "Mapa conceptual"),
+                ("💬", "CONSULTORÍA VIRTUAL",        "Consultoría Q&A"),
+            ]
+            for icon, nav_key, label in opciones:
+                if st.button(f"{icon} {label}", key=f"go_{nav_key}", use_container_width=True):
+                    st.session_state.nav = nav_key
+                    st.rerun()
+        else:
+            st.markdown("""
+            <div style="background:#fdfaf5;border:1px dashed #e2dbd0;border-radius:8px;
+                        padding:1.2rem;text-align:center;color:#9a8e7e;font-size:0.82rem;">
+              Sube un archivo para ver las opciones de análisis
+            </div>""", unsafe_allow_html=True)
+
+    st.markdown("</div>", unsafe_allow_html=True)
+
+
+# ═══════════════════════════════════════════════
+# SECCIÓN: PREPARA TU ALEGATO
+# ═══════════════════════════════════════════════
+elif nav == "PREPARA TU ALEGATO":
+    st.markdown(section_header("🎤 Prepara tu Alegato"), unsafe_allow_html=True)
+    st.markdown("""
+    <div style="font-size:0.88rem;color:#5a4e3e;margin-bottom:1.2rem;line-height:1.6;">
+      Prepara argumentos, anticipa contraargumentos y practica tu defensa oral con IA.
+    </div>""", unsafe_allow_html=True)
+
+    tab_prep, tab_irac, tab_contra = st.tabs(["🎯 Armado de argumentos", "📋 Briefing IRAC", "🔄 Contraargumentos"])
+
+    with tab_prep:
+        st.markdown("#### Describe tu caso o posición")
+        caso_desc = st.text_area(
+            "¿Cuál es tu posición jurídica?",
+            placeholder="Ej: Defensa del demandado en juicio por incumplimiento de contrato de arrendamiento. "
+                        "El arrendador alega que el arrendatario no pagó 3 meses de renta...",
+            height=120,
+        )
+        ramo_alg = st.selectbox("Rama del Derecho", [
+            "Civil — Contratos", "Civil — Responsabilidad", "Civil — Familia",
+            "Penal — Defensa", "Penal — Acusación", "Procesal Civil", "Procesal Penal",
+            "Laboral", "Comercial", "Constitucional",
+        ])
+        tipo_alegato = st.radio("Tipo de alegato", ["Oral formal (tribunal)", "Presentación académica", "Moot court"], horizontal=True)
+        if caso_desc and st.button("🎯 Generar argumentos", use_container_width=True, key="gen_arg"):
+            llm = active_llm()
+            prompt = (
+                f"Actúa como coach de litigación para derecho chileno.\n"
+                f"Caso: {caso_desc}\nRama: {ramo_alg}\nTipo: {tipo_alegato}\n\n"
+                f"Genera:\n"
+                f"1. TESIS PRINCIPAL (1 párrafo contundente)\n"
+                f"2. TRES ARGUMENTOS PRINCIPALES (cada uno con: argumento, norma aplicable del derecho chileno, evidencia recomendada)\n"
+                f"3. ESTRUCTURA SUGERIDA DEL ALEGATO (introducción, desarrollo, conclusión — con tiempos estimados)\n"
+                f"4. FRASES CLAVE de impacto para usar ante el tribunal\n"
+                f"Responde en español jurídico formal chileno."
+            )
+            with st.spinner("Preparando argumentos…"):
+                resp = llm.generate(prompt, system=" ", max_tokens=1200)
+            st.markdown(resp)
+
+    with tab_irac:
+        st.markdown("#### Briefing de Caso — Método IRAC")
+        st.markdown("""
+        <div style="font-size:0.82rem;color:#5a4e3e;background:#f8f5f0;
+                    border-left:3px solid #c9963a;padding:0.7rem 1rem;border-radius:0 6px 6px 0;margin-bottom:1rem;">
+          <strong>IRAC</strong>: Issue (Asunto) · Rule (Norma) · Application (Aplicación) · Conclusion (Conclusión)
+        </div>""", unsafe_allow_html=True)
+        caso_irac = st.text_area("Describe el caso o hecho jurídico", height=100,
+                                  placeholder="Ej: Contrato de compraventa celebrado entre A y B. A entregó el bien pero B no pagó el precio...")
+        if caso_irac and st.button("📋 Generar Briefing IRAC", use_container_width=True, key="gen_irac"):
+            llm = active_llm()
+            prompt = (
+                f"Genera un briefing jurídico completo usando el método IRAC para el siguiente caso:\n\n{caso_irac}\n\n"
+                f"Estructura tu respuesta así:\n"
+                f"**I — ISSUE (Asunto Legal):** ¿Cuál es la cuestión jurídica central?\n"
+                f"**R — RULE (Norma Aplicable):** Artículos del Código Civil, CPP, CT u otras normas chilenas relevantes.\n"
+                f"**A — APPLICATION (Aplicación):** ¿Cómo se aplica la norma a los hechos? Argumentos pro y contra.\n"
+                f"**C — CONCLUSION:** ¿Cuál es el resultado jurídico más probable?\n"
+                f"**PRECEDENTES RELEVANTES:** Menciona jurisprudencia chilena si corresponde.\n"
+                f"Responde en español jurídico formal."
+            )
+            with st.spinner("Generando briefing IRAC…"):
+                resp = llm.generate(prompt, system=" ", max_tokens=1000)
+            st.markdown(resp)
+
+    with tab_contra:
+        st.markdown("#### Anticipa los Contraargumentos")
+        pos_propia = st.text_area("Tu posición / argumento principal", height=80,
+                                   placeholder="Ej: El contrato es nulo por falta de objeto lícito según el Art. 1462 CC...")
+        if pos_propia and st.button("🔄 Generar contraargumentos", use_container_width=True, key="gen_contra"):
+            llm = active_llm()
+            prompt = (
+                f"Actúa como abogado de la contraparte en un juicio chileno.\n"
+                f"La posición del adversario es: {pos_propia}\n\n"
+                f"Genera:\n"
+                f"1. Los 3 contraargumentos más fuertes contra esa posición (con norma y fundamento)\n"
+                f"2. Las debilidades de esos contraargumentos que puedo explotar\n"
+                f"3. Preguntas que el juez podría hacerme sobre mi posición y cómo responderlas\n"
+                f"Responde en español jurídico formal chileno."
+            )
+            with st.spinner("Analizando contraargumentos…"):
+                resp = llm.generate(prompt, system=" ", max_tokens=900)
+            st.markdown(resp)
+    st.markdown("</div>", unsafe_allow_html=True)
 
 
 # ═══════════════════════════════════════════════
