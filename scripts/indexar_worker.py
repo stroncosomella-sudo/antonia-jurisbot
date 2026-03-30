@@ -59,6 +59,17 @@ def main():
         if not result or not result.chunks:
             sys.exit(2)
 
+        # Deduplicar chunks por ID antes de upsert (evita errores de ChromaDB)
+        import hashlib as _hl
+        seen_ids = set()
+        unique_chunks = []
+        for chunk in result.chunks:
+            cid = _hl.md5(chunk.text.encode()).hexdigest()[:16]
+            if cid not in seen_ids:
+                seen_ids.add(cid)
+                unique_chunks.append(chunk)
+        result.chunks = unique_chunks
+
         n = engine.index_chunks(result.chunks, collection_name="biblioteca_doctrina")
 
         # Flush ChromaDB antes de salir
