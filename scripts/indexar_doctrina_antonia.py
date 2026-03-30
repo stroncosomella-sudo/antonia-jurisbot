@@ -62,7 +62,7 @@ CARPETAS = [
 # .docx y .doc causan segfault en Mac — solo PDF y TXT
 EXTENSIONES = {".pdf", ".txt"}
 
-TIMEOUT_POR_ARCHIVO = 180  # segundos máx por PDF
+TIMEOUT_POR_ARCHIVO = 600  # segundos máx por PDF (10 min — libros grandes como Alessandri)
 
 # ── Utilidades ──────────────────────────────────────────────────────────────
 def sha_prefix(p: Path) -> str:
