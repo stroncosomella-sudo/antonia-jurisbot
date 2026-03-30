@@ -68,6 +68,11 @@ def _init():
         "prof_rubrica_result":   "",
         "prof_investigacion_result": "",
         "prof_recursos_result":  "",
+        # Libro de Notas: {curso: [{nombre, notas:[{eval,ponderacion,nota}], promedio}]}
+        "prof_libro_notas": {},
+        # Banco de Preguntas: [{pregunta, alternativas, respuesta_correcta, ramo, dificultad}]
+        "prof_banco": [],
+        "prof_banco_gen_result": "",
     }
     for k, v in defaults.items():
         if k not in st.session_state:
@@ -92,11 +97,14 @@ def render_profesor(get_llm_fn=None):
     st.markdown(_CSS, unsafe_allow_html=True)
 
     TABS = [
-        ("📝", "evaluaciones",   "Evaluaciones"),
-        ("✏️", "nueva_eval",     "Nueva Eval."),
+        ("📝", "evaluaciones",   "Evalúa"),
+        ("✏️", "nueva_eval",     "Crea Eval."),
+        ("📊", "notas",          "Libro Notas"),
+        ("🗂",  "banco",         "Banco Preg."),
+        ("📈", "rendimiento",    "Rendimiento"),
         ("🔬", "investigacion",  "Investigación"),
         ("📋", "asistencia",     "Asistencia"),
-        ("💬", "observaciones",  "Observaciones"),
+        ("💬", "observaciones",  "Obs. Alumnos"),
         ("📚", "recursos",       "Recursos"),
     ]
 
@@ -587,3 +595,266 @@ def render_profesor(get_llm_fn=None):
                     'border:1px dashed rgba(201,150,58,0.15);border-radius:8px;">'
                     '📚<br>El material de clase<br>aparecerá aquí</div>',
                     unsafe_allow_html=True)
+
+    # ── LIBRO DE NOTAS ──────────────────────────────────────────────
+    elif tab == "notas":
+        st.markdown('<div class="prof-header">📊 Libro de Notas</div>', unsafe_allow_html=True)
+        st.markdown('<div class="prof-sub">Registro de calificaciones por alumno y curso · Analytics de rendimiento</div>', unsafe_allow_html=True)
+
+        cursos_disp = st.session_state.prof_cursos
+        if not cursos_disp:
+            st.info("Agrega cursos en la pestaña Asistencia primero.")
+        else:
+            curso_n = st.selectbox("Curso", cursos_disp, key="notas_curso_sel")
+            libro   = st.session_state.prof_libro_notas
+            if curso_n not in libro:
+                libro[curso_n] = []
+            alumnos_n = libro[curso_n]
+
+            # Agregar alumno
+            with st.expander("➕ Agregar / Configurar alumno"):
+                col_an, col_ag = st.columns([2,1])
+                with col_an:
+                    nuevo_al = st.text_input("Nombre", key="notas_nuevo_al", placeholder="Ana García López")
+                with col_ag:
+                    if st.button("Agregar", key="notas_add_al"):
+                        if nuevo_al and nuevo_al not in [a["nombre"] for a in alumnos_n]:
+                            alumnos_n.append({"nombre": nuevo_al, "notas": [], "promedio": 0.0})
+                            st.rerun()
+
+            if not alumnos_n:
+                st.markdown('<div style="text-align:center;color:#a09070;padding:2rem;">Agrega alumnos para comenzar el libro de notas.</div>', unsafe_allow_html=True)
+            else:
+                # Tabla de notas editable
+                st.markdown("#### Ingresar calificaciones")
+                col_al_sel, col_ev_n, col_pond, col_nota_v, col_add_n = st.columns([2, 2, 1, 1, 1])
+                with col_al_sel:
+                    al_sel = st.selectbox("Alumno", [a["nombre"] for a in alumnos_n], key="notas_al_sel")
+                with col_ev_n:
+                    ev_nombre = st.text_input("Evaluación", placeholder="Prueba 1, Control...", key="notas_ev_nombre")
+                with col_pond:
+                    ev_pond = st.number_input("Ponder. %", 0, 100, 25, key="notas_pond")
+                with col_nota_v:
+                    nota_val = st.number_input("Nota (1-7)", 1.0, 7.0, 5.0, step=0.1, key="notas_nota")
+                with col_add_n:
+                    st.markdown("<br>", unsafe_allow_html=True)
+                    if st.button("✓", key="notas_add_nota"):
+                        for a in alumnos_n:
+                            if a["nombre"] == al_sel:
+                                a["notas"].append({"eval": ev_nombre, "ponderacion": ev_pond, "nota": nota_val})
+                                # Recalcular promedio ponderado
+                                total_p = sum(n["ponderacion"] for n in a["notas"])
+                                if total_p > 0:
+                                    a["promedio"] = sum(n["nota"] * n["ponderacion"] for n in a["notas"]) / total_p
+                                break
+                        st.rerun()
+
+                # Mostrar libro completo
+                st.markdown("---")
+                st.markdown("#### Resumen del curso")
+                col_headers = st.columns([3, 1, 1, 1])
+                col_headers[0].markdown("**Alumno**")
+                col_headers[1].markdown("**Evaluaciones**")
+                col_headers[2].markdown("**Promedio**")
+                col_headers[3].markdown("**Estado**")
+
+                promedios = []
+                for a in alumnos_n:
+                    prom = a.get("promedio", 0.0)
+                    promedios.append(prom)
+                    estado = "✅ Aprobado" if prom >= 4.0 else ("⚠️ En riesgo" if prom >= 3.5 else "❌ Reprobado")
+                    cols = st.columns([3, 1, 1, 1])
+                    cols[0].write(a["nombre"])
+                    cols[1].write(len(a["notas"]))
+                    nota_color = "#22c55e" if prom >= 5 else ("#fbbf24" if prom >= 4 else "#ef4444")
+                    cols[2].markdown(f'<span style="font-weight:700;color:{nota_color}">{prom:.1f}</span>', unsafe_allow_html=True)
+                    cols[3].write(estado)
+
+                if promedios:
+                    st.markdown("---")
+                    prom_curso = sum(promedios) / len(promedios)
+                    aprobados = sum(1 for p in promedios if p >= 4.0)
+                    col_m1, col_m2, col_m3, col_m4 = st.columns(4)
+                    col_m1.metric("Promedio del curso", f"{prom_curso:.1f}")
+                    col_m2.metric("Alumnos aprobados", f"{aprobados}/{len(promedios)}")
+                    col_m3.metric("Nota más alta", f"{max(promedios):.1f}")
+                    col_m4.metric("Nota más baja", f"{min(promedios):.1f}")
+
+    # ── BANCO DE PREGUNTAS ──────────────────────────────────────────
+    elif tab == "banco":
+        st.markdown('<div class="prof-header">🗂 Banco de Preguntas</div>', unsafe_allow_html=True)
+        st.markdown('<div class="prof-sub">Crea, organiza y genera preguntas de examen con IA</div>', unsafe_allow_html=True)
+
+        banco = st.session_state.prof_banco
+        tab_b1, tab_b2, tab_b3 = st.tabs(["🤖 Generar con IA", "➕ Agregar manual", "📋 Ver banco"])
+
+        with tab_b1:
+            col_bgen1, col_bgen2 = st.columns([1, 1.4])
+            with col_bgen1:
+                ramo_banco = st.selectbox("Ramo", [
+                    "Civil I — Personas", "Civil II — Bienes", "Civil III — Obligaciones",
+                    "Civil IV — Familia", "Civil V — Sucesorio", "Penal", "Procesal",
+                    "Constitucional", "Laboral", "Comercial",
+                ], key="banco_ramo")
+                tema_banco = st.text_input("Tema específico", placeholder="Ej: nulidad del acto jurídico", key="banco_tema")
+                n_pregs    = st.slider("N° de preguntas", 1, 10, 5, key="banco_n")
+                dif_banco  = st.select_slider("Dificultad", ["Básica", "Intermedia", "Avanzada"], value="Intermedia", key="banco_dif")
+                tipo_banco = st.radio("Tipo", ["Alternativas (4 opciones)", "Verdadero/Falso", "Desarrollo breve"], key="banco_tipo", horizontal=True)
+                if st.button("🤖 Generar preguntas", use_container_width=True, key="banco_gen_btn"):
+                    if get_llm_fn and tema_banco:
+                        llm = get_llm_fn()
+                        prompt = (
+                            f"Eres profesor de Derecho chileno. Genera {n_pregs} preguntas de examen.\n"
+                            f"Ramo: {ramo_banco} | Tema: {tema_banco} | Dificultad: {dif_banco} | Tipo: {tipo_banco}\n\n"
+                            f"Formato requerido para CADA pregunta:\n"
+                            f"PREGUNTA N°X:\n[texto de la pregunta]\n"
+                            f"{'A) ... B) ... C) ... D) ...' if 'Alternativas' in tipo_banco else ''}\n"
+                            f"RESPUESTA CORRECTA: [respuesta]\n"
+                            f"FUNDAMENTO: [artículo o norma chilena que la sustenta]\n"
+                            f"---\n"
+                            f"Genera preguntas rigurosas, con terminología jurídica correcta, basadas en el Código Civil, "
+                            f"CPP, CT u otras normas chilenas según corresponda."
+                        )
+                        with st.spinner("Generando preguntas…"):
+                            try:
+                                resultado = llm.generate(prompt, system=" ", max_tokens=1500)
+                                st.session_state.prof_banco_gen_result = resultado
+                            except Exception as e:
+                                st.error(f"Error: {e}")
+            with col_bgen2:
+                if st.session_state.prof_banco_gen_result:
+                    st.markdown('<div style="font-size:0.68rem;color:#a09070;margin-bottom:0.4rem;">Preguntas generadas</div>', unsafe_allow_html=True)
+                    st.text_area("", value=st.session_state.prof_banco_gen_result,
+                                 height=420, key="banco_result_edit", label_visibility="collapsed")
+                    if st.button("📥 Guardar todo en el banco", key="banco_save_all"):
+                        # Parse simplificado: guardar el bloque completo como entrada
+                        banco.append({
+                            "ramo": ramo_banco, "tema": tema_banco,
+                            "dificultad": dif_banco, "tipo": tipo_banco,
+                            "contenido": st.session_state.prof_banco_gen_result,
+                            "n_pregs": n_pregs,
+                        })
+                        st.session_state.prof_banco_gen_result = ""
+                        st.success(f"✓ Guardado en el banco ({n_pregs} preguntas de {ramo_banco})")
+                        st.rerun()
+
+        with tab_b2:
+            col_bm1, col_bm2 = st.columns(2)
+            with col_bm1:
+                ramo_man = st.selectbox("Ramo", [
+                    "Civil I", "Civil II", "Civil III", "Civil IV", "Civil V",
+                    "Penal", "Procesal", "Constitucional", "Laboral", "Comercial",
+                ], key="banco_man_ramo")
+                dif_man = st.selectbox("Dificultad", ["Básica", "Intermedia", "Avanzada"], key="banco_man_dif")
+            with col_bm2:
+                tipo_man = st.selectbox("Tipo", ["Alternativas", "V/F", "Desarrollo"], key="banco_man_tipo")
+            pregunta_man = st.text_area("Pregunta", height=80, key="banco_man_preg")
+            resp_man = st.text_input("Respuesta correcta", key="banco_man_resp")
+            fund_man = st.text_input("Fundamento normativo", placeholder="Ej: Art. 1437 CC", key="banco_man_fund")
+            if st.button("➕ Agregar al banco", key="banco_add_man"):
+                if pregunta_man and resp_man:
+                    banco.append({
+                        "ramo": ramo_man, "dificultad": dif_man, "tipo": tipo_man,
+                        "contenido": f"PREGUNTA:\n{pregunta_man}\nRESPUESTA: {resp_man}\nFUNDAMENTO: {fund_man}",
+                        "n_pregs": 1,
+                    })
+                    st.success("✓ Pregunta agregada al banco")
+                    st.rerun()
+
+        with tab_b3:
+            if not banco:
+                st.markdown('<div style="text-align:center;color:#a09070;padding:2rem;">El banco está vacío. Genera o agrega preguntas.</div>', unsafe_allow_html=True)
+            else:
+                st.markdown(f"**{sum(e.get('n_pregs',1) for e in banco)} preguntas** en {len(banco)} grupos")
+                for i, entrada in enumerate(banco):
+                    with st.expander(f"📋 {entrada['ramo']} — {entrada.get('tema','Manual')} ({entrada.get('n_pregs',1)} preg.) · {entrada['dificultad']}"):
+                        st.text(entrada["contenido"][:600] + ("..." if len(entrada["contenido"]) > 600 else ""))
+                        if st.button("🗑 Eliminar", key=f"banco_del_{i}"):
+                            banco.pop(i)
+                            st.rerun()
+
+    # ── RENDIMIENTO ─────────────────────────────────────────────────
+    elif tab == "rendimiento":
+        st.markdown('<div class="prof-header">📈 Dashboard de Rendimiento</div>', unsafe_allow_html=True)
+        st.markdown('<div class="prof-sub">Analytics de asistencia, notas y participación por curso</div>', unsafe_allow_html=True)
+
+        cursos_r = st.session_state.prof_cursos
+        if not cursos_r:
+            st.info("Configura cursos y alumnos en Asistencia y Libro de Notas primero.")
+        else:
+            curso_r = st.selectbox("Curso a analizar", cursos_r, key="rend_curso")
+            libro_r = st.session_state.prof_libro_notas.get(curso_r, [])
+            nomina_r = st.session_state.prof_nominas.get(curso_r, [])
+
+            if not libro_r and not nomina_r:
+                st.markdown('<div style="text-align:center;color:#a09070;padding:2rem;">Sin datos aún. Registra notas y asistencia primero.</div>', unsafe_allow_html=True)
+            else:
+                # Métricas globales
+                promedios_r = [a.get("promedio", 0.0) for a in libro_r if a.get("promedio", 0.0) > 0]
+
+                col_r1, col_r2, col_r3, col_r4 = st.columns(4)
+                if promedios_r:
+                    prom_gral = sum(promedios_r) / len(promedios_r)
+                    aprobados_r = sum(1 for p in promedios_r if p >= 4.0)
+                    col_r1.metric("Promedio del curso", f"{prom_gral:.1f}")
+                    col_r2.metric("Tasa de aprobación", f"{aprobados_r}/{len(promedios_r)}")
+                else:
+                    col_r1.metric("Promedio del curso", "—")
+                    col_r2.metric("Tasa de aprobación", "—")
+
+                if nomina_r:
+                    # Calcular asistencia promedio
+                    asist_pcts = []
+                    for al in nomina_r:
+                        asis = al.get("asistencias", [])
+                        if asis:
+                            pct = sum(1 for a in asis if a) / len(asis) * 100
+                            asist_pcts.append(pct)
+                    if asist_pcts:
+                        prom_asist = sum(asist_pcts) / len(asist_pcts)
+                        col_r3.metric("Asistencia promedio", f"{prom_asist:.0f}%")
+                col_r4.metric("Total alumnos", len(libro_r) or len(nomina_r))
+
+                # Tabla de riesgo académico
+                st.markdown("---")
+                st.markdown("#### 🚨 Alumnos en Riesgo Académico")
+                en_riesgo = [a for a in libro_r if a.get("promedio", 0) < 4.0 and a.get("promedio", 0) > 0]
+                if en_riesgo:
+                    for a in en_riesgo:
+                        prom_a = a.get("promedio", 0)
+                        brecha = 4.0 - prom_a
+                        col_riesgo1, col_riesgo2, col_riesgo3 = st.columns([3, 1, 2])
+                        col_riesgo1.write(a["nombre"])
+                        col_riesgo1.progress(min(prom_a / 7.0, 1.0))
+                        col_riesgo2.markdown(f'<span style="color:#ef4444;font-weight:700">{prom_a:.1f}</span>', unsafe_allow_html=True)
+                        col_riesgo3.write(f"Necesita +{brecha:.1f} puntos para aprobar")
+                else:
+                    st.success("✅ No hay alumnos en riesgo académico en este curso.")
+
+                # Análisis IA del curso
+                st.markdown("---")
+                st.markdown("#### 🤖 Análisis Diagnóstico del Curso")
+                if get_llm_fn and st.button("Generar diagnóstico del curso", key="rend_diag"):
+                    resumen_datos = f"Curso: {curso_r}\n"
+                    if promedios_r:
+                        resumen_datos += f"Promedio: {prom_gral:.1f} | Aprobados: {aprobados_r}/{len(promedios_r)}\n"
+                        resumen_datos += f"Notas individuales: {', '.join(str(round(p,1)) for p in sorted(promedios_r))}\n"
+                    if en_riesgo:
+                        resumen_datos += f"Alumnos en riesgo: {len(en_riesgo)}\n"
+                    llm_r = get_llm_fn()
+                    prompt_r = (
+                        f"Eres un coordinador académico de una Facultad de Derecho chilena.\n"
+                        f"Analiza estos datos del curso:\n{resumen_datos}\n\n"
+                        f"Genera:\n"
+                        f"1. DIAGNÓSTICO general del rendimiento del curso (2-3 párrafos)\n"
+                        f"2. ÁREAS DE MEJORA identificadas\n"
+                        f"3. ACCIONES CONCRETAS recomendadas para el profesor (3-5 acciones)\n"
+                        f"4. ALERTA si la tasa de reprobación supera el 30%\n"
+                        f"Responde en español formal académico."
+                    )
+                    with st.spinner("Analizando rendimiento…"):
+                        try:
+                            diag = llm_r.generate(prompt_r, system=" ", max_tokens=800)
+                            st.markdown(diag)
+                        except Exception as e:
+                            st.error(f"Error: {e}")
