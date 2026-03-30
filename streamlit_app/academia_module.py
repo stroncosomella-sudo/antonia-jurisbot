@@ -27,18 +27,20 @@ _GREEN = "#22c55e"
 _RED   = "#ef4444"
 
 CURSOS = [
-    {"id": "civil",          "nombre": "Civil",          "full": "Derecho Civil",               "icono": "⚖️"},
-    {"id": "penal",          "nombre": "Penal",          "full": "Derecho Penal",               "icono": "🔒"},
-    {"id": "procesal",       "nombre": "Procesal",       "full": "Derecho Procesal",            "icono": "📋"},
-    {"id": "constitucional", "nombre": "Constitucional", "full": "Derecho Constitucional",      "icono": "🏛️"},
-    {"id": "laboral",        "nombre": "Laboral",        "full": "Derecho Laboral",             "icono": "👷"},
-    {"id": "obligaciones",   "nombre": "Obligaciones",   "full": "Obligaciones y Contratos",    "icono": "📝"},
-    {"id": "familia",        "nombre": "Familia",        "full": "Derecho de Familia",          "icono": "👨‍👩‍👧"},
-    {"id": "comercial",      "nombre": "Comercial",      "full": "Derecho Comercial",           "icono": "💼"},
-    {"id": "bienes",         "nombre": "Bienes",         "full": "Bienes y D. Reales",          "icono": "🏠"},
-    {"id": "sucesorio",      "nombre": "Sucesorio",      "full": "Derecho Sucesorio",           "icono": "📜"},
-    {"id": "internacional",  "nombre": "Internacional",  "full": "Derecho Internacional",       "icono": "🌐"},
-    {"id": "ambiental",      "nombre": "Ambiental",      "full": "Derecho Ambiental",           "icono": "🌿"},
+    # ── Grupo Derecho Civil (5 sub-ramos según malla UCh / PUC / UDP) ──
+    {"id": "civil",          "nombre": "Civil I",   "full": "Civil I — Personas y Acto Jurídico",   "icono": "👤", "grupo": "civil"},
+    {"id": "bienes",         "nombre": "Civil II",  "full": "Civil II — Bienes y Derechos Reales",  "icono": "🏠", "grupo": "civil"},
+    {"id": "obligaciones",   "nombre": "Civil III", "full": "Civil III — Obligaciones y Contratos", "icono": "📝", "grupo": "civil"},
+    {"id": "familia",        "nombre": "Civil IV",  "full": "Civil IV — Derecho de Familia",        "icono": "👨‍👩‍👧", "grupo": "civil"},
+    {"id": "sucesorio",      "nombre": "Civil V",   "full": "Civil V — Derecho Sucesorio",          "icono": "📜", "grupo": "civil"},
+    # ── Otras áreas ──
+    {"id": "penal",          "nombre": "Penal",     "full": "Derecho Penal",                        "icono": "🔒", "grupo": "otro"},
+    {"id": "procesal",       "nombre": "Procesal",  "full": "Derecho Procesal",                     "icono": "⚖️", "grupo": "otro"},
+    {"id": "constitucional", "nombre": "Const.",    "full": "Derecho Constitucional y DDPP",        "icono": "🏛️", "grupo": "otro"},
+    {"id": "laboral",        "nombre": "Trabajo",   "full": "Derecho del Trabajo",                  "icono": "👷", "grupo": "otro"},
+    {"id": "comercial",      "nombre": "Comercial", "full": "Derecho Comercial",                    "icono": "💼", "grupo": "otro"},
+    {"id": "internacional",  "nombre": "Intl.",     "full": "Derecho Internacional",                "icono": "🌐", "grupo": "otro"},
+    {"id": "ambiental",      "nombre": "Ambiental", "full": "Derecho Ambiental",                    "icono": "🌿", "grupo": "otro"},
 ]
 
 TIPOS = [
@@ -620,52 +622,110 @@ def render_academia(llm_client=None):
     # ── Score bar ────────────────────────────────────────────────
     _score_bar()
 
+    # ── CSS responsive (móvil + desktop) ────────────────────────
+    st.markdown("""
+    <style>
+    /* Botones de ramo más compactos en móvil */
+    @media (max-width: 640px) {
+        div[data-testid="column"] > div > div > div > button {
+            font-size: 0.68rem !important;
+            padding: 0.35rem 0.2rem !important;
+            min-height: 2.4rem !important;
+        }
+        /* Ocultar texto largo, mostrar solo ícono en pantallas muy pequeñas */
+        .ramo-label-full { display: none; }
+        .ramo-label-short { display: inline; }
+    }
+    @media (min-width: 641px) {
+        .ramo-label-full { display: inline; }
+        .ramo-label-short { display: none; }
+    }
+    /* Ancla para scroll */
+    #paso-tipo { scroll-margin-top: 80px; }
+    #paso-quiz { scroll-margin-top: 80px; }
+    </style>
+    """, unsafe_allow_html=True)
+
     # ── PASO 1: Selección de ramo ────────────────────────────────
     cid = st.session_state.eq_curso
-    st.markdown(f"<div style='font-size:0.62rem;color:{_MUTED};text-transform:uppercase;"
-                f"letter-spacing:0.1em;margin-bottom:0.5rem;font-weight:700;'>① Elige el ramo</div>",
-                unsafe_allow_html=True)
 
-    # Fila 1 — primeros 6
-    cols1 = st.columns(6)
-    for i, c in enumerate(CURSOS[:6]):
-        with cols1[i]:
-            act = cid == c["id"]
-            if st.button(f"{c['icono']} {c['nombre']}", key=f"eq_c1_{c['id']}",
-                         use_container_width=True, type="primary" if act else "secondary"):
-                if not act:
-                    st.session_state.eq_curso = c["id"]
-                    st.session_state.eq_tipo  = None   # obliga a elegir tipo
-                    _reset_item()
-                    st.rerun()
+    # Grupo Derecho Civil
+    civil_cursos = [c for c in CURSOS if c.get("grupo") == "civil"]
+    otro_cursos  = [c for c in CURSOS if c.get("grupo") == "otro"]
 
-    # Fila 2 — siguientes 6
-    cols2 = st.columns(6)
-    for i, c in enumerate(CURSOS[6:]):
-        with cols2[i]:
+    st.markdown(f"""
+    <div style='font-size:0.62rem;color:{_MUTED};text-transform:uppercase;
+                letter-spacing:0.1em;margin-bottom:0.4rem;font-weight:700;'>① Elige el ramo</div>
+    <div style='font-size:0.7rem;color:{_GOLD};font-weight:600;margin-bottom:0.3rem;'>
+        📚 Derecho Civil
+    </div>""", unsafe_allow_html=True)
+
+    # Fila Civil — 5 columnas
+    civil_cols = st.columns(len(civil_cursos))
+    for i, c in enumerate(civil_cursos):
+        with civil_cols[i]:
             act = cid == c["id"]
-            if st.button(f"{c['icono']} {c['nombre']}", key=f"eq_c2_{c['id']}",
-                         use_container_width=True, type="primary" if act else "secondary"):
+            label = f"{c['icono']} {c['nombre']}\n{c['full'].split('—')[1].strip() if '—' in c['full'] else ''}"
+            if st.button(f"{c['icono']} {c['nombre']}", key=f"eq_c_civil_{c['id']}",
+                         use_container_width=True, type="primary" if act else "secondary",
+                         help=c["full"]):
                 if not act:
                     st.session_state.eq_curso = c["id"]
                     st.session_state.eq_tipo  = None
                     _reset_item()
                     st.rerun()
 
-    # Si no hay ramo seleccionado, nada más que mostrar
+    st.markdown(f"""
+    <div style='font-size:0.7rem;color:{_MUTED};font-weight:600;
+                margin:0.6rem 0 0.3rem;'>
+        🏛️ Otras áreas
+    </div>""", unsafe_allow_html=True)
+
+    # Fila otras áreas — 7 columnas (responsive: 4 en móvil vía CSS)
+    otro_cols = st.columns(len(otro_cursos))
+    for i, c in enumerate(otro_cursos):
+        with otro_cols[i]:
+            act = cid == c["id"]
+            if st.button(f"{c['icono']} {c['nombre']}", key=f"eq_c_otro_{c['id']}",
+                         use_container_width=True, type="primary" if act else "secondary",
+                         help=c["full"]):
+                if not act:
+                    st.session_state.eq_curso = c["id"]
+                    st.session_state.eq_tipo  = None
+                    _reset_item()
+                    st.rerun()
+
+    # Si no hay ramo seleccionado, mostrar instrucción
     if not cid:
         st.markdown(f"""
-        <div style="margin-top:2rem;text-align:center;color:{_MUTED};font-size:0.9rem;">
-            Selecciona un ramo para comenzar ↑
+        <div style="margin-top:1.5rem;text-align:center;color:{_MUTED};font-size:0.85rem;
+                    padding:1rem;border:1px dashed rgba(201,150,58,0.2);border-radius:8px;">
+            👆 Selecciona un ramo para comenzar
         </div>""", unsafe_allow_html=True)
         return
 
-    # ── PASO 2: Selección de tipo (aparece solo tras elegir ramo) ──
+    # ── Banner ramo activo ────────────────────────────────────────
+    curso_activo = next((c for c in CURSOS if c["id"] == cid), None)
+    if curso_activo:
+        st.markdown(f"""
+        <div id="paso-tipo" style="margin:0.8rem 0 0.6rem;padding:0.6rem 1rem;
+                  background:rgba(201,150,58,0.08);border-left:3px solid {_GOLD};
+                  border-radius:0 8px 8px 0;display:flex;align-items:center;gap:0.5rem;">
+          <span style="font-size:1.1rem;">{curso_activo['icono']}</span>
+          <div>
+            <div style="font-size:0.65rem;color:{_MUTED};text-transform:uppercase;
+                        letter-spacing:0.08em;">Ramo seleccionado</div>
+            <div style="font-size:0.9rem;font-weight:700;color:{_WHITE};">{curso_activo['full']}</div>
+          </div>
+        </div>""", unsafe_allow_html=True)
+
+    # ── PASO 2: Selección de tipo ─────────────────────────────────
     tid = st.session_state.eq_tipo
-    st.markdown("<div style='margin:0.8rem 0 0.5rem;'></div>", unsafe_allow_html=True)
-    st.markdown(f"<div style='font-size:0.62rem;color:{_MUTED};text-transform:uppercase;"
-                f"letter-spacing:0.1em;margin-bottom:0.5rem;font-weight:700;'>② Tipo de pregunta</div>",
-                unsafe_allow_html=True)
+    st.markdown(f"""
+    <div style='font-size:0.62rem;color:{_MUTED};text-transform:uppercase;
+                letter-spacing:0.1em;margin-bottom:0.5rem;font-weight:700;'>
+        ② Tipo de pregunta
+    </div>""", unsafe_allow_html=True)
 
     tcols = st.columns(len(TIPOS))
     for i, t in enumerate(TIPOS):
@@ -678,17 +738,25 @@ def render_academia(llm_client=None):
                     _reset_item()
                     st.rerun()
 
-    # Si no hay tipo seleccionado, nada más
+    # Si no hay tipo, flecha animada indicando que hay que elegir
     if not tid:
         st.markdown(f"""
-        <div style="margin-top:1.5rem;text-align:center;color:{_MUTED};font-size:0.9rem;">
-            Selecciona el tipo de pregunta ↑
-        </div>""", unsafe_allow_html=True)
+        <div id="paso-tipo-hint" style="margin-top:1rem;text-align:center;
+                  color:{_GOLD};font-size:0.85rem;animation:pulse 1.5s infinite;">
+            👆 Elige el tipo de pregunta para comenzar
+        </div>
+        <style>
+        @keyframes pulse {{
+            0%,100% {{ opacity:1; }} 50% {{ opacity:0.4; }}
+        }}
+        </style>""", unsafe_allow_html=True)
         return
 
     # ── PASO 3: Quiz ─────────────────────────────────────────────
-    st.markdown("<hr style='border-color:rgba(201,150,58,0.1);margin:0.8rem 0 0.2rem;'>",
-                unsafe_allow_html=True)
+    st.markdown(f"""
+    <div id="paso-quiz" style="margin:0.5rem 0;">
+        <hr style='border-color:rgba(201,150,58,0.15);margin:0.5rem 0;'>
+    </div>""", unsafe_allow_html=True)
 
     if   tid == "mcq":        _render_mcq(llm_client)
     elif tid == "vf":         _render_vf(llm_client)
