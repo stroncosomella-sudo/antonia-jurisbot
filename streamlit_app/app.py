@@ -660,12 +660,51 @@ with st.sidebar:
     persona_actual  = st.session_state.persona
     en_universidad  = persona_actual in ("alumno", "profesor")
 
-    AREAS = [
-        ("universidad", "🎓", "Universidad",   en_universidad),
-        ("abogado",     "⚖️",  "Abogados",       persona_actual == "abogado"),
-        ("consulta",    "👤", "Consulta Legal", persona_actual == "consulta"),
-    ]
-    for aid, aicon, alabel, is_active in AREAS:
+    # ── Universidad (con sub-opciones inline) ───────────────────
+    if en_universidad:
+        # Header Universidad activo
+        st.markdown(
+            '<div style="border-left:2px solid #c9963a;'
+            'background:linear-gradient(90deg,rgba(201,150,58,0.15),rgba(201,150,58,0.04));'
+            'padding:0.45rem 1rem 0.45rem 0.8rem;margin:1px 0;">'
+            '<span style="font-size:0.7rem;font-weight:700;color:#c9963a;'
+            'text-transform:uppercase;letter-spacing:0.04em;">🎓 Universidad</span>'
+            '</div>',
+            unsafe_allow_html=True)
+        # Alumno / Profesor: opciones anidadas bajo Universidad
+        col_a, col_p = st.columns(2)
+        with col_a:
+            if persona_actual == "alumno":
+                st.markdown(
+                    '<div style="margin:2px 0 2px 8px;border:1px solid #c9963a;'
+                    'background:rgba(201,150,58,0.18);border-radius:5px;'
+                    'padding:0.35rem 0.3rem;text-align:center;'
+                    'font-size:0.7rem;font-weight:700;color:#c9963a;">👨‍🎓 Alumno</div>',
+                    unsafe_allow_html=True)
+            else:
+                st.button("👨‍🎓  Alumno", key="sub_alumno", use_container_width=True,
+                          on_click=set_persona, args=("alumno",))
+        with col_p:
+            if persona_actual == "profesor":
+                st.markdown(
+                    '<div style="margin:2px 0 2px 0;border:1px solid #c9963a;'
+                    'background:rgba(201,150,58,0.18);border-radius:5px;'
+                    'padding:0.35rem 0.3rem;text-align:center;'
+                    'font-size:0.7rem;font-weight:700;color:#c9963a;">👩‍🏫 Profesor</div>',
+                    unsafe_allow_html=True)
+            else:
+                st.button("👩‍🏫  Profesor", key="sub_profesor", use_container_width=True,
+                          on_click=set_persona, args=("profesor",))
+    else:
+        st.button("🎓  Universidad", key="area_universidad",
+                  use_container_width=True,
+                  on_click=set_persona, args=("alumno",))
+
+    # ── Abogados y Consulta ──────────────────────────────────────
+    for aid, aicon, alabel, is_active in [
+        ("abogado",  "⚖️",  "Abogados",       persona_actual == "abogado"),
+        ("consulta", "👤", "Consulta Legal", persona_actual == "consulta"),
+    ]:
         if is_active:
             st.markdown(
                 f'<div style="border-left:2px solid #c9963a;'
@@ -676,41 +715,9 @@ with st.sidebar:
                 f'font-family:Inter,sans-serif;">'
                 f'{aicon} {alabel}</div>', unsafe_allow_html=True)
         else:
-            dest = "alumno" if aid == "universidad" else aid
             st.button(f"{aicon}  {alabel}", key=f"area_{aid}",
                       use_container_width=True,
-                      on_click=set_persona, args=(dest,))
-
-    # ── Sub-selector Universidad: Alumno / Profesor ──────────────
-    if en_universidad:
-        st.markdown('<hr style="border-color:rgba(255,255,255,0.07);margin:0.4rem 0;">', unsafe_allow_html=True)
-        st.markdown("""
-        <div style="padding:0.3rem 1rem 0.2rem;">
-          <div style="font-size:0.58rem;font-weight:700;color:rgba(201,150,58,0.5);
-                      text-transform:uppercase;letter-spacing:0.1em;">Perfil</div>
-        </div>
-        """, unsafe_allow_html=True)
-        col_a, col_p = st.columns(2)
-        with col_a:
-            if persona_actual == "alumno":
-                st.markdown(
-                    '<div style="border:1px solid #c9963a;background:rgba(201,150,58,0.12);'
-                    'border-radius:5px;padding:0.38rem 0.4rem;text-align:center;'
-                    'font-size:0.69rem;font-weight:700;color:#c9963a;">👨‍🎓 Alumno</div>',
-                    unsafe_allow_html=True)
-            else:
-                st.button("👨‍🎓 Alumno", key="sub_alumno", use_container_width=True,
-                          on_click=set_persona, args=("alumno",))
-        with col_p:
-            if persona_actual == "profesor":
-                st.markdown(
-                    '<div style="border:1px solid #c9963a;background:rgba(201,150,58,0.12);'
-                    'border-radius:5px;padding:0.38rem 0.4rem;text-align:center;'
-                    'font-size:0.69rem;font-weight:700;color:#c9963a;">👩‍🏫 Profesor</div>',
-                    unsafe_allow_html=True)
-            else:
-                st.button("👩‍🏫 Profesor", key="sub_profesor", use_container_width=True,
-                          on_click=set_persona, args=("profesor",))
+                      on_click=set_persona, args=(aid,))
 
     st.markdown('<hr style="border-color:rgba(255,255,255,0.07);margin:0.5rem 0;">', unsafe_allow_html=True)
 
