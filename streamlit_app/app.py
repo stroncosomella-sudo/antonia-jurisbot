@@ -743,6 +743,7 @@ with st.sidebar:
             ("🎤", "PREPARA TU ALEGATO"),
             ("💬", "CONSULTORÍA VIRTUAL"),
             ("🏛",  "BIBLIOTECA DOCTRINA"),
+            ("📂", "BANCO DE CASOS"),
         ]
         for icon, label in NAV_ALUMNO:
             active = st.session_state.nav == label
@@ -1621,6 +1622,149 @@ elif nav == "BIBLIOTECA DOCTRINA":
                         unsafe_allow_html=True)
 
     st.markdown('</div>', unsafe_allow_html=True)
+
+
+# ═══════════════════════════════════════════════
+# SECCIÓN: BANCO DE CASOS
+# ═══════════════════════════════════════════════
+elif nav == "BANCO DE CASOS":
+    try:
+        from casos_banco import CASOS, get_casos, RAMAS, SUBTEMAS, DIFICULTADES
+    except ImportError:
+        st.error("No se encontró el módulo casos_banco. Verifica la instalación.")
+        st.stop()
+
+    st.markdown(section_header("Banco de Casos"), unsafe_allow_html=True)
+    st.markdown(
+        '<div style="max-width:900px;margin:0 auto 1.2rem;">'
+        '<p style="font-family:\'Playfair Display\',serif;font-size:1.05rem;'
+        'font-style:italic;color:#5c4a2a;line-height:1.6;">'
+        'Practica con casos reales del Derecho chileno. Analiza los hechos, '
+        'formula tu respuesta y luego revela la solución fundada.'
+        '</p></div>', unsafe_allow_html=True)
+
+    # ── Filtros ──────────────────────────────────────────────────────────
+    col_f1, col_f2, col_f3, col_f4 = st.columns([2, 2, 2, 1])
+    with col_f1:
+        rama_filtro = st.selectbox(
+            "Rama del Derecho",
+            ["Todas"] + sorted(RAMAS),
+            key="bc_rama",
+        )
+    with col_f2:
+        # Subtemas según rama seleccionada
+        subtemas_disp = sorted({c["subtema"] for c in CASOS if (rama_filtro == "Todas" or c["rama"] == rama_filtro)})
+        subtema_filtro = st.selectbox("Subtema", ["Todos"] + subtemas_disp, key="bc_subtema")
+    with col_f3:
+        dif_filtro = st.selectbox("Dificultad", ["Todas"] + DIFICULTADES, key="bc_dif")
+    with col_f4:
+        modo_practica = st.toggle("🎯 Modo práctica", value=False, key="bc_practica",
+                                  help="Oculta la respuesta hasta que la solicites")
+
+    # ── Aplicar filtros ──────────────────────────────────────────────────
+    casos_filtrados = CASOS
+    if rama_filtro != "Todas":
+        casos_filtrados = [c for c in casos_filtrados if c["rama"] == rama_filtro]
+    if subtema_filtro != "Todos":
+        casos_filtrados = [c for c in casos_filtrados if c["subtema"] == subtema_filtro]
+    if dif_filtro != "Todas":
+        casos_filtrados = [c for c in casos_filtrados if c["dificultad"] == dif_filtro]
+
+    # ── Conteo ───────────────────────────────────────────────────────────
+    st.markdown(
+        f'<div style="margin:0.3rem 0 1rem;font-size:0.8rem;color:#8a7a60;">'
+        f'<strong>{len(casos_filtrados)}</strong> casos encontrados'
+        f'{"  ·  🎯 Modo práctica activo — la respuesta está oculta" if modo_practica else ""}'
+        f'</div>', unsafe_allow_html=True)
+
+    if not casos_filtrados:
+        st.info("No hay casos con los filtros seleccionados.")
+        st.stop()
+
+    # ── Paginación simple: 10 por página ─────────────────────────────────
+    PAGE_SIZE = 10
+    n_pages = max(1, (len(casos_filtrados) + PAGE_SIZE - 1) // PAGE_SIZE)
+    if "bc_page" not in st.session_state:
+        st.session_state.bc_page = 0
+    # Reset página si cambian filtros
+    _filter_key = f"{rama_filtro}|{subtema_filtro}|{dif_filtro}"
+    if st.session_state.get("bc_filter_key") != _filter_key:
+        st.session_state.bc_page = 0
+        st.session_state.bc_filter_key = _filter_key
+
+    page = st.session_state.bc_page
+    page = max(0, min(page, n_pages - 1))
+    casos_pag = casos_filtrados[page * PAGE_SIZE : (page + 1) * PAGE_SIZE]
+
+    # ── Colores por dificultad ────────────────────────────────────────────
+    _dif_color = {"básico": "#2e9055", "intermedio": "#c9963a", "avanzado": "#a83232"}
+    _rama_label = {
+        "civil": "Civil", "penal": "Penal", "procesal": "Procesal",
+        "constitucional": "Constitucional", "laboral": "Laboral",
+        "comercial": "Comercial", "laboral": "Laboral",
+    }
+
+    # ── Mostrar casos ─────────────────────────────────────────────────────
+    for caso in casos_pag:
+        dcolor = _dif_color.get(caso["dificultad"], "#888")
+        with st.container():
+            st.markdown(
+                f'<div style="border:1px solid rgba(201,150,58,0.2);border-left:3px solid {dcolor};'
+                f'border-radius:0 8px 8px 0;padding:1rem 1.2rem;margin-bottom:1.1rem;'
+                f'background:rgba(255,252,245,0.6);">'
+                f'<div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.5rem;">'
+                f'<span style="font-size:0.68rem;font-weight:700;text-transform:uppercase;'
+                f'color:{dcolor};background:rgba(0,0,0,0.04);padding:0.15rem 0.5rem;border-radius:3px;">'
+                f'{caso["dificultad"]}</span>'
+                f'<span style="font-size:0.68rem;color:#a09070;">'
+                f'{_rama_label.get(caso["rama"], caso["rama"])} · {caso["subtema"]}</span>'
+                f'<span style="font-size:0.68rem;color:#c0b090;margin-left:auto;">#{caso["id"]}</span>'
+                f'</div>'
+                f'<div style="font-family:\'Playfair Display\',serif;font-size:1rem;font-weight:600;'
+                f'color:#1a1813;margin-bottom:0.6rem;">{caso["titulo"]}</div>'
+                f'<div style="font-size:0.82rem;color:#3a3020;line-height:1.65;margin-bottom:0.6rem;">'
+                f'<strong>Hechos:</strong> {caso["hechos"]}</div>'
+                f'<div style="font-size:0.85rem;color:#4a3a20;font-style:italic;'
+                f'background:rgba(201,150,58,0.07);padding:0.5rem 0.7rem;border-radius:4px;'
+                f'margin-bottom:0.4rem;"><strong>❓ Pregunta:</strong> {caso["pregunta"]}</div>'
+                f'</div>', unsafe_allow_html=True)
+
+            if modo_practica:
+                if st.button(f"💡 Ver respuesta — #{caso['id']}", key=f"bc_reveal_{caso['id']}"):
+                    st.markdown(
+                        f'<div style="background:rgba(46,144,85,0.06);border:1px solid rgba(46,144,85,0.2);'
+                        f'border-left:3px solid #2e9055;border-radius:0 6px 6px 0;padding:0.8rem 1rem;'
+                        f'margin:-0.5rem 0 1rem;font-size:0.83rem;color:#1a3a25;line-height:1.65;">'
+                        f'<strong>✅ Respuesta:</strong> {caso["respuesta"]}<br>'
+                        f'<span style="font-size:0.75rem;color:#4a7a5a;margin-top:0.4rem;display:block;">'
+                        f'📌 Fundamento: {caso["fundamento"]}</span></div>', unsafe_allow_html=True)
+            else:
+                st.markdown(
+                    f'<div style="background:rgba(46,144,85,0.06);border:1px solid rgba(46,144,85,0.2);'
+                    f'border-left:3px solid #2e9055;border-radius:0 6px 6px 0;padding:0.8rem 1rem;'
+                    f'margin:-1.1rem 0 1.1rem 0;font-size:0.83rem;color:#1a3a25;line-height:1.65;">'
+                    f'<strong>✅ Respuesta:</strong> {caso["respuesta"]}<br>'
+                    f'<span style="font-size:0.75rem;color:#4a7a5a;margin-top:0.4rem;display:block;">'
+                    f'📌 Fundamento: {caso["fundamento"]}</span></div>', unsafe_allow_html=True)
+
+    # ── Controles de página ───────────────────────────────────────────────
+    if n_pages > 1:
+        st.markdown("---")
+        col_pp1, col_pp2, col_pp3 = st.columns([1, 2, 1])
+        with col_pp1:
+            if st.button("◀ Anterior", key="bc_prev", disabled=(page == 0)):
+                st.session_state.bc_page = page - 1
+                st.rerun()
+        with col_pp2:
+            st.markdown(
+                f'<div style="text-align:center;font-size:0.8rem;color:#8a7a60;padding-top:0.5rem;">'
+                f'Página {page + 1} de {n_pages} &nbsp;·&nbsp; '
+                f'casos {page * PAGE_SIZE + 1}–{min((page + 1) * PAGE_SIZE, len(casos_filtrados))} '
+                f'de {len(casos_filtrados)}</div>', unsafe_allow_html=True)
+        with col_pp3:
+            if st.button("Siguiente ▶", key="bc_next", disabled=(page >= n_pages - 1)):
+                st.session_state.bc_page = page + 1
+                st.rerun()
 
 
 # ═══════════════════════════════════════════════
