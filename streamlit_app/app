@@ -1,6 +1,6 @@
-"""AntonIA — By Mar.IA Group  v4.0 ÉLITE
-Plataforma de IA para el estudio y análisis del Derecho chileno.
-Diseño inspirado en Harvey AI + Dark Academia Premium.
+"""AntonIA — By Mar.IA Group  v4.1
+Plataforma de IA para el Derecho chileno.
+4 perfiles: Alumno · Abogado · Profesor · Consulta Legal
 """
 import sys, base64, json, os
 from pathlib import Path
@@ -19,6 +19,9 @@ from jurisbot.nlp.llm_client import LLMClient
 from jurisbot.study.generator import StudyGenerator
 from academia_module import render_academia
 from jurisbot.rag.engine import RAGEngine
+from abogado_module import render_abogado
+from profesor_module import render_profesor
+from consulta_legal_module import render_consulta_legal
 
 # ─────────────────────────────────────────────
 # CONFIGURACIÓN
@@ -572,6 +575,7 @@ def get_orch():
 # ESTADO DE SESIÓN
 # ─────────────────────────────────────────────
 DEFAULTS = {
+    "persona": "alumno",   # alumno | abogado | profesor | consulta
     "nav": "ENTRENA",
     "ingestion_result": None, "classification": None,
     "chat_history": [], "quiz_data": [], "quiz_answers": {},
@@ -598,6 +602,16 @@ for k, v in DEFAULTS.items():
         st.session_state[k] = v
 
 def set_nav(page): st.session_state.nav = page
+def set_persona(p):
+    st.session_state.persona = p
+    # Resetear nav al default del perfil
+    defaults_nav = {
+        "alumno":   "ENTRENA",
+        "abogado":  "ABOGADO",
+        "profesor": "PROFESOR",
+        "consulta": "CONSULTA",
+    }
+    st.session_state.nav = defaults_nav.get(p, "ENTRENA")
 
 
 # ─────────────────────────────────────────────
@@ -631,104 +645,183 @@ with st.sidebar:
     </div>
     """, unsafe_allow_html=True)
 
-    # ── CARGA DE DOCUMENTO ──
+    # ══════════════════════════════════════════
+    # ── SELECTOR DE PERFIL ──────────────────
+    # ══════════════════════════════════════════
     st.markdown("""
-    <div style="padding:0.9rem 1rem 0.4rem;">
-      <div style="font-size:0.6rem;font-weight:700;color:rgba(201,150,58,0.55);
+    <div style="padding:0.7rem 1rem 0.3rem;">
+      <div style="font-size:0.58rem;font-weight:700;color:rgba(201,150,58,0.5);
                   text-transform:uppercase;letter-spacing:0.1em;margin-bottom:0.5rem;">
-        Documento
+        Soy…
       </div>
     </div>
     """, unsafe_allow_html=True)
 
-    uploaded = st.file_uploader("Subir", type=["pdf","docx","doc","txt","rtf","html","htm"],
-                                  label_visibility="collapsed")
-    if uploaded:
-        if st.button("⬆  Procesar Documento", use_container_width=True, key="proc"):
-            settings.ensure_dirs()
-            tmp = settings.upload_dir / uploaded.name
-            tmp.write_bytes(uploaded.getvalue())
-            for k in ["ingestion_result","classification","chat_history","quiz_data",
-                       "quiz_answers","quiz_submitted","flashcards","fc_idx","fc_show",
-                       "glossary","concept_map","summary_text","jurisprudencia","doctrina"]:
-                st.session_state[k] = DEFAULTS[k]
-            with st.spinner("Procesando…"):
-                try:
-                    res = get_orch().ingest(tmp)
-                    st.session_state.ingestion_result = res
-                    cls = get_clf().classify(res.extraction.raw_text, res.extraction.metadata)
-                    st.session_state.classification = cls
-                    try:
-                        rag = get_rag()
-                        rag.delete_collection("current_doc")
-                        rag.index_chunks(res.chunks, "current_doc")
-                    except Exception: pass
-                    st.success("✓ Documento listo")
-                except Exception as e:
-                    st.error(f"Error: {e}")
-
-    if st.session_state.ingestion_result:
-        r = st.session_state.ingestion_result
-        st.markdown(
-            f'<div style="margin:0.5rem 0.3rem;padding:0.6rem 0.8rem;'
-            f'background:rgba(201,150,58,0.08);border:1px solid rgba(201,150,58,0.2);'
-            f'border-radius:6px;">'
-            f'<div style="font-size:0.77rem;color:#e8d8b8;font-weight:500;'
-            f'overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{r.file_name[:26]}</div>'
-            f'<div style="font-size:0.66rem;color:rgba(201,150,58,0.55);margin-top:2px;">'
-            f'{r.extraction.pages} págs · {len(r.chunks)} fragmentos</div>'
-            f'</div>',
-            unsafe_allow_html=True)
-        if st.session_state.classification:
+    PERSONAS = [
+        ("consulta", "👤", "Consulta Legal"),
+        ("alumno",   "👨‍🎓", "Alumno"),
+        ("abogado",  "⚖️",  "Abogado"),
+        ("profesor", "👨‍🏫", "Profesor"),
+    ]
+    for pid, picon, plabel in PERSONAS:
+        active_p = st.session_state.persona == pid
+        if active_p:
             st.markdown(
-                f'<div style="margin:0 0.3rem 0.2rem;font-size:0.67rem;'
-                f'color:#c9963a;padding:0 0.5rem;">⚖ {st.session_state.classification.rama_derecho}</div>',
-                unsafe_allow_html=True)
+                f'<div style="border-left:2px solid #c9963a;'
+                f'background:linear-gradient(90deg,rgba(201,150,58,0.15),rgba(201,150,58,0.04));'
+                f'padding:0.52rem 1rem 0.52rem 0.8rem;margin:1px 0;'
+                f'font-size:0.74rem;font-weight:700;color:#c9963a;'
+                f'text-transform:uppercase;letter-spacing:0.04em;'
+                f'font-family:Inter,sans-serif;">'
+                f'{picon} {plabel}</div>', unsafe_allow_html=True)
+        else:
+            st.button(f"{picon}  {plabel}", key=f"persona_{pid}",
+                      use_container_width=True,
+                      on_click=set_persona, args=(pid,))
 
     st.markdown('<hr style="border-color:rgba(255,255,255,0.07);margin:0.5rem 0;">', unsafe_allow_html=True)
 
-    # ── NAVEGACIÓN ──
-    st.markdown("""
-    <div style="padding:0.3rem 1rem 0.2rem;">
-      <div style="font-size:0.6rem;font-weight:700;color:rgba(201,150,58,0.5);
-                  text-transform:uppercase;letter-spacing:0.1em;">Navegación</div>
-    </div>
-    """, unsafe_allow_html=True)
+    # ── NAVEGACIÓN (según perfil) ────────────────────────────────
+    persona_actual = st.session_state.persona
 
-    NAV_ITEMS = [
-        ("🧠", "ENTRENA"),
-        ("📋", "RESUMEN EJECUTIVO"),
-        ("🔍", "ANÁLISIS"),
-        ("⚖️", "JURISPRUDENCIA RELACIONADA"),
-        ("📚", "DOCTRINA RELACIONADA"),
-        ("📖", "GLOSARIO LEGAL"),
-        ("🗺️", "MAPA CONCEPTUAL"),
-        ("💬", "CONSULTORÍA VIRTUAL"),
-        ("🏛", "BIBLIOTECA DOCTRINA"),
-        ("🏛️", "QUIÉNES SOMOS"),
-        ("💎", "SUSCRIPCIONES"),
-    ]
-    for icon, label in NAV_ITEMS:
-        active = st.session_state.nav == label
-        if active:
+    # Solo Alumno y Abogado tienen sub-navegación en el sidebar
+    # Consulta Legal y Profesor son módulos únicos (sin sub-nav)
+
+    if persona_actual == "alumno":
+        # ── Carga de documento (solo Alumno) ──
+        st.markdown("""
+        <div style="padding:0.5rem 1rem 0.3rem;">
+          <div style="font-size:0.58rem;font-weight:700;color:rgba(201,150,58,0.55);
+                      text-transform:uppercase;letter-spacing:0.1em;margin-bottom:0.4rem;">
+            Documento
+          </div>
+        </div>
+        """, unsafe_allow_html=True)
+
+        uploaded = st.file_uploader("Subir", type=["pdf","docx","doc","txt","rtf","html","htm"],
+                                      label_visibility="collapsed")
+        if uploaded:
+            if st.button("⬆  Procesar Documento", use_container_width=True, key="proc"):
+                settings.ensure_dirs()
+                tmp = settings.upload_dir / uploaded.name
+                tmp.write_bytes(uploaded.getvalue())
+                for k in ["ingestion_result","classification","chat_history","quiz_data",
+                           "quiz_answers","quiz_submitted","flashcards","fc_idx","fc_show",
+                           "glossary","concept_map","summary_text","jurisprudencia","doctrina"]:
+                    st.session_state[k] = DEFAULTS[k]
+                with st.spinner("Procesando…"):
+                    try:
+                        res = get_orch().ingest(tmp)
+                        st.session_state.ingestion_result = res
+                        cls = get_clf().classify(res.extraction.raw_text, res.extraction.metadata)
+                        st.session_state.classification = cls
+                        try:
+                            rag = get_rag()
+                            rag.delete_collection("current_doc")
+                            rag.index_chunks(res.chunks, "current_doc")
+                        except Exception: pass
+                        st.success("✓ Documento listo")
+                    except Exception as e:
+                        st.error(f"Error: {e}")
+
+        if st.session_state.ingestion_result:
+            r = st.session_state.ingestion_result
             st.markdown(
-                f'<div style="border-left:2px solid #c9963a;'
-                f'background:linear-gradient(90deg,rgba(201,150,58,0.12),rgba(201,150,58,0.04));'
-                f'padding:0.58rem 1rem 0.58rem 0.85rem;'
-                f'font-size:0.72rem;font-weight:700;'
-                f'color:#c9963a;'
-                f'text-transform:uppercase;letter-spacing:0.04em;'
-                f'font-family:Inter,sans-serif;">'
-                f'{icon} {label}</div>', unsafe_allow_html=True)
-        else:
-            st.button(f"{icon}  {label}", key=f"nav_{label}",
-                      use_container_width=True,
-                      on_click=set_nav, args=(label,))
+                f'<div style="margin:0.5rem 0.3rem;padding:0.6rem 0.8rem;'
+                f'background:rgba(201,150,58,0.08);border:1px solid rgba(201,150,58,0.2);'
+                f'border-radius:6px;">'
+                f'<div style="font-size:0.77rem;color:#e8d8b8;font-weight:500;'
+                f'overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{r.file_name[:26]}</div>'
+                f'<div style="font-size:0.66rem;color:rgba(201,150,58,0.55);margin-top:2px;">'
+                f'{r.extraction.pages} págs · {len(r.chunks)} fragmentos</div>'
+                f'</div>',
+                unsafe_allow_html=True)
+            if st.session_state.classification:
+                st.markdown(
+                    f'<div style="margin:0 0.3rem 0.2rem;font-size:0.67rem;'
+                    f'color:#c9963a;padding:0 0.5rem;">⚖ {st.session_state.classification.rama_derecho}</div>',
+                    unsafe_allow_html=True)
+
+        st.markdown('<hr style="border-color:rgba(255,255,255,0.07);margin:0.4rem 0;">', unsafe_allow_html=True)
+
+        # Nav Alumno
+        st.markdown("""
+        <div style="padding:0.3rem 1rem 0.2rem;">
+          <div style="font-size:0.58rem;font-weight:700;color:rgba(201,150,58,0.5);
+                      text-transform:uppercase;letter-spacing:0.1em;">Herramientas</div>
+        </div>
+        """, unsafe_allow_html=True)
+
+        NAV_ALUMNO = [
+            ("🧠", "ENTRENA"),
+            ("📋", "RESUMEN EJECUTIVO"),
+            ("🔍", "ANÁLISIS"),
+            ("⚖️", "JURISPRUDENCIA RELACIONADA"),
+            ("📚", "DOCTRINA RELACIONADA"),
+            ("📖", "GLOSARIO LEGAL"),
+            ("🗺️", "MAPA CONCEPTUAL"),
+            ("💬", "CONSULTORÍA VIRTUAL"),
+            ("🏛", "BIBLIOTECA DOCTRINA"),
+        ]
+        for icon, label in NAV_ALUMNO:
+            active = st.session_state.nav == label
+            if active:
+                st.markdown(
+                    f'<div style="border-left:2px solid #c9963a;'
+                    f'background:linear-gradient(90deg,rgba(201,150,58,0.12),rgba(201,150,58,0.04));'
+                    f'padding:0.52rem 1rem 0.52rem 0.85rem;'
+                    f'font-size:0.72rem;font-weight:700;color:#c9963a;'
+                    f'text-transform:uppercase;letter-spacing:0.04em;'
+                    f'font-family:Inter,sans-serif;">'
+                    f'{icon} {label}</div>', unsafe_allow_html=True)
+            else:
+                st.button(f"{icon}  {label}", key=f"nav_{label}",
+                          use_container_width=True,
+                          on_click=set_nav, args=(label,))
+
+    elif persona_actual == "abogado":
+        st.markdown("""
+        <div style="padding:0.4rem 1rem 0.3rem;">
+          <div style="font-size:0.72rem;color:#c8b890;line-height:1.5;">
+            Gestión profesional para abogados. Todos los módulos están en el área principal →
+          </div>
+        </div>
+        """, unsafe_allow_html=True)
+
+    elif persona_actual == "profesor":
+        st.markdown("""
+        <div style="padding:0.4rem 1rem 0.3rem;">
+          <div style="font-size:0.72rem;color:#c8b890;line-height:1.5;">
+            Herramientas docentes. Todos los módulos están en el área principal →
+          </div>
+        </div>
+        """, unsafe_allow_html=True)
+
+    elif persona_actual == "consulta":
+        st.markdown("""
+        <div style="padding:0.4rem 1rem 0.3rem;">
+          <div style="font-size:0.72rem;color:#c8b890;line-height:1.5;">
+            Orientación legal accesible para todas las personas.
+          </div>
+        </div>
+        """, unsafe_allow_html=True)
+
+    st.markdown('<hr style="border-color:rgba(255,255,255,0.07);margin:0.5rem 0;">', unsafe_allow_html=True)
+
+    # Enlace a páginas institucionales
+    col_q, col_s = st.columns(2)
+    with col_q:
+        if st.button("🏛️ Quiénes", key="nav_quienes", use_container_width=True,
+                     on_click=set_nav, args=("QUIÉNES SOMOS",)):
+            pass
+    with col_s:
+        if st.button("💎 Planes", key="nav_subs", use_container_width=True,
+                     on_click=set_nav, args=("SUSCRIPCIONES",)):
+            pass
 
     st.markdown('<hr style="border-color:rgba(255,255,255,0.07);margin:0.5rem 0;">', unsafe_allow_html=True)
 
     # ── MOTOR IA (hardcoded — invisible al usuario) ──
-    # Anthropic Claude como único motor. API key desde secrets o env var.
     _provider_key = "anthropic"
     _model        = "claude-sonnet-4-20250514"
     _api_key      = (
@@ -838,15 +931,41 @@ def doc_text(limit=5500):
     return st.session_state.ingestion_result.extraction.raw_text[:limit]
 
 def make_gen():
-    return StudyGenerator(get_llm(provider_key, api_key, model))
+    return StudyGenerator(get_llm(_provider_key, _api_key, _model))
 
 def active_llm():
-    return get_llm(provider_key, api_key, model)
+    return get_llm(_provider_key, _api_key, _model)
 
 def section_header(title):
     return f'<div class="mc"><div class="mc-title">{title}</div>'
 
-nav = st.session_state.nav
+nav     = st.session_state.nav
+persona = st.session_state.persona
+
+# ═══════════════════════════════════════════════
+# ENRUTAMIENTO POR PERFIL
+# ═══════════════════════════════════════════════
+
+# ── Perfil: ABOGADO ─────────────────────────────
+if persona == "abogado" and nav not in ("QUIÉNES SOMOS", "SUSCRIPCIONES"):
+    render_abogado(get_llm_fn=lambda: get_llm(_provider_key, _api_key, _model))
+    st.stop()
+
+# ── Perfil: PROFESOR ────────────────────────────
+elif persona == "profesor" and nav not in ("QUIÉNES SOMOS", "SUSCRIPCIONES"):
+    render_profesor(get_llm_fn=lambda: get_llm(_provider_key, _api_key, _model))
+    st.stop()
+
+# ── Perfil: CONSULTA LEGAL (no abogados) ────────
+elif persona == "consulta" and nav not in ("QUIÉNES SOMOS", "SUSCRIPCIONES"):
+    render_consulta_legal(
+        get_orch_fn=get_orch,
+        get_llm_fn=lambda: get_llm(_provider_key, _api_key, _model),
+    )
+    st.stop()
+
+# ── Perfil: ALUMNO + páginas institucionales ────
+# Continúa con la navegación original de Alumno
 
 
 # ═══════════════════════════════════════════════
