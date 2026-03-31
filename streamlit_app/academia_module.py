@@ -928,13 +928,6 @@ def render_academia(llm_client=None):
         <hr style='border-color:rgba(201,150,58,0.15);margin:0.5rem 0;'>
     </div>""", unsafe_allow_html=True)
 
-    # Debug: mostrar estado de bancos (quitar después de verificar)
-    if tid == "desarrollo":
-        _dm = {"civil":"civil","bienes":"bienes","obligaciones":"obligaciones","familia":"familia","sucesorio":"sucesorio","penal":"penal","procesal":"procesal","constitucional":"constitucional","laboral":"laboral","comercial":"civil","ambiental":"constitucional","internacional":"constitucional"}
-        _bk = _dm.get(cid, cid)
-        _dev_count = len(BANCO_DEV.get(_bk, []))
-        st.caption(f"🔧 Debug: BANCO_DEV={_DEV_OK}, EXTRA={_DEV_EXTRA_OK}, total={_DEV_TOTAL}, ramo '{cid}' key='{_bk}' → {_dev_count}q")
-
     if   tid == "mcq":        _render_mcq(llm_client)
     elif tid == "vf":         _render_vf(llm_client)
     elif tid == "flashcard":  _render_flashcard(llm_client)
