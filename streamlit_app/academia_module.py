@@ -13,15 +13,17 @@ import json, random, re
 try:
     from banco_preguntas import BANCO_MCQ, BANCO_VF, BANCO_FC
     _BANCO_OK = True
-except ImportError:
+except Exception:
     BANCO_MCQ = BANCO_VF = BANCO_FC = {}
     _BANCO_OK = False
 
 # Banco de preguntas de desarrollo
 try:
     from banco_desarrollo import BANCO_DEV
-except ImportError:
+    _DEV_OK = True
+except Exception:
     BANCO_DEV = {}
+    _DEV_OK = False
 
 # Banco de preguntas de desarrollo extra (doctrina 2025 + avanzado)
 try:
@@ -31,8 +33,12 @@ try:
             BANCO_DEV[_k] = BANCO_DEV[_k] + list(_v)
         else:
             BANCO_DEV[_k] = list(_v)
-except ImportError:
-    pass
+    _DEV_EXTRA_OK = True
+except Exception:
+    _DEV_EXTRA_OK = False
+
+# Total de preguntas de desarrollo cargadas
+_DEV_TOTAL = sum(len(v) for v in BANCO_DEV.values()) if BANCO_DEV else 0
 
 _GOLD  = "#c9963a"
 _DARK  = "#141210"
@@ -904,6 +910,13 @@ def render_academia(llm_client=None):
     <div id="paso-quiz" style="margin:0.5rem 0;">
         <hr style='border-color:rgba(201,150,58,0.15);margin:0.5rem 0;'>
     </div>""", unsafe_allow_html=True)
+
+    # Debug: mostrar estado de bancos (quitar después de verificar)
+    if tid == "desarrollo":
+        _dm = {"civil":"civil","bienes":"bienes","obligaciones":"obligaciones","familia":"familia","sucesorio":"sucesorio","penal":"penal","procesal":"procesal","constitucional":"constitucional","laboral":"laboral","comercial":"civil","ambiental":"constitucional","internacional":"constitucional"}
+        _bk = _dm.get(cid, cid)
+        _dev_count = len(BANCO_DEV.get(_bk, []))
+        st.caption(f"🔧 Debug: BANCO_DEV={_DEV_OK}, EXTRA={_DEV_EXTRA_OK}, total={_DEV_TOTAL}, ramo '{cid}' key='{_bk}' → {_dev_count}q")
 
     if   tid == "mcq":        _render_mcq(llm_client)
     elif tid == "vf":         _render_vf(llm_client)
