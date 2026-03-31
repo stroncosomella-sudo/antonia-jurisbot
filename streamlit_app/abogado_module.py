@@ -246,7 +246,7 @@ def render_abogado(get_llm_fn=None):
             f'{icon}<br>{label}</div>', unsafe_allow_html=True)
         if not active:
             if col.button(f"{icon} {label}", key=f"abg_tab_{tid}",
-                          use_container_width=True, label_visibility="collapsed"):
+                          use_container_width=True):
                 st.session_state.abg_tab = tid
                 st.rerun()
 
