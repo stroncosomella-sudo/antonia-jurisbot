@@ -301,12 +301,87 @@ def render_profesor(get_llm_fn=None):
                     height=440, key="prof_eval_edit")
                 st.caption("Revisa y ajusta antes de usar con alumnos.")
             else:
-                st.markdown(
-                    '<div style="height:350px;display:flex;align-items:center;justify-content:center;'
-                    'color:#a09070;font-size:0.82rem;text-align:center;'
-                    'border:1px dashed rgba(201,150,58,0.15);border-radius:8px;">'
-                    '✏️<br>La evaluación generada<br>aparecerá aquí</div>',
-                    unsafe_allow_html=True)
+                # ── Panel de casos del banco según ramo seleccionado ─────────
+                _ramo_a_rama = {
+                    "Civil I — Personas y Acto Jurídico":   ("civil", ["Personas y Familia"]),
+                    "Civil II — Bienes y Derechos Reales":  ("civil", ["Bienes y Derechos Reales"]),
+                    "Civil III — Obligaciones y Contratos": ("civil", ["Obligaciones y Contratos","Contratos y Cuasicontratos"]),
+                    "Civil IV — Derecho de Familia":        ("civil", ["Personas y Familia"]),
+                    "Civil V — Derecho Sucesorio":          ("civil", ["Sucesiones"]),
+                    "Derecho Penal":                        ("penal", None),
+                    "Derecho Procesal":                     ("procesal", None),
+                    "Derecho Constitucional y DDPP":        ("constitucional", None),
+                    "Derecho del Trabajo":                  ("laboral", None),
+                    "Derecho Comercial":                    ("civil", ["Contratos y Cuasicontratos"]),
+                }
+                try:
+                    from casos_banco import CASOS as _CB
+                    _rama_info = _ramo_a_rama.get(ramo_ne, ("civil", None))
+                    _rama_key, _subtemas = _rama_info
+                    if _subtemas:
+                        _casos_ramo = [c for c in _CB if c["rama"] == _rama_key and c["subtema"] in _subtemas]
+                        if not _casos_ramo:
+                            _casos_ramo = [c for c in _CB if c["rama"] == _rama_key]
+                    else:
+                        _casos_ramo = [c for c in _CB if c["rama"] == _rama_key]
+
+                    if _casos_ramo:
+                        st.markdown(
+                            f'<div style="font-size:0.68rem;color:#c9963a;text-transform:uppercase;'
+                            f'letter-spacing:0.06em;margin-bottom:0.6rem;">'
+                            f'📂 Casos del banco · {ramo_ne.split("—")[-1].strip() if "—" in ramo_ne else ramo_ne}'
+                            f' ({len(_casos_ramo)} disponibles)</div>', unsafe_allow_html=True)
+
+                        _dif_color = {"básico":"#2e9055","intermedio":"#c9963a","avanzado":"#a83232"}
+                        for _c in _casos_ramo[:8]:
+                            _dc = _dif_color.get(_c["dificultad"], "#888")
+                            with st.expander(f"#{_c['id']} · {_c['titulo']}", expanded=False):
+                                st.markdown(
+                                    f'<span style="font-size:0.67rem;color:{_dc};font-weight:700;">'
+                                    f'{_c["dificultad"]}</span> &nbsp; '
+                                    f'<span style="font-size:0.67rem;color:#9a8a6a;">{_c["subtema"]}</span>',
+                                    unsafe_allow_html=True)
+                                st.markdown(f"**Hechos:** {_c['hechos']}")
+                                st.markdown(
+                                    f'<div style="font-style:italic;background:rgba(201,150,58,0.07);'
+                                    f'padding:0.4rem 0.6rem;border-radius:4px;font-size:0.82rem;">'
+                                    f'❓ {_c["pregunta"]}</div>', unsafe_allow_html=True)
+                                st.markdown(f"📌 *Fundamento:* `{_c['fundamento']}`")
+                                if st.button("📋 Usar como base de evaluación",
+                                             key=f"ne_usar_{_c['id']}",
+                                             use_container_width=True):
+                                    _plantilla = (
+                                        f"CASO PRÁCTICO\n\n"
+                                        f"**{_c['titulo']}**\n\n"
+                                        f"HECHOS:\n{_c['hechos']}\n\n"
+                                        f"PREGUNTAS:\n1. {_c['pregunta']}\n"
+                                        f"2. Fundamente su respuesta citando el articulado aplicable.\n"
+                                        f"3. ¿Qué acción(es) procesales proceden? Señale tribunal competente.\n\n"
+                                        f"PAUTA DE CORRECCIÓN:\n{_c['respuesta']}\n"
+                                        f"Base normativa: {_c['fundamento']}"
+                                    )
+                                    st.session_state.prof_rubrica_result = _plantilla
+                                    st.rerun()
+
+                        if len(_casos_ramo) > 8:
+                            st.markdown(
+                                f'<div style="font-size:0.72rem;color:#9a8a6a;margin-top:0.3rem;">'
+                                f'Mostrando 8 de {len(_casos_ramo)}. Filtra por dificultad en el Banco de Preguntas.</div>',
+                                unsafe_allow_html=True)
+                    else:
+                        st.markdown(
+                            '<div style="height:300px;display:flex;align-items:center;justify-content:center;'
+                            'color:#a09070;font-size:0.82rem;text-align:center;'
+                            'border:1px dashed rgba(201,150,58,0.15);border-radius:8px;">'
+                            '✏️<br>La evaluación generada<br>aparecerá aquí</div>',
+                            unsafe_allow_html=True)
+                except ImportError:
+                    st.markdown(
+                        '<div style="height:300px;display:flex;align-items:center;justify-content:center;'
+                        'color:#a09070;font-size:0.82rem;text-align:center;'
+                        'border:1px dashed rgba(201,150,58,0.15);border-radius:8px;">'
+                        '✏️<br>La evaluación generada<br>aparecerá aquí</div>',
+                        unsafe_allow_html=True)
 
         # Historial de evaluaciones creadas
         if st.session_state.prof_evals:
