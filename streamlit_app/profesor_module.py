@@ -1041,3 +1041,201 @@ def render_profesor(get_llm_fn=None):
                             st.markdown(diag)
                         except Exception as e:
                             st.error(f"Error: {e}")
+
+    # ── EXAMEN ORAL ─────────────────────────────────────────────────
+    elif tab == "oral":
+        st.markdown('<div class="prof-header">🎙️ Simulacro de Examen Oral</div>', unsafe_allow_html=True)
+        st.markdown('<div class="prof-sub">Genera preguntas para tomar examen oral con respuestas esperadas y tiempo estimado</div>', unsafe_allow_html=True)
+
+        col1, col2 = st.columns([1, 1.4])
+        with col1:
+            ramo_oral = st.selectbox("Ramo", [
+                "Civil I — Personas y Acto Jurídico",
+                "Civil II — Bienes y Derechos Reales",
+                "Civil III — Obligaciones y Contratos",
+                "Civil IV — Derecho de Familia",
+                "Civil V — Derecho Sucesorio",
+                "Derecho Penal",
+                "Derecho Procesal",
+                "Derecho Constitucional y DDPP",
+                "Derecho del Trabajo",
+                "Derecho Comercial",
+            ], key="oral_ramo")
+            temas_oral = st.text_area("Temas a evaluar",
+                height=80,
+                placeholder="Ej: Nulidad absoluta y relativa, actos jurídicos unilaterales, vicios del consentimiento.",
+                key="oral_temas")
+            nivel_oral = st.selectbox("Nivel del alumno", ["1° año","2° año","3° año","4° año","5° año / Egresados"], key="oral_nivel")
+            n_oral = st.slider("N° de preguntas", 3, 12, 6, key="oral_n")
+            dur_oral = st.selectbox("Duración total del examen", ["15 min","20 min","30 min","45 min","60 min"], key="oral_dur")
+            estilo_oral = st.radio("Estilo de examen oral", [
+                "Directo (definiciones y normas)",
+                "Socrático (problematiza con contraejemplos)",
+                "Caso en vivo (presenta hechos y pregunta)",
+            ], key="oral_estilo")
+
+            if st.button("🎙️ Generar Examen Oral", use_container_width=True, type="primary"):
+                if temas_oral and get_llm_fn:
+                    tiempo_x_preg = int(dur_oral.split()[0]) // n_oral
+                    prompt = (
+                        f"Eres un profesor de Derecho chileno tomando un examen oral.\n"
+                        f"Ramo: {ramo_oral}\n"
+                        f"Temas: {temas_oral}\n"
+                        f"Nivel: {nivel_oral}\n"
+                        f"Estilo: {estilo_oral}\n"
+                        f"Duración total: {dur_oral} para {n_oral} preguntas (~{tiempo_x_preg} min c/u)\n\n"
+                        f"Genera exactamente {n_oral} preguntas de examen oral. Para cada una:\n"
+                        f"PREGUNTA N°X: [texto de la pregunta, directa, clara]\n"
+                        f"RESPUESTA ESPERADA: [lo que el alumno DEBE responder — con artículos y doctrina chilena]\n"
+                        f"TIEMPO ESTIMADO: [{tiempo_x_preg} min]\n"
+                        f"REPREGUNTA SUGERIDA: [una pregunta de seguimiento si el alumno responde bien]\n"
+                        f"---\n"
+                        f"Varía la dificultad: comienza con preguntas de base y escala a análisis crítico.\n"
+                        f"Aplica el estilo '{estilo_oral}' en el tipo de pregunta.\n"
+                        f"Cita artículos del CC, CP, CPC, CPP, CT u otras normas chilenas según el ramo."
+                    )
+                    with st.spinner("Generando examen oral…"):
+                        try:
+                            llm = get_llm_fn()
+                            resp = llm.generate(prompt, system=" ", max_tokens=2500)
+                            st.session_state.prof_oral_result = resp
+                        except Exception as e:
+                            st.error(f"Error: {e}")
+                elif not get_llm_fn:
+                    st.warning("LLM no disponible.")
+                else:
+                    st.warning("Indica los temas a evaluar.")
+
+        with col2:
+            if st.session_state.prof_oral_result:
+                st.markdown(
+                    f'<div style="font-size:0.8rem;color:#c9963a;text-transform:uppercase;'
+                    f'letter-spacing:0.06em;margin-bottom:0.5rem;font-weight:700;">'
+                    f'🎙️ Examen listo · {ramo_oral}</div>', unsafe_allow_html=True)
+                oral_edit = st.text_area("Edita si necesitas ajustar:",
+                    value=st.session_state.prof_oral_result,
+                    height=500, key="oral_result_edit")
+                c_oral1, c_oral2 = st.columns(2)
+                with c_oral1:
+                    if st.button("🔄 Nuevo examen", use_container_width=True):
+                        st.session_state.prof_oral_result = ""
+                        st.rerun()
+                with c_oral2:
+                    st.caption(f"📋 {n_oral} preguntas · {dur_oral}")
+            else:
+                st.markdown(
+                    '<div style="height:400px;display:flex;align-items:center;justify-content:center;'
+                    'color:#a09070;font-size:0.92rem;text-align:center;'
+                    'border:1px dashed rgba(201,150,58,0.15);border-radius:8px;">'
+                    '🎙️<br><br>Las preguntas del examen oral<br>aparecerán aquí<br><br>'
+                    '<span style="font-size:0.78rem;color:#6a5a3a;">Incluye respuesta esperada,<br>'
+                    'tiempo por pregunta y repreguntas sugeridas</span></div>',
+                    unsafe_allow_html=True)
+
+        # Tip de uso
+        st.markdown(
+            f'<div style="margin-top:1rem;padding:0.8rem 1rem;background:rgba(201,150,58,0.06);'
+            f'border-left:3px solid rgba(201,150,58,0.3);border-radius:0 6px 6px 0;'
+            f'font-size:0.82rem;color:#a09070;">'
+            f'💡 <strong>Cómo usar:</strong> Imprime o ten en pantalla las preguntas y respuestas esperadas. '
+            f'Toma el examen con la guía visible solo para ti. '
+            f'Las "repreguntas sugeridas" sirven para profundizar cuando el alumno responde bien o para rescatar si responde mal.'
+            f'</div>', unsafe_allow_html=True)
+
+    # ── PLANIFICADOR DE CLASE ────────────────────────────────────────
+    elif tab == "plan_clase":
+        st.markdown('<div class="prof-header">🗓️ Planificador de Clase</div>', unsafe_allow_html=True)
+        st.markdown('<div class="prof-sub">Genera un plan de clase completo con objetivos, actividades y tiempos</div>', unsafe_allow_html=True)
+
+        col1, col2 = st.columns([1, 1.4])
+        with col1:
+            ramo_plan = st.selectbox("Ramo", [
+                "Civil I — Personas y Acto Jurídico",
+                "Civil II — Bienes y Derechos Reales",
+                "Civil III — Obligaciones y Contratos",
+                "Civil IV — Derecho de Familia",
+                "Civil V — Derecho Sucesorio",
+                "Derecho Penal",
+                "Derecho Procesal",
+                "Derecho Constitucional y DDPP",
+                "Derecho del Trabajo",
+                "Derecho Comercial",
+            ], key="plan_ramo")
+            tema_plan = st.text_area("Tema de la clase",
+                height=70,
+                placeholder="Ej: Condición resolutoria tácita: naturaleza jurídica, requisitos y efectos.",
+                key="plan_tema")
+            nivel_plan = st.selectbox("Año del curso", ["1° año","2° año","3° año","4° año","5° año"], key="plan_nivel")
+            dur_plan = st.selectbox("Duración de la clase", ["45 min","90 min","2 horas","3 horas"], key="plan_dur")
+            modalidad_plan = st.selectbox("Modalidad", ["Presencial magistral","Presencial taller/seminario","Híbrida","Online sincrónica"], key="plan_modal")
+            prev_plan = st.text_input("¿Qué vieron la clase anterior?",
+                placeholder="Ej: Condición suspensiva y sus efectos.",
+                key="plan_prev")
+            objetivo_plan = st.text_area("Objetivo de aprendizaje (opcional)",
+                height=60,
+                placeholder="Ej: Que el alumno distinga la CRT de la ordinaria y aplique ambas a casos concretos.",
+                key="plan_obj")
+
+            if st.button("🗓️ Generar Plan de Clase", use_container_width=True, type="primary"):
+                if tema_plan and get_llm_fn:
+                    prompt = (
+                        f"Eres un profesor de Derecho chileno experto en didáctica universitaria.\n"
+                        f"Crea un plan de clase detallado con los siguientes datos:\n"
+                        f"Ramo: {ramo_plan}\n"
+                        f"Tema: {tema_plan}\n"
+                        f"Nivel: {nivel_plan}\n"
+                        f"Duración: {dur_plan}\n"
+                        f"Modalidad: {modalidad_plan}\n"
+                        f"Clase anterior: {prev_plan or 'No especificado'}\n"
+                        f"Objetivo: {objetivo_plan or 'Comprensión y aplicación del tema al Derecho chileno vigente'}\n\n"
+                        f"El plan debe incluir:\n"
+                        f"1. OBJETIVO DE APRENDIZAJE (1-2 oraciones precisas)\n"
+                        f"2. CONEXIÓN CON CLASE ANTERIOR (5 min) — cómo retomar lo visto\n"
+                        f"3. ESTRUCTURA TEMPORAL — tabla con: Bloque | Actividad | Tiempo | Método\n"
+                        f"4. CONTENIDOS CLAVE a desarrollar (puntos con normas y artículos)\n"
+                        f"5. CASO PRÁCTICO para discutir en clase (hechos + 2 preguntas)\n"
+                        f"6. PREGUNTAS SOCRÁTICAS (3-4 para dinamizar el debate)\n"
+                        f"7. CIERRE Y SÍNTESIS (10 min) — qué debe llevarse el alumno\n"
+                        f"8. TAREA O LECTURA SUGERIDA (con bibliografía chilena)\n"
+                        f"9. MATERIALES NECESARIOS\n\n"
+                        f"Basa todo en el Derecho chileno vigente. "
+                        f"El caso práctico debe usar nombres ficticios y hechos plausibles en Chile."
+                    )
+                    with st.spinner("Generando plan de clase…"):
+                        try:
+                            llm = get_llm_fn()
+                            resp = llm.generate(prompt, system=" ", max_tokens=2500)
+                            st.session_state.prof_plan_result = resp
+                        except Exception as e:
+                            st.error(f"Error: {e}")
+                elif not get_llm_fn:
+                    st.warning("LLM no disponible.")
+                else:
+                    st.warning("Indica el tema de la clase.")
+
+        with col2:
+            if st.session_state.prof_plan_result:
+                st.markdown(
+                    f'<div style="font-size:0.8rem;color:#c9963a;text-transform:uppercase;'
+                    f'letter-spacing:0.06em;margin-bottom:0.5rem;font-weight:700;">'
+                    f'🗓️ Plan de clase generado · {tema_plan[:40] if tema_plan else ""}</div>',
+                    unsafe_allow_html=True)
+                plan_edit = st.text_area("Edita y guarda tu plan:",
+                    value=st.session_state.prof_plan_result,
+                    height=520, key="plan_result_edit")
+                c_plan1, c_plan2 = st.columns(2)
+                with c_plan1:
+                    if st.button("🔄 Nuevo plan", use_container_width=True):
+                        st.session_state.prof_plan_result = ""
+                        st.rerun()
+                with c_plan2:
+                    st.caption(f"📋 {ramo_plan.split('—')[-1].strip() if '—' in ramo_plan else ramo_plan} · {dur_plan}")
+            else:
+                st.markdown(
+                    '<div style="height:420px;display:flex;align-items:center;justify-content:center;'
+                    'color:#a09070;font-size:0.92rem;text-align:center;'
+                    'border:1px dashed rgba(201,150,58,0.15);border-radius:8px;">'
+                    '🗓️<br><br>Tu plan de clase aparecerá aquí<br><br>'
+                    '<span style="font-size:0.78rem;color:#6a5a3a;">Incluye estructura temporal,<br>'
+                    'caso práctico, preguntas socráticas<br>y bibliografía chilena</span></div>',
+                    unsafe_allow_html=True)
