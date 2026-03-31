@@ -744,6 +744,7 @@ with st.sidebar:
             ("💬", "CONSULTORÍA VIRTUAL"),
             ("🏛",  "BIBLIOTECA DOCTRINA"),
             ("📂", "BANCO DE CASOS"),
+            ("📈", "MI PROGRESO"),
         ]
         for icon, label in NAV_ALUMNO:
             active = st.session_state.nav == label
@@ -1829,6 +1830,12 @@ elif nav == "BANCO DE CASOS":
 
             if modo_practica:
                 if st.button(f"💡 Ver respuesta — #{caso['id']}", key=f"bc_reveal_{caso['id']}"):
+                    if "bc_revealed" not in st.session_state:
+                        st.session_state.bc_revealed = set()
+                    st.session_state.bc_revealed.add(caso["id"])
+                    if "bc_ramas_seen" not in st.session_state:
+                        st.session_state.bc_ramas_seen = {}
+                    st.session_state.bc_ramas_seen[caso["rama"]] = st.session_state.bc_ramas_seen.get(caso["rama"], 0) + 1
                     st.markdown(
                         f'<div style="background:rgba(46,144,85,0.06);border:1px solid rgba(46,144,85,0.2);'
                         f'border-left:3px solid #2e9055;border-radius:0 6px 6px 0;padding:0.8rem 1rem;'
@@ -1863,6 +1870,236 @@ elif nav == "BANCO DE CASOS":
             if st.button("Siguiente ▶", key="bc_next", disabled=(page >= n_pages - 1)):
                 st.session_state.bc_page = page + 1
                 st.rerun()
+
+
+# ═══════════════════════════════════════════════
+# SECCIÓN: MI PROGRESO
+# ═══════════════════════════════════════════════
+elif nav == "MI PROGRESO":
+    st.markdown(section_header("📈 Mi Progreso"), unsafe_allow_html=True)
+
+    # ── Inicializar variables de tracking ────────────────────────────────
+    if "eq_n" not in st.session_state:
+        st.session_state.eq_n = 0
+    if "eq_ok" not in st.session_state:
+        st.session_state.eq_ok = 0
+    if "eq_racha_max" not in st.session_state:
+        st.session_state.eq_racha_max = 0
+    if "eq_hist" not in st.session_state:
+        st.session_state.eq_hist = {}
+    if "bc_revealed" not in st.session_state:
+        st.session_state.bc_revealed = set()
+    if "bc_ramas_seen" not in st.session_state:
+        st.session_state.bc_ramas_seen = {}
+
+    eq_total   = st.session_state.eq_n
+    eq_ok      = st.session_state.eq_ok
+    eq_pct     = int(eq_ok / eq_total * 100) if eq_total > 0 else 0
+    racha_max  = st.session_state.eq_racha_max
+    bc_total   = len(st.session_state.bc_revealed)
+    bc_ramas   = st.session_state.bc_ramas_seen
+
+    # ── Estilo interno ────────────────────────────────────────────────────
+    st.markdown("""
+    <style>
+    .prog-card {
+        background:#ffffff; border:1px solid #e2dbd0;
+        border-top:3px solid #c9963a;
+        border-radius:0 0 12px 12px; padding:1.2rem 1.4rem;
+        text-align:center; box-shadow:0 2px 12px rgba(20,18,10,0.05);
+    }
+    .prog-num  { font-size:2rem; font-weight:800; color:#c9963a; font-family:'Playfair Display',serif; }
+    .prog-lbl  { font-size:0.72rem; color:#9a8e7e; text-transform:uppercase;
+                 letter-spacing:0.06em; margin-top:0.2rem; }
+    .prog-bar-wrap { background:#f0ebe2; border-radius:6px; height:10px; margin:0.6rem 0; overflow:hidden; }
+    .prog-bar-fill { height:10px; border-radius:6px; background:linear-gradient(90deg,#c9963a,#e8b84b); }
+    .prog-badge { display:inline-block; padding:0.35rem 0.8rem; border-radius:20px;
+                  font-size:0.78rem; font-weight:600; margin:0.3rem 0.2rem; }
+    .badge-gold { background:#fff7e0; color:#b07d10; border:1px solid #e8c96a; }
+    .badge-green{ background:#edfaf0; color:#1a6e38; border:1px solid #6fd894; }
+    .badge-gray { background:#f5f4f0; color:#888070; border:1px solid #d8d4c8; }
+    .prog-section { font-size:0.78rem; font-weight:700; text-transform:uppercase;
+                    letter-spacing:0.07em; color:#c9963a; margin:1.4rem 0 0.7rem; }
+    .prog-row { display:flex; align-items:center; gap:0.5rem;
+                font-size:0.82rem; color:#3a3020; padding:0.35rem 0;
+                border-bottom:1px solid rgba(201,150,58,0.1); }
+    .prog-row-lbl { flex:1; }
+    .prog-row-val { font-weight:700; color:#c9963a; min-width:40px; text-align:right; }
+    </style>""", unsafe_allow_html=True)
+
+    # ── Métricas globales ─────────────────────────────────────────────────
+    c1, c2, c3, c4 = st.columns(4)
+    with c1:
+        st.markdown(f'<div class="prog-card"><div class="prog-num">{eq_total}</div>'
+                    f'<div class="prog-lbl">Preguntas respondidas</div></div>', unsafe_allow_html=True)
+    with c2:
+        st.markdown(f'<div class="prog-card"><div class="prog-num">{eq_pct}%</div>'
+                    f'<div class="prog-lbl">Tasa de aciertos</div></div>', unsafe_allow_html=True)
+    with c3:
+        st.markdown(f'<div class="prog-card"><div class="prog-num">{racha_max}</div>'
+                    f'<div class="prog-lbl">Racha máxima</div></div>', unsafe_allow_html=True)
+    with c4:
+        st.markdown(f'<div class="prog-card"><div class="prog-num">{bc_total}</div>'
+                    f'<div class="prog-lbl">Casos estudiados</div></div>', unsafe_allow_html=True)
+
+    st.markdown("<br>", unsafe_allow_html=True)
+
+    col_izq, col_der = st.columns([3, 2])
+
+    with col_izq:
+        # ── Barra de progreso general ─────────────────────────────────────
+        st.markdown('<div class="prog-section">🎯 Progreso en ENTRENA</div>', unsafe_allow_html=True)
+        if eq_total > 0:
+            bar_w = min(eq_pct, 100)
+            st.markdown(
+                f'<div style="margin-bottom:0.4rem;font-size:0.82rem;color:#3a3020;">'
+                f'<strong>{eq_ok}</strong> correctas de <strong>{eq_total}</strong> respondidas</div>'
+                f'<div class="prog-bar-wrap"><div class="prog-bar-fill" style="width:{bar_w}%;"></div></div>',
+                unsafe_allow_html=True)
+        else:
+            st.markdown('<div style="color:#a09070;font-size:0.82rem;padding:0.5rem 0;">'
+                        'Aún no has respondido preguntas en ENTRENA. ¡Comienza practicando! 🚀</div>',
+                        unsafe_allow_html=True)
+
+        # ── Progreso por curso ────────────────────────────────────────────
+        if st.session_state.eq_hist:
+            st.markdown('<div class="prog-section">📚 Rendimiento por Curso</div>', unsafe_allow_html=True)
+            _curso_labels = {
+                "civil": "Derecho Civil", "bienes": "Bienes", "obligaciones": "Obligaciones",
+                "familia": "Familia", "sucesorio": "Sucesorio", "penal": "Derecho Penal",
+                "procesal": "Procesal", "constitucional": "Constitucional", "laboral": "Laboral",
+            }
+            # Aggregate by course (strip tipo prefix)
+            curso_stats = {}
+            for key, items in st.session_state.eq_hist.items():
+                parts = key.split("__")
+                curso = parts[1] if len(parts) > 1 else key
+                if curso not in curso_stats:
+                    curso_stats[curso] = {"total": 0, "ok": 0}
+                for item in items:
+                    curso_stats[curso]["total"] += 1
+                    if item.get("correcto", False):
+                        curso_stats[curso]["ok"] += 1
+            rows_html = ""
+            for curso, stats in sorted(curso_stats.items(), key=lambda x: -x[1]["total"]):
+                pct_c = int(stats["ok"] / stats["total"] * 100) if stats["total"] > 0 else 0
+                color_c = "#2e9055" if pct_c >= 70 else ("#c9963a" if pct_c >= 50 else "#a83232")
+                rows_html += (
+                    f'<div class="prog-row">'
+                    f'<span class="prog-row-lbl">{_curso_labels.get(curso, curso.title())}</span>'
+                    f'<span style="font-size:0.75rem;color:#888;margin-right:0.5rem;">{stats["total"]} preg.</span>'
+                    f'<span class="prog-row-val" style="color:{color_c};">{pct_c}%</span>'
+                    f'</div>'
+                )
+            st.markdown(rows_html, unsafe_allow_html=True)
+
+        # ── Banco de casos por rama ───────────────────────────────────────
+        if bc_ramas:
+            st.markdown('<div class="prog-section">📂 Casos Estudiados por Rama</div>', unsafe_allow_html=True)
+            _rama_icons = {"civil": "⚖️", "penal": "🔒", "procesal": "📋",
+                           "constitucional": "🏛", "laboral": "💼", "comercial": "📈"}
+            rows_bc = ""
+            for rama, cnt in sorted(bc_ramas.items(), key=lambda x: -x[1]):
+                rows_bc += (
+                    f'<div class="prog-row">'
+                    f'<span class="prog-row-lbl">{_rama_icons.get(rama,"📄")} {rama.title()}</span>'
+                    f'<span class="prog-row-val">{cnt} casos</span>'
+                    f'</div>'
+                )
+            st.markdown(rows_bc, unsafe_allow_html=True)
+        else:
+            st.markdown('<div style="color:#a09070;font-size:0.82rem;padding:0.4rem 0;">'
+                        'Aún no has revelado respuestas en el Banco de Casos.</div>',
+                        unsafe_allow_html=True)
+
+    with col_der:
+        # ── Logros / Badges ───────────────────────────────────────────────
+        st.markdown('<div class="prog-section">🏅 Logros</div>', unsafe_allow_html=True)
+        badges = []
+        if eq_total >= 1:
+            badges.append(("badge-gold", "🎓 Primera Pregunta"))
+        if eq_total >= 10:
+            badges.append(("badge-gold", "📖 10 Preguntas"))
+        if eq_total >= 50:
+            badges.append(("badge-gold", "🔥 50 Preguntas"))
+        if eq_total >= 100:
+            badges.append(("badge-gold", "💯 100 Preguntas"))
+        if eq_pct >= 80 and eq_total >= 10:
+            badges.append(("badge-green", "⭐ Nivel Experto"))
+        if racha_max >= 5:
+            badges.append(("badge-green", "⚡ Racha ×5"))
+        if racha_max >= 10:
+            badges.append(("badge-green", "🌟 Racha ×10"))
+        if bc_total >= 1:
+            badges.append(("badge-gold", "📂 Primer Caso"))
+        if bc_total >= 10:
+            badges.append(("badge-gold", "📚 10 Casos"))
+        if bc_total >= 30:
+            badges.append(("badge-gold", "🏆 30 Casos"))
+        if len(bc_ramas) >= 3:
+            badges.append(("badge-green", "🌐 Multirrama"))
+        if not badges:
+            badges.append(("badge-gray", "🔒 Completa ejercicios para desbloquear logros"))
+
+        badges_html = "".join(
+            f'<span class="prog-badge {cls}">{label}</span>' for cls, label in badges
+        )
+        st.markdown(f'<div style="line-height:2.2;">{badges_html}</div>', unsafe_allow_html=True)
+
+        # ── Ruta de Aprendizaje Sugerida ──────────────────────────────────
+        st.markdown('<div class="prog-section">🗺️ Ruta Sugerida</div>', unsafe_allow_html=True)
+
+        # Identify weakest area
+        weak_curso = None
+        if st.session_state.eq_hist:
+            worst = None
+            worst_pct = 101
+            for key, items in st.session_state.eq_hist.items():
+                if len(items) >= 3:
+                    parts = key.split("__")
+                    curso = parts[1] if len(parts) > 1 else key
+                    pct_w = sum(1 for i in items if i.get("correcto")) / len(items) * 100
+                    if pct_w < worst_pct:
+                        worst_pct = pct_w
+                        worst = curso
+            weak_curso = worst
+
+        sugerencias = []
+        if eq_total == 0:
+            sugerencias = [
+                ("🧠", "Empieza con Alternativas en Derecho Civil", "ENTRENA"),
+                ("📂", "Revisa casos básicos del Banco de Casos", "BANCO DE CASOS"),
+            ]
+        else:
+            if weak_curso:
+                _curso_labels2 = {
+                    "civil": "Civil", "bienes": "Bienes", "obligaciones": "Obligaciones",
+                    "familia": "Familia", "sucesorio": "Sucesorio", "penal": "Penal",
+                    "procesal": "Procesal", "constitucional": "Constitucional", "laboral": "Laboral",
+                }
+                sugerencias.append(("📉", f"Refuerza {_curso_labels2.get(weak_curso, weak_curso)} (área débil)", "ENTRENA"))
+            if bc_total < 10:
+                sugerencias.append(("📂", "Practica más casos en el Banco de Casos", "BANCO DE CASOS"))
+            if eq_pct < 60 and eq_total >= 5:
+                sugerencias.append(("🃏", "Usa Flashcards para reforzar conceptos", "ENTRENA"))
+            if not sugerencias:
+                sugerencias.append(("🚀", "¡Excelente ritmo! Avanza a nivel avanzado", "BANCO DE CASOS"))
+
+        for sicon, stxt, snav in sugerencias:
+            if st.button(f"{sicon} {stxt}", key=f"prog_sugg_{snav}_{stxt[:10]}",
+                         use_container_width=True):
+                st.session_state.nav = snav
+                st.rerun()
+
+        # ── Reiniciar progreso ────────────────────────────────────────────
+        st.markdown('<div class="prog-section" style="margin-top:1.8rem;color:#a09070;">⚙️ Opciones</div>',
+                    unsafe_allow_html=True)
+        if st.button("🔄 Reiniciar estadísticas ENTRENA", use_container_width=True, key="prog_reset"):
+            for rk in ["eq_n", "eq_ok", "eq_racha", "eq_racha_max", "eq_hist", "eq_banco_idx"]:
+                if rk in st.session_state:
+                    del st.session_state[rk]
+            st.success("Estadísticas reiniciadas.")
+            st.rerun()
 
 
 # ═══════════════════════════════════════════════

@@ -1,6 +1,7 @@
 """
 casos_banco.py — Banco de casos legales AntonIA
-180 casos pre-cargados de Derecho chileno con preguntas y respuestas.
+250 casos pre-cargados de Derecho chileno con preguntas y respuestas.
+Incluye 180 casos originales + 70 casos de la biblioteca de doctrina.
 """
 from __future__ import annotations
 
@@ -1645,6 +1646,13 @@ CASOS: list[dict] = [
         "dificultad": "básico",
     },
 ]
+
+
+try:
+    from casos_banco_extra import CASOS_EXTRA as _EXTRA
+    CASOS = CASOS + _EXTRA
+except ImportError:
+    pass
 
 
 def get_casos(rama: str | None = None, dificultad: str | None = None) -> list[dict]:
