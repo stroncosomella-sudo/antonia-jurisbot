@@ -344,6 +344,20 @@ _CID_SUBTEMA = {
     "internacional": ("constitucional", None),
 }
 
+# Preguntas de emergencia embebidas — se usan si TODOS los imports fallan
+_EMERGENCY_DEV = [
+    {"pregunta": "Explique la teoría de las nulidades en el Código Civil chileno. Distinga entre nulidad absoluta y relativa, señalando causales, titulares de la acción y efectos.", "tema": "Nulidades", "pauta": "Art. 1682 CC. Absoluta: objeto/causa ilícita, omisión requisitos esenciales. Relativa: vicios del consentimiento, incapacidad relativa."},
+    {"pregunta": "Desarrolle la estructura del delito según la doctrina finalista. Explique tipicidad, antijuridicidad y culpabilidad.", "tema": "Estructura del Delito", "pauta": "Tipicidad: adecuación al tipo penal. Antijuridicidad: contrariedad con el ordenamiento. Culpabilidad: reprochabilidad."},
+    {"pregunta": "Analice los principios del proceso civil en Chile. Señale cuáles son y cómo se manifiestan en el CPC.", "tema": "Principios Procesales", "pauta": "Dispositivo, contradicción, igualdad, escrituración, preclusión, concentración, publicidad, bilateralidad."},
+    {"pregunta": "Explique el principio de supremacía constitucional en Chile. ¿Cómo se garantiza? Mencione los mecanismos de control.", "tema": "Supremacía Constitucional", "pauta": "Arts. 6 y 7 CPR. TC control preventivo y represivo. Recurso de protección y amparo. Contraloría."},
+    {"pregunta": "Explique los principios del derecho del trabajo. ¿Cuáles son los más importantes? ¿Cómo se manifiestan en el CT?", "tema": "Principios Laborales", "pauta": "Protector (pro operario), irrenunciabilidad (art. 5 CT), continuidad, primacía de la realidad, buena fe."},
+    {"pregunta": "¿Qué es la representación en el derecho civil chileno? Explique sus clases y efectos jurídicos.", "tema": "Representación", "pauta": "Art. 1448 CC. Legal y voluntaria. Efectos directos en el representado."},
+    {"pregunta": "Analice la rescisión por lesión enorme en la compraventa. ¿En qué consiste? ¿Cuándo procede?", "tema": "Lesión Enorme", "pauta": "Arts. 1888-1896 CC. Vendedor: precio < mitad justo precio. Comprador: precio > doble. Solo inmuebles."},
+    {"pregunta": "Explique los órdenes sucesorios en la sucesión intestada chilena. ¿Qué es el derecho de representación?", "tema": "Sucesión Intestada", "pauta": "1° hijos y cónyuge, 2° ascendientes y cónyuge, 3° hermanos, 4° colaterales, 5° Fisco. Representación: art. 984 CC."},
+    {"pregunta": "Explique el sistema registral chileno de bienes raíces. ¿Qué función cumple la inscripción en el CBR?", "tema": "Sistema Registral", "pauta": "CBR: tres registros. Funciones: publicidad, tradición de inmuebles (art. 686 CC), posesión inscrita."},
+    {"pregunta": "Analice la acción de protección constitucional. ¿Qué derechos protege? ¿Cuáles son sus características procesales?", "tema": "Acción de Protección", "pauta": "Art. 20 CPR. Protege derechos del art. 19. Informal, 30 días, ante CA, tramitación breve."},
+]
+
 def _fallback_desarrollo(cid: str):
     """
     Devuelve una pregunta de desarrollo del BANCO_DEV usando rotación sin repetición.
@@ -363,6 +377,9 @@ def _fallback_desarrollo(cid: str):
     if not banco:
         # Fallback genérico con civil
         banco = BANCO_DEV.get("civil", [])
+    if not banco:
+        # Fallback absoluto: preguntas embebidas directamente
+        banco = _EMERGENCY_DEV
     if not banco:
         return None
 

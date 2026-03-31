@@ -5,6 +5,7 @@ Plataforma de IA para el Derecho chileno.
 import sys, base64, json, os
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
+sys.path.insert(0, str(Path(__file__).parent))  # Asegurar que streamlit_app/ esté en sys.path
 
 # Ruta al manifest de la biblioteca (relativa al directorio de la app)
 _APP_DIR = Path(__file__).parent.parent
