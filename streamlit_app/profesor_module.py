@@ -26,30 +26,40 @@ _CSS = """
 <style>
 .prof-header {
     font-family: 'Playfair Display', Georgia, serif;
-    font-size: 1.35rem; font-weight: 700;
-    color: #f5f0e8; margin-bottom: 0.15rem;
+    font-size: 1.6rem; font-weight: 700;
+    color: #f5f0e8; margin-bottom: 0.2rem;
 }
 .prof-sub {
-    font-size: 0.72rem; color: #a09070;
-    margin-bottom: 1.2rem; letter-spacing: 0.03em;
+    font-size: 0.92rem; color: #a09070;
+    margin-bottom: 1.2rem; letter-spacing: 0.02em;
 }
 .prof-card {
     background: #1e1b16;
     border: 1px solid rgba(201,150,58,0.18);
     border-radius: 8px; padding: 1rem 1.2rem;
     margin-bottom: 0.7rem;
+    font-size: 0.9rem;
 }
 .prof-alumno-btn {
-    padding: 0.35rem 0.7rem; border-radius: 20px;
-    font-size: 0.68rem; cursor: pointer;
+    padding: 0.4rem 0.8rem; border-radius: 20px;
+    font-size: 0.78rem; cursor: pointer;
     background: rgba(201,150,58,0.1);
     border: 1px solid rgba(201,150,58,0.2);
     color: #c9963a; display: inline-block;
     margin: 2px;
 }
-.nota-alta  { color: #22c55e; font-weight: 700; }
-.nota-media { color: #fbbf24; font-weight: 700; }
-.nota-baja  { color: #ef4444; font-weight: 700; }
+.nota-alta  { color: #22c55e; font-weight: 700; font-size: 1rem; }
+.nota-media { color: #fbbf24; font-weight: 700; font-size: 1rem; }
+.nota-baja  { color: #ef4444; font-weight: 700; font-size: 1rem; }
+/* Textos de label generales */
+div[data-testid="stMarkdownContainer"] p { font-size: 0.95rem !important; }
+div[data-testid="stTextInput"] label,
+div[data-testid="stSelectbox"] label,
+div[data-testid="stTextArea"] label,
+div[data-testid="stNumberInput"] label,
+div[data-testid="stSlider"] label { font-size: 0.9rem !important; }
+div[data-testid="stTextInput"] input,
+div[data-testid="stTextArea"] textarea { font-size: 0.92rem !important; }
 </style>
 """
 
@@ -73,6 +83,11 @@ def _init():
         # Banco de Preguntas: [{pregunta, alternativas, respuesta_correcta, ramo, dificultad}]
         "prof_banco": [],
         "prof_banco_gen_result": "",
+        # Examen Oral
+        "prof_oral_result": "",
+        "prof_oral_qa": [],   # [{"pregunta": str, "respuesta_esperada": str, "tiempo": str}]
+        # Planificador de Clase
+        "prof_plan_result": "",
     }
     for k, v in defaults.items():
         if k not in st.session_state:
@@ -99,6 +114,8 @@ def render_profesor(get_llm_fn=None):
     TABS = [
         ("📝", "evaluaciones",   "Evalúa"),
         ("✏️", "nueva_eval",     "Crea Eval."),
+        ("🎙️", "oral",          "Examen Oral"),
+        ("🗓️", "plan_clase",    "Plan de Clase"),
         ("📊", "notas",          "Libro Notas"),
         ("🗂",  "banco",         "Banco Preg."),
         ("📈", "rendimiento",    "Rendimiento"),
