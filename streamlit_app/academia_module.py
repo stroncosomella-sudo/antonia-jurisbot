@@ -17,6 +17,23 @@ except ImportError:
     BANCO_MCQ = BANCO_VF = BANCO_FC = {}
     _BANCO_OK = False
 
+# Banco de preguntas de desarrollo
+try:
+    from banco_desarrollo import BANCO_DEV
+except ImportError:
+    BANCO_DEV = {}
+
+# Banco de preguntas de desarrollo extra (doctrina 2025 + avanzado)
+try:
+    from banco_desarrollo_extra import BANCO_DEV_EXTRA
+    for _k, _v in BANCO_DEV_EXTRA.items():
+        if _k in BANCO_DEV:
+            BANCO_DEV[_k] = BANCO_DEV[_k] + list(_v)
+        else:
+            BANCO_DEV[_k] = list(_v)
+except ImportError:
+    pass
+
 _GOLD  = "#c9963a"
 _DARK  = "#141210"
 _CARD  = "#1e1b16"
@@ -321,6 +338,50 @@ _CID_SUBTEMA = {
     "internacional": ("constitucional", None),
 }
 
+def _fallback_desarrollo(cid: str):
+    """
+    Devuelve una pregunta de desarrollo del BANCO_DEV usando rotación sin repetición.
+    Intenta con el cid exacto; si no hay, busca con claves relacionadas.
+    """
+    # Mapeo de cursos con muchos subtemas → rama base del banco
+    _cid_dev_map = {
+        "civil": "civil", "bienes": "bienes", "obligaciones": "obligaciones",
+        "familia": "familia", "sucesorio": "sucesorio",
+        "penal": "penal", "procesal": "procesal",
+        "constitucional": "constitucional", "laboral": "laboral",
+        "comercial": "civil", "ambiental": "constitucional",
+        "internacional": "constitucional",
+    }
+    banco_key = _cid_dev_map.get(cid, cid)
+    banco = BANCO_DEV.get(banco_key, [])
+    if not banco:
+        # Fallback genérico con civil
+        banco = BANCO_DEV.get("civil", [])
+    if not banco:
+        return None
+
+    k = f"dev__{cid}"
+    banco_idx = dict(st.session_state.eq_banco_idx)
+    usados = list(banco_idx.get(k, []))
+    usados_set = set(usados)
+    disponibles = [i for i in range(len(banco)) if i not in usados_set]
+    if not disponibles:
+        usados = []
+        disponibles = list(range(len(banco)))
+        random.shuffle(disponibles)
+
+    idx = random.choice(disponibles)
+    usados.append(idx)
+    banco_idx[k] = usados
+    st.session_state.eq_banco_idx = banco_idx
+
+    item = dict(banco[idx])
+    # Asegurar campos requeridos
+    if "tema" not in item:
+        item["tema"] = item.get("pregunta", "")[:60]
+    return item
+
+
 def _fallback_caso(cid: str):
     """
     Devuelve un caso del banco estático (casos_banco.py) como item compatible
@@ -409,8 +470,7 @@ def _ensure_item(tipo, llm) -> bool:
         # Para tipos con banco estático (mcq, vf, flashcard):
         #   → SIEMPRE usar el banco primero (rotación garantizada, 0 repeticiones)
         #   → LLM solo si el banco está vacío para ese ramo
-        # Para desarrollo y caso (sin banco):
-        #   → LLM primero; sin fallback de banco
+        # Para desarrollo y caso: banco estático primero, LLM como respaldo
         if tipo in ("mcq", "vf", "flashcard"):
             item = _fallback(tipo, cid)
             if item is None and llm:
@@ -418,6 +478,11 @@ def _ensure_item(tipo, llm) -> bool:
         elif tipo == "caso":
             # Primero banco estático, luego LLM
             item = _fallback_caso(cid)
+            if item is None and llm:
+                item = _gen(tipo, llm)
+        elif tipo == "desarrollo":
+            # Primero banco estático de desarrollo, luego LLM
+            item = _fallback_desarrollo(cid)
             if item is None and llm:
                 item = _gen(tipo, llm)
         else:
