@@ -576,8 +576,9 @@ def get_orch():
 # ESTADO DE SESIÓN
 # ─────────────────────────────────────────────
 DEFAULTS = {
-    "persona": "alumno",   # alumno | abogado | profesor | consulta
-    "nav": "ENTRENA",
+    "persona": "alumno",       # alumno | abogado | profesor | consulta
+    "nav": "HOME",             # HOME = landing page
+    "main_section": None,      # None | "universidad" | "abogados" | "consulta" | "prueba"
     "ingestion_result": None, "classification": None,
     "chat_history": [], "quiz_data": [], "quiz_answers": {},
     "quiz_submitted": False, "flashcards": [], "fc_idx": 0,
@@ -603,9 +604,9 @@ for k, v in DEFAULTS.items():
         st.session_state[k] = v
 
 def set_nav(page): st.session_state.nav = page
+
 def set_persona(p):
     st.session_state.persona = p
-    # Resetear nav al default del perfil
     defaults_nav = {
         "alumno":   "ENTRENA",
         "abogado":  "ABOGADO",
@@ -613,184 +614,250 @@ def set_persona(p):
         "consulta": "CONSULTA",
     }
     st.session_state.nav = defaults_nav.get(p, "ENTRENA")
+    if p in ("alumno", "profesor"):
+        st.session_state.main_section = "universidad"
+    elif p == "abogado":
+        st.session_state.main_section = "abogados"
+    elif p == "consulta":
+        st.session_state.main_section = "consulta"
+
+def set_main_section(s):
+    st.session_state.main_section = s
+    if s == "abogados":
+        st.session_state.persona = "abogado"
+        st.session_state.nav = "ABOGADO"
+    elif s == "consulta":
+        st.session_state.persona = "consulta"
+        st.session_state.nav = "CONSULTA"
+    elif s == "prueba":
+        st.session_state.persona = "alumno"
+        st.session_state.main_section = "universidad"
+        st.session_state.nav = "ENTRENA"
 
 
 # ─────────────────────────────────────────────
-# SIDEBAR — DARK PREMIUM
+# SIDEBAR — NUEVO DISEÑO JERÁRQUICO
 # ─────────────────────────────────────────────
 with st.sidebar:
-    # ── LOGO MAR.IA GROUP ──
+
+    # ── CSS para botones del sidebar ──────────────────────────────
+    st.markdown("""<style>
+    section[data-testid="stSidebar"] .stButton > button {
+        background: rgba(201,150,58,0.04) !important;
+        border: 1px solid rgba(201,150,58,0.18) !important;
+        border-radius: 8px !important;
+        padding: 0.62rem 0.85rem !important;
+        text-align: left !important;
+        height: auto !important;
+        min-height: 2.4rem !important;
+        color: rgba(240,232,218,0.75) !important;
+        font-size: 0.75rem !important;
+        font-weight: 600 !important;
+        width: 100% !important;
+        transition: all 0.18s ease !important;
+        white-space: normal !important;
+        line-height: 1.3 !important;
+    }
+    section[data-testid="stSidebar"] .stButton > button:hover {
+        border-color: rgba(201,150,58,0.55) !important;
+        background: rgba(201,150,58,0.10) !important;
+        color: #e8c97a !important;
+        transform: translateX(2px) !important;
+    }
+    section[data-testid="stSidebar"] .stButton > button:focus {
+        outline: none !important;
+        box-shadow: 0 0 0 2px rgba(201,150,58,0.3) !important;
+    }
+    /* Quitar margen extra entre botones */
+    section[data-testid="stSidebar"] div[data-testid="stVerticalBlock"] > div {
+        gap: 0.12rem !important;
+    }
+    </style>""", unsafe_allow_html=True)
+
+    # ── LOGO ─────────────────────────────────────────────────────
     st.markdown("""
-    <div style="padding:1.6rem 1rem 1rem;border-bottom:1px solid rgba(255,255,255,0.07);">
-      <div style="display:flex;align-items:center;gap:0.75rem;">
-        <svg width="38" height="38" viewBox="0 0 38 38" fill="none">
-          <circle cx="19" cy="19" r="17" stroke="rgba(201,150,58,0.45)" stroke-width="1.2" fill="rgba(201,150,58,0.06)"/>
+    <div style="padding:1.4rem 1rem 0.9rem;border-bottom:1px solid rgba(201,150,58,0.1);">
+      <div style="display:flex;align-items:center;gap:0.7rem;">
+        <svg width="36" height="36" viewBox="0 0 38 38" fill="none">
+          <circle cx="19" cy="19" r="17" stroke="rgba(201,150,58,0.45)"
+                  stroke-width="1.2" fill="rgba(201,150,58,0.07)"/>
           <text x="19" y="25" text-anchor="middle"
                 font-family="Playfair Display,Georgia,serif" font-size="18"
                 font-weight="700" fill="#e8c97a" font-style="italic">M</text>
         </svg>
         <div>
-          <div style="font-family:'Playfair Display',Georgia,serif;font-size:1.1rem;
-                      font-weight:700;color:#f0e8d8;letter-spacing:0.01em;line-height:1.1;">
+          <div style="font-family:'Playfair Display',Georgia,serif;font-size:1.05rem;
+                      font-weight:700;color:#f0e8d8;line-height:1.1;">
             Mar.<span style="color:#c9963a;">IA</span> Group
           </div>
-          <div style="font-size:0.6rem;color:rgba(201,150,58,0.6);text-transform:uppercase;
+          <div style="font-size:0.58rem;color:rgba(201,150,58,0.55);text-transform:uppercase;
                       letter-spacing:0.12em;margin-top:2px;">LegalTech Chile</div>
         </div>
       </div>
-      <div style="margin-top:0.9rem;padding:0.55rem 0.75rem;background:rgba(201,150,58,0.07);
-                  border:1px solid rgba(201,150,58,0.18);border-radius:6px;text-align:center;">
-        <span style="font-family:'Playfair Display',serif;font-size:1.05rem;font-weight:600;
-                     color:#c9963a;font-style:italic;letter-spacing:0.03em;">AntonIA</span>
-      </div>
+      <button onclick="window.location.reload()" style="margin-top:0.8rem;width:100%;
+              padding:0.45rem;background:rgba(201,150,58,0.08);
+              border:1px solid rgba(201,150,58,0.2);border-radius:6px;cursor:pointer;
+              font-family:'Playfair Display',serif;font-size:0.95rem;font-weight:600;
+              color:#c9963a;font-style:italic;letter-spacing:0.03em;">
+        Anton<span style="color:#e8d4a0;">IA</span>
+      </button>
     </div>
     """, unsafe_allow_html=True)
 
-    # ══════════════════════════════════════════
-    # ── SELECTOR DE ÁREA (3 grandes secciones)
-    # ══════════════════════════════════════════
-    st.markdown("""
-    <div style="padding:0.7rem 1rem 0.3rem;">
-      <div style="font-size:0.58rem;font-weight:700;color:rgba(201,150,58,0.5);
-                  text-transform:uppercase;letter-spacing:0.1em;margin-bottom:0.5rem;">
-        Área
-      </div>
-    </div>
-    """, unsafe_allow_html=True)
+    st.markdown('<div style="height:0.6rem"></div>', unsafe_allow_html=True)
 
-    persona_actual  = st.session_state.persona
-    en_universidad  = persona_actual in ("alumno", "profesor")
+    # ── 4 SECCIONES PRINCIPALES ──────────────────────────────────
+    ms = st.session_state.get("main_section")
 
-    # ── Universidad (con sub-opciones inline) ───────────────────
-    if en_universidad:
-        # Header Universidad activo
+    SECCIONES = [
+        ("universidad", "🎓", "Universidad",    "Alumnos y profesores de Derecho"),
+        ("abogados",    "⚖️", "Abogados",        "Herramientas para litigantes"),
+        ("consulta",    "💬", "Consulta Legal",  "Asesoría jurídica inmediata"),
+        ("prueba",      "🆓", "Prueba Gratis",   "Explora sin registrarte"),
+    ]
+
+    for sid, icon, label, desc in SECCIONES:
+        active = ms == sid
+        if active:
+            st.markdown(
+                f'<div style="margin:0.12rem 0;padding:0.68rem 0.9rem;'
+                f'background:rgba(201,150,58,0.13);'
+                f'border:1px solid rgba(201,150,58,0.5);'
+                f'border-left:3px solid #c9963a;border-radius:8px;'
+                f'display:flex;align-items:center;gap:0.65rem;">'
+                f'<span style="font-size:1.05rem;min-width:1.3rem">{icon}</span>'
+                f'<div><div style="font-size:0.78rem;font-weight:700;color:#e8c97a;'
+                f'line-height:1.2;">{label}</div>'
+                f'<div style="font-size:0.59rem;color:rgba(201,150,58,0.62);'
+                f'margin-top:2px;">{desc}</div></div>'
+                f'</div>',
+                unsafe_allow_html=True)
+        else:
+            if st.button(f"{icon}  {label}", key=f"ms_{sid}",
+                         use_container_width=True,
+                         on_click=set_main_section, args=(sid,),
+                         help=desc):
+                pass
+
+    # ── SUB-NAVEGACIÓN (aparece solo cuando hay sección activa) ──
+    if ms == "universidad":
         st.markdown(
-            '<div style="border-left:2px solid #c9963a;'
-            'background:linear-gradient(90deg,rgba(201,150,58,0.15),rgba(201,150,58,0.04));'
-            'padding:0.45rem 1rem 0.45rem 0.8rem;margin:1px 0;">'
-            '<span style="font-size:0.7rem;font-weight:700;color:#c9963a;'
-            'text-transform:uppercase;letter-spacing:0.04em;">🎓 Universidad</span>'
+            '<div style="margin:0.6rem 0 0.35rem;padding:0 0.1rem;">'
+            '<div style="height:1px;background:rgba(201,150,58,0.15);margin-bottom:0.5rem;"></div>'
+            '<div style="font-size:0.57rem;font-weight:700;color:rgba(201,150,58,0.45);'
+            'text-transform:uppercase;letter-spacing:0.12em;padding:0 0.1rem 0.2rem;">¿Quién eres?</div>'
             '</div>',
             unsafe_allow_html=True)
-        # Alumno / Profesor: opciones anidadas bajo Universidad
-        col_a, col_p = st.columns(2)
+
+        persona_actual = st.session_state.persona
+        col_a, col_p   = st.columns(2)
         with col_a:
             if persona_actual == "alumno":
                 st.markdown(
-                    '<div style="margin:2px 0 2px 8px;border:1px solid #c9963a;'
-                    'background:rgba(201,150,58,0.18);border-radius:5px;'
-                    'padding:0.35rem 0.3rem;text-align:center;'
-                    'font-size:0.7rem;font-weight:700;color:#c9963a;">👨‍🎓 Alumno</div>',
+                    '<div style="border:1px solid #c9963a;background:rgba(201,150,58,0.15);'
+                    'border-radius:7px;padding:0.42rem 0.3rem;text-align:center;'
+                    'font-size:0.72rem;font-weight:700;color:#e8c97a;">👨‍🎓 Alumno</div>',
                     unsafe_allow_html=True)
             else:
-                st.button("👨‍🎓  Alumno", key="sub_alumno", use_container_width=True,
+                st.button("👨‍🎓 Alumno", key="sub_alumno",
+                          use_container_width=True,
                           on_click=set_persona, args=("alumno",))
         with col_p:
             if persona_actual == "profesor":
                 st.markdown(
-                    '<div style="margin:2px 0 2px 0;border:1px solid #c9963a;'
-                    'background:rgba(201,150,58,0.18);border-radius:5px;'
-                    'padding:0.35rem 0.3rem;text-align:center;'
-                    'font-size:0.7rem;font-weight:700;color:#c9963a;">👩‍🏫 Profesor</div>',
+                    '<div style="border:1px solid #c9963a;background:rgba(201,150,58,0.15);'
+                    'border-radius:7px;padding:0.42rem 0.3rem;text-align:center;'
+                    'font-size:0.72rem;font-weight:700;color:#e8c97a;">👩‍🏫 Profesor</div>',
                     unsafe_allow_html=True)
             else:
-                st.button("👩‍🏫  Profesor", key="sub_profesor", use_container_width=True,
-                          on_click=set_persona, args=("profesor",))
-    else:
-        st.button("🎓  Universidad", key="area_universidad",
-                  use_container_width=True,
-                  on_click=set_persona, args=("alumno",))
-
-    # ── Abogados y Consulta ──────────────────────────────────────
-    for aid, aicon, alabel, is_active in [
-        ("abogado",  "⚖️",  "Abogados",       persona_actual == "abogado"),
-        ("consulta", "👤", "Consulta Legal", persona_actual == "consulta"),
-    ]:
-        if is_active:
-            st.markdown(
-                f'<div style="border-left:2px solid #c9963a;'
-                f'background:linear-gradient(90deg,rgba(201,150,58,0.15),rgba(201,150,58,0.04));'
-                f'padding:0.52rem 1rem 0.52rem 0.8rem;margin:1px 0;'
-                f'font-size:0.74rem;font-weight:700;color:#c9963a;'
-                f'text-transform:uppercase;letter-spacing:0.04em;'
-                f'font-family:Inter,sans-serif;">'
-                f'{aicon} {alabel}</div>', unsafe_allow_html=True)
-        else:
-            st.button(f"{aicon}  {alabel}", key=f"area_{aid}",
-                      use_container_width=True,
-                      on_click=set_persona, args=(aid,))
-
-    st.markdown('<hr style="border-color:rgba(255,255,255,0.07);margin:0.5rem 0;">', unsafe_allow_html=True)
-
-    # ── NAVEGACIÓN (según perfil) ────────────────────────────────
-
-    if persona_actual == "alumno":
-        st.markdown("""
-        <div style="padding:0.3rem 1rem 0.2rem;">
-          <div style="font-size:0.58rem;font-weight:700;color:rgba(201,150,58,0.5);
-                      text-transform:uppercase;letter-spacing:0.1em;">Herramientas</div>
-        </div>
-        """, unsafe_allow_html=True)
-
-        NAV_ALUMNO = [
-            ("🧠", "ENTRENA"),
-            ("📄", "DOCUMENTO"),
-            ("📋", "RESUMEN EJECUTIVO"),
-            ("🔍", "ANÁLISIS"),
-            ("⚖️", "JURISPRUDENCIA RELACIONADA"),
-            ("📚", "DOCTRINA RELACIONADA"),
-            ("📖", "GLOSARIO LEGAL"),
-            ("🗺️", "MAPA CONCEPTUAL"),
-            ("🎤", "PREPARA TU ALEGATO"),
-            ("💬", "CONSULTORÍA VIRTUAL"),
-            ("🏛",  "BIBLIOTECA DOCTRINA"),
-            ("📂", "BANCO DE CASOS"),
-            ("📈", "MI PROGRESO"),
-        ]
-        for icon, label in NAV_ALUMNO:
-            active = st.session_state.nav == label
-            if active:
-                st.markdown(
-                    f'<div style="border-left:2px solid #c9963a;'
-                    f'background:linear-gradient(90deg,rgba(201,150,58,0.12),rgba(201,150,58,0.04));'
-                    f'padding:0.52rem 1rem 0.52rem 0.85rem;'
-                    f'font-size:0.72rem;font-weight:700;color:#c9963a;'
-                    f'text-transform:uppercase;letter-spacing:0.04em;'
-                    f'font-family:Inter,sans-serif;">'
-                    f'{icon} {label}</div>', unsafe_allow_html=True)
-            else:
-                st.button(f"{icon}  {label}", key=f"nav_{label}",
+                st.button("👩‍🏫 Profesor", key="sub_profesor",
                           use_container_width=True,
-                          on_click=set_nav, args=(label,))
+                          on_click=set_persona, args=("profesor",))
 
-    elif persona_actual in ("abogado", "profesor", "consulta"):
-        _desc = {
-            "abogado":  "Gestión profesional. Casos, plazos, honorarios y más →",
-            "profesor": "Herramientas docentes. Clases, evaluaciones y alumnos →",
-            "consulta": "Orientación legal para todas las personas →",
-        }
-        st.markdown(
-            f'<div style="padding:0.4rem 1rem 0.3rem;">'
-            f'<div style="font-size:0.72rem;color:#c8b890;line-height:1.5;">'
-            f'{_desc[persona_actual]}</div></div>',
-            unsafe_allow_html=True)
+        # ── Herramientas Alumno ────────────────────────────────
+        if persona_actual == "alumno":
+            st.markdown(
+                '<div style="margin:0.5rem 0 0.25rem;">'
+                '<div style="height:1px;background:rgba(201,150,58,0.1);margin-bottom:0.4rem;"></div>'
+                '<div style="font-size:0.57rem;font-weight:700;color:rgba(201,150,58,0.45);'
+                'text-transform:uppercase;letter-spacing:0.12em;">Herramientas</div>'
+                '</div>',
+                unsafe_allow_html=True)
 
-    st.markdown('<hr style="border-color:rgba(255,255,255,0.07);margin:0.5rem 0;">', unsafe_allow_html=True)
+            NAV_ALUMNO = [
+                ("🧠", "ENTRENA",                  "Quiz legal infinito con IA"),
+                ("📄", "DOCUMENTO",                "Genera contratos y escritos"),
+                ("📋", "RESUMEN EJECUTIVO",         "Resume casos y normativa"),
+                ("🔍", "ANÁLISIS",                  "Análisis jurídico profundo"),
+                ("⚖️", "JURISPRUDENCIA RELACIONADA","Jurisprudencia chilena"),
+                ("📚", "DOCTRINA RELACIONADA",      "Doctrina y artículos 2025"),
+                ("📖", "GLOSARIO LEGAL",            "Definiciones jurídicas"),
+                ("🗺️", "MAPA CONCEPTUAL",           "Visualiza conexiones"),
+                ("🎤", "PREPARA TU ALEGATO",        "Prepara argumentos orales"),
+                ("💬", "CONSULTORÍA VIRTUAL",       "Pregunta a AntonIA"),
+                ("🏛",  "BIBLIOTECA DOCTRINA",      "Obras y artículos"),
+                ("📂", "BANCO DE CASOS",            "250+ casos reales"),
+                ("📈", "MI PROGRESO",               "Estadísticas de estudio"),
+            ]
+            for icon, label, tool_desc in NAV_ALUMNO:
+                if st.session_state.nav == label:
+                    st.markdown(
+                        f'<div style="margin:0.1rem 0;padding:0.5rem 0.85rem 0.5rem 0.75rem;'
+                        f'background:linear-gradient(90deg,rgba(201,150,58,0.13),rgba(201,150,58,0.03));'
+                        f'border-left:2.5px solid #c9963a;border-radius:0 7px 7px 0;">'
+                        f'<div style="font-size:0.73rem;font-weight:700;color:#e8c97a;">'
+                        f'{icon} {label}</div>'
+                        f'<div style="font-size:0.58rem;color:rgba(201,150,58,0.55);margin-top:2px;">'
+                        f'{tool_desc}</div>'
+                        f'</div>',
+                        unsafe_allow_html=True)
+                else:
+                    st.button(f"{icon}  {label}", key=f"nav_{label}",
+                              use_container_width=True,
+                              on_click=set_nav, args=(label,),
+                              help=tool_desc)
 
-    # Enlace a páginas institucionales
+        # ── Herramientas Profesor ──────────────────────────────
+        elif persona_actual == "profesor":
+            st.markdown(
+                '<div style="margin:0.5rem 0 0.25rem;">'
+                '<div style="height:1px;background:rgba(201,150,58,0.1);margin-bottom:0.4rem;"></div>'
+                '<div style="font-size:0.57rem;font-weight:700;color:rgba(201,150,58,0.45);'
+                'text-transform:uppercase;letter-spacing:0.12em;">Panel Docente</div>'
+                '</div>',
+                unsafe_allow_html=True)
+            if st.session_state.nav == "PROFESOR":
+                st.markdown(
+                    '<div style="padding:0.5rem 0.85rem 0.5rem 0.75rem;'
+                    'background:linear-gradient(90deg,rgba(201,150,58,0.13),transparent);'
+                    'border-left:2.5px solid #c9963a;border-radius:0 7px 7px 0;'
+                    'font-size:0.73rem;font-weight:700;color:#e8c97a;">'
+                    '🧑‍🏫 Herramientas Docentes</div>',
+                    unsafe_allow_html=True)
+            else:
+                st.button("🧑‍🏫 Herramientas Docentes", key="nav_prof",
+                          use_container_width=True,
+                          on_click=set_nav, args=("PROFESOR",))
+
+    # ── Pie del sidebar ──────────────────────────────────────────
+    st.markdown('<div style="height:0.5rem"></div>', unsafe_allow_html=True)
+    st.markdown('<div style="height:1px;background:rgba(201,150,58,0.1);margin:0 0 0.4rem;"></div>',
+                unsafe_allow_html=True)
+
     col_q, col_s = st.columns(2)
     with col_q:
-        if st.button("🏛️ Quiénes", key="nav_quienes", use_container_width=True,
-                     on_click=set_nav, args=("QUIÉNES SOMOS",)):
-            pass
+        st.button("🏛️ Quiénes", key="nav_quienes",
+                  use_container_width=True,
+                  on_click=set_nav, args=("QUIÉNES SOMOS",))
     with col_s:
-        if st.button("💎 Planes", key="nav_subs", use_container_width=True,
-                     on_click=set_nav, args=("SUSCRIPCIONES",)):
-            pass
+        st.button("💎 Planes", key="nav_subs",
+                  use_container_width=True,
+                  on_click=set_nav, args=("SUSCRIPCIONES",))
 
-    st.markdown('<hr style="border-color:rgba(255,255,255,0.07);margin:0.5rem 0;">', unsafe_allow_html=True)
+    st.markdown('<div style="height:1px;background:rgba(201,150,58,0.1);margin:0.4rem 0 0.3rem;"></div>',
+                unsafe_allow_html=True)
 
-    # ── MOTOR IA (hardcoded — invisible al usuario) ──
+    # ── Motor IA ─────────────────────────────────────────────────
     _provider_key = "anthropic"
     _model        = "claude-sonnet-4-20250514"
     _api_key      = (
@@ -798,45 +865,30 @@ with st.sidebar:
         if hasattr(st, "secrets")
         else os.environ.get("ANTHROPIC_API_KEY", "")
     )
-    settings.llm_provider        = _provider_key
-    settings.anthropic_api_key   = _api_key
-    settings.anthropic_model     = _model
+    settings.llm_provider      = _provider_key
+    settings.anthropic_api_key = _api_key
+    settings.anthropic_model   = _model
 
-    # ── Indicador Biblioteca ──
+    # ── Biblioteca ───────────────────────────────────────────────
     if _bib_activa:
         n_docs  = len(_bib_manifest)
         n_ramas = len(_bib_ramas)
         st.markdown(
-            f'<div style="margin:0.5rem 0.4rem 0.3rem;padding:0.55rem 0.8rem;'
-            f'background:rgba(46,144,85,0.08);border:1px solid rgba(46,144,85,0.25);'
-            f'border-left:2px solid rgba(46,144,85,0.6);border-radius:0 6px 6px 0;">'
-            f'<div style="font-size:0.6rem;font-weight:700;color:rgba(46,144,85,0.85);'
+            f'<div style="padding:0.42rem 0.7rem;background:rgba(46,144,85,0.07);'
+            f'border:1px solid rgba(46,144,85,0.2);border-radius:6px;">'
+            f'<div style="font-size:0.57rem;font-weight:700;color:rgba(46,144,85,0.8);'
             f'text-transform:uppercase;letter-spacing:0.08em;">📚 Biblioteca activa</div>'
-            f'<div style="font-size:0.65rem;color:rgba(200,220,200,0.7);margin-top:2px;">'
+            f'<div style="font-size:0.6rem;color:rgba(200,220,200,0.6);margin-top:2px;">'
             f'{n_docs} obras · {n_ramas} ramas</div>'
             f'</div>',
             unsafe_allow_html=True)
-    else:
-        st.markdown(
-            '<div style="margin:0.5rem 0.4rem 0.3rem;padding:0.55rem 0.8rem;'
-            'background:rgba(180,134,12,0.06);border:1px solid rgba(180,134,12,0.18);'
-            'border-left:2px solid rgba(180,134,12,0.4);border-radius:0 6px 6px 0;">'
-            '<div style="font-size:0.6rem;font-weight:700;color:rgba(180,134,12,0.7);'
-            'text-transform:uppercase;letter-spacing:0.08em;">📚 Biblioteca</div>'
-            '<div style="font-size:0.62rem;color:rgba(200,180,100,0.5);margin-top:2px;">'
-            'No indexada aún</div>'
-            '</div>',
-            unsafe_allow_html=True)
 
-    st.markdown("""
-    <div style="margin:0.3rem 0.4rem 0.8rem;padding:0.6rem 0.8rem;
-                background:rgba(218,165,32,0.06);
-                border:1px solid rgba(218,165,32,0.18);
-                border-left:2px solid rgba(218,165,32,0.45);
-                border-radius:0 6px 6px 0;
-                font-size:0.67rem;color:rgba(218,165,32,0.7);line-height:1.5;">
-      ⚠ Análisis académico. No constituye asesoría legal profesional.
-    </div>""", unsafe_allow_html=True)
+    st.markdown(
+        '<div style="margin:0.3rem 0 0.4rem;padding:0.45rem 0.7rem;'
+        'background:rgba(218,165,32,0.04);border:1px solid rgba(218,165,32,0.14);'
+        'border-radius:6px;font-size:0.59rem;color:rgba(218,165,32,0.55);line-height:1.4;">'
+        '⚠ Análisis académico. No constituye asesoría legal profesional.</div>',
+        unsafe_allow_html=True)
 
 
 # ─────────────────────────────────────────────
@@ -1001,6 +1053,134 @@ def _mostrar_casos_relacionados(texto_doc: str, max_casos: int = 3, key_prefix: 
 
 nav     = st.session_state.nav
 persona = st.session_state.persona
+
+# ── HOME PAGE ────────────────────────────────────────────────────
+if nav == "HOME" or st.session_state.get("main_section") is None:
+    st.markdown("""
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--gold:#c9963a;--dark:#141210;--parchment:#f5f0e8;--card-dark:#1e1b16;}
+@keyframes float{0%,100%{transform:translateY(0) rotate(0);opacity:.3}50%{transform:translateY(-18px) rotate(2deg);opacity:.55}}
+@keyframes floatSlow{0%,100%{transform:translateY(0);opacity:.2}50%{transform:translateY(-25px);opacity:.45}}
+@keyframes fadeInUp{from{opacity:0;transform:translateY(28px)}to{opacity:1;transform:translateY(0)}}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(201,150,58,.65)}50%{box-shadow:0 0 0 10px rgba(201,150,58,0)}}
+@keyframes gradBg{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
+.ant-hero{position:relative;padding:80px 20px 70px;background:linear-gradient(135deg,#0d0b09 0%,#1a1511 50%,#0d0b09 100%);background-size:200% 200%;animation:gradBg 8s ease infinite;overflow:hidden;text-align:center;}
+.ant-hero::before{content:'';position:absolute;inset:0;background:radial-gradient(circle at 20% 50%,rgba(201,150,58,.1) 0%,transparent 55%),radial-gradient(circle at 80% 80%,rgba(201,150,58,.06) 0%,transparent 50%);pointer-events:none;}
+.ant-ptcl{position:absolute;font-size:1.8rem;animation:float 7s ease-in-out infinite;pointer-events:none;}
+.ant-ptcl:nth-child(1){top:10%;left:8%;animation-delay:0s}
+.ant-ptcl:nth-child(2){top:18%;right:12%;animation-delay:1.2s;animation-name:floatSlow}
+.ant-ptcl:nth-child(3){bottom:18%;left:16%;animation-delay:2s}
+.ant-ptcl:nth-child(4){top:42%;right:6%;animation-delay:1.7s;animation-name:floatSlow}
+.ant-ptcl:nth-child(5){bottom:25%;right:18%;animation-delay:2.8s}
+.ant-hero-inner{position:relative;z-index:2;animation:fadeInUp .9s ease-out .15s both;}
+.ant-tag{font-family:'Inter',sans-serif;font-size:.82rem;color:var(--gold);text-transform:uppercase;letter-spacing:.18em;margin-bottom:18px;font-weight:600;}
+.ant-h1{font-family:'Playfair Display',serif;font-size:clamp(2.2rem,5vw,3.6rem);font-weight:900;color:var(--parchment);margin-bottom:20px;line-height:1.18;}
+.ant-h1 span{color:var(--gold);}
+.ant-sub{font-family:'Inter',sans-serif;font-size:1.05rem;color:#d4cfc8;margin:0 auto 38px;max-width:580px;line-height:1.65;}
+.ant-btns{display:flex;gap:16px;justify-content:center;flex-wrap:wrap;margin-bottom:10px;}
+.ant-btn-p{padding:13px 30px;background:var(--gold);color:#0d0b09;border:none;border-radius:8px;font-family:'Inter',sans-serif;font-size:.95rem;font-weight:700;cursor:pointer;animation:pulse 2.2s infinite;transition:all .28s ease;text-decoration:none;display:inline-block;}
+.ant-btn-p:hover{background:#dab157;transform:translateY(-2px);box-shadow:0 14px 36px rgba(201,150,58,.3);}
+.ant-btn-s{padding:13px 30px;background:transparent;color:var(--gold);border:2px solid var(--gold);border-radius:8px;font-family:'Inter',sans-serif;font-size:.95rem;font-weight:600;cursor:pointer;transition:all .28s ease;display:inline-block;}
+.ant-btn-s:hover{background:rgba(201,150,58,.1);transform:translateY(-2px);}
+.ant-stats{display:flex;justify-content:center;gap:clamp(20px,4vw,48px);padding:28px 20px;background:rgba(201,150,58,.05);border-top:1px solid rgba(201,150,58,.12);border-bottom:1px solid rgba(201,150,58,.12);flex-wrap:wrap;}
+.ant-stat-n{font-family:'Playfair Display',serif;font-size:1.8rem;font-weight:800;color:var(--gold);}
+.ant-stat-l{font-size:.72rem;color:rgba(240,232,218,.5);text-transform:uppercase;letter-spacing:.08em;margin-top:2px;}
+.ant-sec{padding:55px 20px;max-width:900px;margin:0 auto;}
+.ant-sec-t{font-family:'Playfair Display',serif;font-size:1.9rem;font-weight:800;color:var(--parchment);text-align:center;margin-bottom:8px;}
+.ant-sec-s{font-size:.92rem;color:rgba(240,232,218,.5);text-align:center;margin-bottom:36px;}
+.ant-grid-4{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;}
+.ant-card{background:var(--card-dark);border:1px solid rgba(201,150,58,.15);border-radius:12px;padding:24px 20px;transition:all .28s ease;cursor:pointer;}
+.ant-card:hover{border-color:rgba(201,150,58,.45);transform:translateY(-4px);box-shadow:0 16px 40px rgba(0,0,0,.35);}
+.ant-card-icon{font-size:2rem;margin-bottom:12px;}
+.ant-card-t{font-family:'Inter',sans-serif;font-size:.88rem;font-weight:700;color:var(--parchment);margin-bottom:7px;}
+.ant-card-d{font-size:.78rem;color:rgba(240,232,218,.48);line-height:1.55;}
+.ant-steps{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:10px;}
+.ant-step{flex:1;min-width:160px;max-width:220px;text-align:center;padding:22px 16px;background:rgba(201,150,58,.05);border:1px solid rgba(201,150,58,.12);border-radius:10px;}
+.ant-step-n{font-family:'Playfair Display',serif;font-size:2rem;font-weight:900;color:rgba(201,150,58,.4);line-height:1;}
+.ant-step-t{font-size:.83rem;font-weight:700;color:var(--parchment);margin:8px 0 5px;}
+.ant-step-d{font-size:.73rem;color:rgba(240,232,218,.45);line-height:1.5;}
+.ant-tools{display:grid;grid-template-columns:repeat(auto-fit,minmax(175px,1fr));gap:12px;}
+.ant-tool{background:rgba(201,150,58,.04);border:1px solid rgba(201,150,58,.12);border-radius:9px;padding:16px 14px;display:flex;align-items:flex-start;gap:10px;transition:all .22s ease;}
+.ant-tool:hover{border-color:rgba(201,150,58,.38);background:rgba(201,150,58,.07);}
+.ant-tool-icon{font-size:1.35rem;min-width:1.6rem;}
+.ant-tool-t{font-size:.78rem;font-weight:700;color:var(--parchment);margin-bottom:3px;}
+.ant-tool-d{font-size:.68rem;color:rgba(240,232,218,.42);line-height:1.45;}
+.ant-cta{text-align:center;padding:55px 20px;background:linear-gradient(135deg,rgba(201,150,58,.08),rgba(201,150,58,.03));border-top:1px solid rgba(201,150,58,.12);}
+.ant-cta-t{font-family:'Playfair Display',serif;font-size:1.7rem;font-weight:800;color:var(--parchment);margin-bottom:12px;}
+.ant-cta-s{font-size:.92rem;color:rgba(240,232,218,.5);margin-bottom:28px;}
+</style>
+
+<div class="ant-hero">
+  <div class="ant-ptcl">⚖️</div><div class="ant-ptcl">📜</div>
+  <div class="ant-ptcl">🏛️</div><div class="ant-ptcl">📖</div><div class="ant-ptcl">⚡</div>
+  <div class="ant-hero-inner">
+    <div class="ant-tag">AntonIA · Mar.IA Group · LegalTech Chile</div>
+    <div class="ant-h1">Domina el Derecho chileno<br>con <span>Inteligencia Artificial</span></div>
+    <div class="ant-sub">AntonIA es tu asistente jurídico inteligente — entrena para tus exámenes, analiza casos, redacta documentos y consulta con la IA más avanzada del sistema legal chileno.</div>
+    <div class="ant-btns">
+      <span class="ant-btn-p">Comenzar gratis →</span>
+      <span class="ant-btn-s">▶ Ver demo</span>
+    </div>
+  </div>
+</div>
+
+<div class="ant-stats">
+  <div style="text-align:center"><div class="ant-stat-n">10.000+</div><div class="ant-stat-l">Preguntas de práctica</div></div>
+  <div style="text-align:center"><div class="ant-stat-n">250+</div><div class="ant-stat-l">Casos reales</div></div>
+  <div style="text-align:center"><div class="ant-stat-n">12</div><div class="ant-stat-l">Ramos disponibles</div></div>
+  <div style="text-align:center"><div class="ant-stat-n">4</div><div class="ant-stat-l">Perfiles distintos</div></div>
+</div>
+
+<div class="ant-sec">
+  <div class="ant-sec-t">¿Para quién es AntonIA?</div>
+  <div class="ant-sec-s">Selecciona tu perfil en el panel izquierdo para comenzar</div>
+  <div class="ant-grid-4">
+    <div class="ant-card"><div class="ant-card-icon">🎓</div><div class="ant-card-t">Universidad</div><div class="ant-card-d">Plataforma completa para alumnos y profesores. Quiz infinito, análisis de casos, documentos legales y más.</div></div>
+    <div class="ant-card"><div class="ant-card-icon">⚖️</div><div class="ant-card-t">Abogados</div><div class="ant-card-d">Herramientas de alto nivel para litigantes. Jurisprudencia, análisis jurídico profundo, redacción de escritos.</div></div>
+    <div class="ant-card"><div class="ant-card-icon">💬</div><div class="ant-card-t">Consulta Legal</div><div class="ant-card-d">Asesoría jurídica inmediata basada en el derecho chileno vigente. Respuestas precisas y fundamentadas.</div></div>
+    <div class="ant-card"><div class="ant-card-icon">🆓</div><div class="ant-card-t">Prueba Gratis</div><div class="ant-card-d">Explora todas las funcionalidades sin compromiso. Descubre el poder de la IA aplicada al Derecho.</div></div>
+  </div>
+</div>
+
+<div style="background:rgba(201,150,58,.04);border-top:1px solid rgba(201,150,58,.1);border-bottom:1px solid rgba(201,150,58,.1);padding:50px 20px;">
+  <div style="max-width:900px;margin:0 auto;">
+    <div class="ant-sec-t">Cómo funciona</div>
+    <div class="ant-sec-s" style="margin-bottom:28px;">Tres pasos para transformar tu práctica jurídica</div>
+    <div class="ant-steps">
+      <div class="ant-step"><div class="ant-step-n">01</div><div class="ant-step-t">Elige tu perfil</div><div class="ant-step-d">Selecciona si eres alumno, abogado, profesor o quieres una consulta.</div></div>
+      <div class="ant-step"><div class="ant-step-n">02</div><div class="ant-step-t">Selecciona la herramienta</div><div class="ant-step-d">Elige entre ENTRENA, DOCUMENTO, ANÁLISIS, JURISPRUDENCIA y más.</div></div>
+      <div class="ant-step"><div class="ant-step-n">03</div><div class="ant-step-t">AntonIA trabaja</div><div class="ant-step-d">La IA genera contenido jurídico preciso basado en el derecho chileno vigente.</div></div>
+    </div>
+  </div>
+</div>
+
+<div class="ant-sec">
+  <div class="ant-sec-t">Herramientas para estudiantes</div>
+  <div class="ant-sec-s">Todo lo que necesitas para aprobar y destacar en Derecho</div>
+  <div class="ant-tools">
+    <div class="ant-tool"><div class="ant-tool-icon">🧠</div><div><div class="ant-tool-t">ENTRENA</div><div class="ant-tool-d">Quiz legal infinito con IA. Alternativas, V/F, Flashcards, Desarrollo y Casos.</div></div></div>
+    <div class="ant-tool"><div class="ant-tool-icon">📄</div><div><div class="ant-tool-t">DOCUMENTO</div><div class="ant-tool-d">Genera contratos, escritos y documentos legales en segundos.</div></div></div>
+    <div class="ant-tool"><div class="ant-tool-icon">📋</div><div><div class="ant-tool-t">RESUMEN</div><div class="ant-tool-d">Resume casos, sentencias y normativa en formato estructurado.</div></div></div>
+    <div class="ant-tool"><div class="ant-tool-icon">🔍</div><div><div class="ant-tool-t">ANÁLISIS</div><div class="ant-tool-d">Análisis jurídico profundo con citas doctrinales y jurisprudenciales.</div></div></div>
+    <div class="ant-tool"><div class="ant-tool-icon">⚖️</div><div><div class="ant-tool-t">JURISPRUDENCIA</div><div class="ant-tool-d">Busca y analiza jurisprudencia chilena relevante para tu caso.</div></div></div>
+    <div class="ant-tool"><div class="ant-tool-icon">📚</div><div><div class="ant-tool-t">DOCTRINA</div><div class="ant-tool-d">Accede a la doctrina nacional más actualizada de 2025.</div></div></div>
+    <div class="ant-tool"><div class="ant-tool-icon">🎤</div><div><div class="ant-tool-t">ALEGATO</div><div class="ant-tool-d">Prepara argumentos orales, defensas y alegatos con IA.</div></div></div>
+    <div class="ant-tool"><div class="ant-tool-icon">📂</div><div><div class="ant-tool-t">BANCO DE CASOS</div><div class="ant-tool-d">250+ casos reales del Derecho chileno para practicar.</div></div></div>
+    <div class="ant-tool"><div class="ant-tool-icon">📈</div><div><div class="ant-tool-t">MI PROGRESO</div><div class="ant-tool-d">Estadísticas de estudio, rachas y áreas de mejora.</div></div></div>
+  </div>
+</div>
+
+<div class="ant-cta">
+  <div class="ant-cta-t">¿Listo para transformar tu práctica jurídica?</div>
+  <div class="ant-cta-s">Únete a los estudiantes y profesionales que ya usan AntonIA</div>
+  <span class="ant-btn-p" style="font-size:1rem;padding:15px 36px;">Comenzar ahora →</span>
+  <div style="margin-top:20px;font-size:.72rem;color:rgba(201,150,58,.4);font-family:'Inter',sans-serif;">
+    Anton<strong style="color:rgba(201,150,58,.6);">IA</strong> · Mar.IA Group · LegalTech Chile
+  </div>
+</div>
+    """, unsafe_allow_html=True)
+    st.stop()
 
 # ═══════════════════════════════════════════════
 # ENRUTAMIENTO POR PERFIL
