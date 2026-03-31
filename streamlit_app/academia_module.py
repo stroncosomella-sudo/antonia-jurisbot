@@ -305,6 +305,83 @@ def _fallback(tipo, cid):
     return item
 
 
+# ── Mapa cid → subtemas de casos_banco ──────────────────────────────────────
+_CID_SUBTEMA = {
+    "civil":       ("civil",  ["Personas y Familia"]),
+    "bienes":      ("civil",  ["Bienes y Derechos Reales"]),
+    "obligaciones":("civil",  ["Obligaciones y Contratos", "Contratos y Cuasicontratos"]),
+    "familia":     ("civil",  ["Personas y Familia"]),
+    "sucesorio":   ("civil",  ["Sucesiones"]),
+    "penal":       ("penal",  None),
+    "procesal":    ("procesal", None),
+    "constitucional": ("constitucional", None),
+    "laboral":     ("laboral", None),
+    "comercial":   ("civil",  ["Contratos y Cuasicontratos"]),
+    "ambiental":   ("civil",  None),
+    "internacional": ("constitucional", None),
+}
+
+def _fallback_caso(cid: str):
+    """
+    Devuelve un caso del banco estático (casos_banco.py) como item compatible
+    con _render_caso: {titulo, enunciado, preguntas: [...], tema, fundamento}.
+    Usa rotación sin repetición por cid hasta agotar el banco.
+    """
+    try:
+        from casos_banco import CASOS
+    except ImportError:
+        return None
+
+    rama, subtemas = _CID_SUBTEMA.get(cid, ("civil", None))
+    if subtemas:
+        candidatos = [c for c in CASOS if c["rama"] == rama and c["subtema"] in subtemas]
+        if not candidatos:
+            candidatos = [c for c in CASOS if c["rama"] == rama]
+    else:
+        candidatos = [c for c in CASOS if c["rama"] == rama]
+
+    if not candidatos:
+        candidatos = CASOS  # fallback total
+
+    k = f"caso__{cid}"
+    banco_idx = dict(st.session_state.eq_banco_idx)
+    usados = list(banco_idx.get(k, []))
+    usados_set = set(usados)
+
+    ids_candidatos = [c["id"] for c in candidatos]
+    disponibles = [cid2 for cid2 in ids_candidatos if cid2 not in usados_set]
+    if not disponibles:
+        usados = []
+        disponibles = ids_candidatos[:]
+        random.shuffle(disponibles)
+
+    chosen_id = random.choice(disponibles)
+    usados.append(chosen_id)
+    banco_idx[k] = usados
+    st.session_state.eq_banco_idx = banco_idx
+
+    caso = next(c for c in candidatos if c["id"] == chosen_id)
+
+    # Convertir al formato que espera _render_caso
+    pregunta_raw = caso["pregunta"]
+    # Separar si hay múltiples preguntas (delimitadas por ¿ o número)
+    import re as _re
+    partes = _re.split(r"(?<=[.?])\s*(?=¿|\d+\.)", pregunta_raw)
+    preguntas = [p.strip() for p in partes if p.strip()]
+    if not preguntas:
+        preguntas = [pregunta_raw]
+
+    return {
+        "titulo":    caso["titulo"],
+        "enunciado": caso["hechos"],
+        "preguntas": preguntas,
+        "tema":      caso["subtema"],
+        "fundamento": caso.get("fundamento", ""),
+        "_banco_id": caso["id"],
+    }
+
+
+
 # ── Score bar ─────────────────────────────────────────────────
 def _score_bar():
     n  = st.session_state.eq_n
@@ -336,6 +413,11 @@ def _ensure_item(tipo, llm) -> bool:
         #   → LLM primero; sin fallback de banco
         if tipo in ("mcq", "vf", "flashcard"):
             item = _fallback(tipo, cid)
+            if item is None and llm:
+                item = _gen(tipo, llm)
+        elif tipo == "caso":
+            # Primero banco estático, luego LLM
+            item = _fallback_caso(cid)
             if item is None and llm:
                 item = _gen(tipo, llm)
         else:
