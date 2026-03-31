@@ -21,6 +21,21 @@ _WHITE = "#f5f0e8"
 # ── Estilos ───────────────────────────────────────────────────────────────────
 _CSS = """
 <style>
+/* Ocultar botones Streamlit de tabs (usamos HTML decorativo encima) */
+[data-testid="stMainBlockContainer"] div[data-testid="column"] .stButton > button[kind="secondary"] {
+    position:absolute !important;
+    opacity:0 !important;
+    height:100% !important;
+    top:0 !important;
+    left:0 !important;
+    width:100% !important;
+    cursor:pointer !important;
+    z-index:10 !important;
+}
+[data-testid="stMainBlockContainer"] div[data-testid="column"] {
+    position:relative !important;
+    overflow:visible !important;
+}
 .abg-tab-header{font-family:'Playfair Display',serif;font-size:1.15rem;font-weight:700;
   color:#1a1813;margin-bottom:.2rem;}
 .abg-tab-sub{font-size:.78rem;color:#9a8e7e;margin-bottom:1rem;}
@@ -239,11 +254,14 @@ def render_abogado(get_llm_fn=None):
     for col, (icon, tid, label) in zip(tab_cols, TABS):
         active = st.session_state.abg_tab == tid
         col.markdown(
-            f'<div style="text-align:center;padding:.35rem .1rem;'
+            f'<div style="text-align:center;padding:.3rem .05rem;'
             f'border-bottom:2px solid {"#c9963a" if active else "transparent"};'
-            f'cursor:pointer;font-size:.72rem;font-weight:{"700" if active else "500"};'
-            f'color:{"#c9963a" if active else "#9a8e7e"};text-transform:uppercase;letter-spacing:.04em;">'
-            f'{icon}<br>{label}</div>', unsafe_allow_html=True)
+            f'cursor:pointer;">'
+            f'<span style="font-size:.85rem;line-height:1;">{icon}</span>'
+            f'<div style="font-size:.58rem;font-weight:{"700" if active else "500"};'
+            f'color:{"#c9963a" if active else "#9a8e7e"};text-transform:uppercase;'
+            f'letter-spacing:.04em;margin-top:2px;line-height:1.1;">{label}</div>'
+            f'</div>', unsafe_allow_html=True)
         if not active:
             if col.button(f"{icon} {label}", key=f"abg_tab_{tid}",
                           use_container_width=True):
