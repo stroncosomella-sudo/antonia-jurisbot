@@ -906,6 +906,97 @@ def active_llm():
 def section_header(title):
     return f'<div class="mc"><div class="mc-title">{title}</div>'
 
+
+# ── Helper: Casos relacionados del Banco ────────────────────────────────────
+def _detectar_rama(texto: str) -> str | None:
+    """Detecta la rama del derecho predominante en el texto mediante palabras clave."""
+    t = texto.lower()
+    scores = {
+        "civil":         sum(t.count(w) for w in [
+            "contrato","compraventa","arrendamiento","nulidad","obligación","obligaciones",
+            "heredero","sucesión","testamento","propiedad","dominio","bienes","posesión",
+            "responsabilidad civil","daño","indemnización","prescripción","código civil",
+        ]),
+        "penal":         sum(t.count(w) for w in [
+            "delito","imputado","querella","fiscal","ministerio público","pena","condena",
+            "código penal","homicidio","robo","hurto","estafa","procesado","acusado",
+        ]),
+        "procesal":      sum(t.count(w) for w in [
+            "demanda","tribunal","juicio","procedimiento","sentencia","recurso","apelación",
+            "casación","notificación","plazo fatal","expediente","audiencia","código de procedimiento",
+        ]),
+        "constitucional":sum(t.count(w) for w in [
+            "constitución","derecho fundamental","garantía","recurso de protección","amparo",
+            "ley orgánica","tribunal constitucional","cpr","carta fundamental",
+        ]),
+        "laboral":       sum(t.count(w) for w in [
+            "trabajador","empleador","contrato de trabajo","despido","finiquito","sindicato",
+            "huelga","código del trabajo","remuneración","indemnización por años","licencia",
+        ]),
+    }
+    best = max(scores, key=scores.get)
+    return best if scores[best] > 0 else None
+
+
+def _mostrar_casos_relacionados(texto_doc: str, max_casos: int = 3, key_prefix: str = "cr") -> None:
+    """Muestra un panel de casos del banco relacionados al documento activo."""
+    try:
+        from casos_banco import CASOS
+    except ImportError:
+        return
+
+    rama = _detectar_rama(texto_doc)
+    if rama:
+        candidatos = [c for c in CASOS if c["rama"] == rama]
+    else:
+        candidatos = CASOS
+
+    import random, hashlib
+    # Seed determinista basado en primeros 200 chars del texto para consistencia por sesión
+    seed = int(hashlib.md5(texto_doc[:200].encode()).hexdigest(), 16) % (2**32)
+    rng = random.Random(seed)
+    muestra = rng.sample(candidatos, min(max_casos, len(candidatos)))
+
+    _dif_color = {"básico": "#2e9055", "intermedio": "#c9963a", "avanzado": "#a83232"}
+    rama_label = rama.capitalize() if rama else "Derecho"
+
+    st.markdown(
+        f'<div style="margin-top:1.8rem;padding-top:1.2rem;'
+        f'border-top:1px solid rgba(201,150,58,0.2);">'
+        f'<div style="font-size:0.72rem;font-weight:700;text-transform:uppercase;'
+        f'letter-spacing:0.08em;color:#c9963a;margin-bottom:0.8rem;">'
+        f'📂 Casos del Banco · {rama_label}</div></div>',
+        unsafe_allow_html=True)
+
+    for caso in muestra:
+        dc = _dif_color.get(caso["dificultad"], "#888")
+        with st.expander(f"#{caso['id']} · {caso['titulo']} · {caso['subtema']}", expanded=False):
+            st.markdown(
+                f'<span style="font-size:0.68rem;font-weight:700;color:{dc};'
+                f'background:rgba(0,0,0,0.04);padding:0.1rem 0.45rem;border-radius:3px;">'
+                f'{caso["dificultad"]}</span>', unsafe_allow_html=True)
+            st.markdown(f"**Hechos:** {caso['hechos']}")
+            st.markdown(
+                f'<div style="font-style:italic;background:rgba(201,150,58,0.07);'
+                f'padding:0.5rem 0.7rem;border-radius:4px;font-size:0.84rem;">'
+                f'❓ {caso["pregunta"]}</div>', unsafe_allow_html=True)
+            if st.button(f"💡 Ver respuesta", key=f"{key_prefix}_rev_{caso['id']}"):
+                st.markdown(
+                    f'<div style="background:rgba(46,144,85,0.07);border-left:3px solid #2e9055;'
+                    f'padding:0.7rem 0.9rem;border-radius:0 6px 6px 0;font-size:0.83rem;">'
+                    f'✅ {caso["respuesta"]}<br>'
+                    f'<span style="font-size:0.74rem;color:#4a7a5a;">📌 {caso["fundamento"]}</span>'
+                    f'</div>', unsafe_allow_html=True)
+
+    st.markdown(
+        f'<div style="font-size:0.72rem;color:#a09070;margin-top:0.5rem;">'
+        f'<a href="#" onclick="window.location.reload()" style="color:#c9963a;text-decoration:none;">'
+        f'↻ Ver más casos</a> &nbsp;·&nbsp; '
+        f'<span style="cursor:pointer;color:#c9963a;" '
+        f'onclick="streamlit:navigate(\'BANCO DE CASOS\')">Ver banco completo →</span>'
+        f'</div>', unsafe_allow_html=True)
+
+
 nav     = st.session_state.nav
 persona = st.session_state.persona
 
@@ -1237,6 +1328,9 @@ elif nav == "ANÁLISIS":
                         f'<div style="color:#5a4e3e;font-size:0.84rem;margin-top:0.3rem;">'
                         f'{ok} de {t} respuestas correctas</div></div>', unsafe_allow_html=True)
                     if sc >= 80: st.balloons()
+
+        # ── Casos relacionados ──────────────────────────────────────────────
+        _mostrar_casos_relacionados(doc_text(3000), max_casos=3, key_prefix="an")
     st.markdown('</div>', unsafe_allow_html=True)
 
 
@@ -1280,6 +1374,7 @@ TEXTO A ANALIZAR:
         if st.session_state.jurisprudencia:
             st.markdown(f'<div class="card" style="margin-top:1rem;">{st.session_state.jurisprudencia}</div>',
                         unsafe_allow_html=True)
+        _mostrar_casos_relacionados(doc_text(3000), max_casos=3, key_prefix="ju")
     st.markdown('</div>', unsafe_allow_html=True)
 
 
@@ -1328,6 +1423,7 @@ TEXTO A ANALIZAR:
         if st.session_state.doctrina:
             st.markdown(f'<div class="card" style="margin-top:1rem;">{st.session_state.doctrina}</div>',
                         unsafe_allow_html=True)
+        _mostrar_casos_relacionados(doc_text(3000), max_casos=3, key_prefix="do")
     st.markdown('</div>', unsafe_allow_html=True)
 
 
@@ -1357,6 +1453,7 @@ elif nav == "GLOSARIO LEGAL":
                     st.markdown(f"**Ejemplo práctico:** {entry.example}")
                 if entry.related_terms:
                     st.markdown("**Términos relacionados:** " + " · ".join([f"`{t}`" for t in entry.related_terms]))
+        _mostrar_casos_relacionados(doc_text(3000), max_casos=4, key_prefix="gl")
     st.markdown('</div>', unsafe_allow_html=True)
 
 
@@ -1383,6 +1480,7 @@ elif nav == "MAPA CONCEPTUAL":
                 'mermaid.live</a> para visualizar el diagrama interactivo.</div>',
                 unsafe_allow_html=True)
             st.code(st.session_state.concept_map, language="mermaid")
+        _mostrar_casos_relacionados(doc_text(3000), max_casos=3, key_prefix="mc")
     st.markdown('</div>', unsafe_allow_html=True)
 
 
