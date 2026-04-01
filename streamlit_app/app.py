@@ -23,6 +23,8 @@ from jurisbot.rag.engine import RAGEngine
 from abogado_module import render_abogado
 from profesor_module import render_profesor
 from consulta_legal_module import render_consulta_legal
+from examen_simulado_module import render_examen_simulado
+from calculadora_plazos_module import render_calculadora_plazos
 
 # ─────────────────────────────────────────────
 # CONFIGURACIÓN
@@ -786,6 +788,8 @@ with st.sidebar:
 
             NAV_ALUMNO = [
                 ("🧠", "ENTRENA",                  "Quiz interactivo con IA"),
+                ("📝", "EXAMEN SIMULADO",           "Examen con nota 1-7"),
+                ("📅", "CALCULADORA PLAZOS",        "Plazos legales chilenos"),
                 ("📄", "DOCUMENTO",                "Genera contratos y escritos"),
                 ("📋", "RESUMEN EJECUTIVO",         "Resume casos y normativa"),
                 ("🔍", "ANÁLISIS",                  "Análisis jurídico profundo"),
@@ -2289,6 +2293,20 @@ elif nav == "MI PROGRESO":
 elif nav == "ENTRENA":
     llm = LLMClient() if settings.anthropic_api_key else None
     render_academia(llm_client=llm)
+
+
+# ═══════════════════════════════════════════════
+# SECCIÓN: EXAMEN SIMULADO
+# ═══════════════════════════════════════════════
+elif nav == "EXAMEN SIMULADO":
+    render_examen_simulado()
+
+
+# ═══════════════════════════════════════════════
+# SECCIÓN: CALCULADORA DE PLAZOS
+# ═══════════════════════════════════════════════
+elif nav == "CALCULADORA PLAZOS":
+    render_calculadora_plazos()
 
 
 # ═══════════════════════════════════════════════
