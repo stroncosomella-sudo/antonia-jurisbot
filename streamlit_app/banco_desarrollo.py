@@ -290,5 +290,74 @@ BANCO_DEV: dict[str, list[dict]] = {
             "tema": "Jornada Laboral — Horas Extraordinarias",
             "pauta": "Arts. 30-32 CT. Horas extra: exceso sobre 45 horas semanales (jornada ordinaria máxima). Requisitos: pacto escrito, situaciones temporales, máx. 2 horas diarias y 12 semanales. Recargo: mínimo 50% sobre sueldo base para jornada ordinaria. Prescripción de créditos laborales: 2 años desde que se hicieron exigibles (art. 510 CT). Acción especial de nulidad del despido: 60 días desde notificación.",
         },
+        {
+            "pregunta": "Explique los cambios introducidos por la Ley 21.561 a la jornada laboral en Chile. ¿Cuáles son los plazos de implementación gradual? ¿Qué regímenes especiales contempla la ley?",
+            "tema": "Jornada Laboral — Ley 21.561 (40 horas)",
+            "pauta": "Ley 21.561 (Ley de las 40 horas, promulgada 2023): reduce jornada ordinaria máxima de 45 a 40 horas semanales. Gradualidad: 44h desde abril 2024; 42h desde abril 2026; 40h desde abril 2028. Regímenes especiales: jornada bisemanal (arts. 39 y 40 CT), jornada excepcional, trabajadores excluidos de limitación de jornada (art. 22 CT). Adapta el banco de horas y el pacto de distribución horaria.",
+        },
+        {
+            "pregunta": "Analice el contrato de teletrabajo o trabajo a distancia según la Ley 21.220. ¿En qué consiste? ¿Qué derechos especiales reconoce al trabajador? ¿Cómo opera la reversibilidad?",
+            "tema": "Teletrabajo — Ley 21.220",
+            "pauta": "Ley 21.220 (2020), arts. 152 quáter G y ss. del CT. Teletrabajo: prestación de servicios total o parcialmente fuera del establecimiento, mediante medios tecnológicos. Derechos: derecho a desconexión (mínimo 12 horas entre jornadas), provisión de equipos y elementos de trabajo por el empleador, igualdad de condiciones. Reversibilidad: trabajador puede solicitar volver a modalidad presencial; empleador no puede negarse sin causa justificada. Accidentes en trabajo a distancia son accidentes laborales (SUSESO).",
+        },
+        {
+            "pregunta": "¿Qué es el finiquito laboral? ¿Cuáles son sus requisitos de validez? ¿Qué ocurre si el trabajador lo firma bajo reserva?",
+            "tema": "Finiquito — Terminación del Contrato",
+            "pauta": "Art. 177 CT. Finiquito: instrumento que da cuenta del término de la relación laboral. Requisitos: debe ser firmado por el trabajador ante ministro de fe (notario, inspector del trabajo, oficial del registro civil, secretario municipal) o ante 2 testigos. Si no cumple formalidades: no produce efecto liberatorio respecto de las acciones laborales. Firma bajo reserva: el trabajador puede firmar y dejar constancia de que reserva su acción respecto de determinadas prestaciones. El finiquito ratificado ante ministro de fe tiene mérito ejecutivo.",
+        },
+    ],
+
+    # ── DERECHO COMERCIAL ────────────────────────────────────────────────────
+    "comercial": [
+        {
+            "pregunta": "Explique las diferencias entre la Sociedad Anónima Abierta y Cerrada en Chile. ¿Qué normas las regulan? ¿Qué mecanismos de fiscalización se aplican a cada una?",
+            "tema": "Sociedades Anónimas — SA Abierta y Cerrada",
+            "pauta": "Ley 18.046. SA Abierta: acciones registradas en el Registro de Valores de la CMF, inscritas en bolsa de valores o con activos >= UF 75.000 y >= 500 accionistas. Fiscalización: CMF. SA Cerrada: el resto. Fiscalización: inspectores de la SVS (solo si tiene > 500 accionistas). Diferencias: quórum de directorio, obligación de auditoría externa, dividendo mínimo (30% de utilidades líquidas en SA abierta).",
+        },
+        {
+            "pregunta": "Analice la Sociedad por Acciones (SpA) en Chile. ¿En qué se diferencia de la SRL y la SA? ¿Qué ventajas ofrece para el emprendimiento?",
+            "tema": "Sociedad por Acciones — SpA",
+            "pauta": "Ley 20.190 (2007), arts. 424-446 CCom. SpA: puede constituirse con un solo socio. Acciones libremente transferibles (diferencia con SRL). Capital dividido en acciones (como SA) pero sin regulación de la CMF (diferencia con SA abierta). Ventajas: flexibilidad estatutaria, un socio fundador, sin mínimo de capital, acciones de distintas clases. Constitución: escritura pública o instrumento privado con firma autorizada ante notario, inscrito en el CBR.",
+        },
+        {
+            "pregunta": "Explique el procedimiento concursal de liquidación forzosa de la empresa deudora según la Ley 20.720. ¿Quién puede solicitarla? ¿Cuáles son sus efectos sobre el deudor y los acreedores?",
+            "tema": "Derecho Concursal — Liquidación Forzosa",
+            "pauta": "Ley 20.720 (2014), arts. 117 y ss. Solicitud: deudor (liquidación voluntaria), acreedor que invoca causales del art. 117 (incumplimiento de acuerdo de reorganización, alzamiento de bienes, sentencias de más del 50% del pasivo). Efectos: desasimiento del deudor (pierde administración), se forma la masa de bienes, suspensión de acciones individuales de cobro, suspensión de intereses, vencimiento anticipado de deudas. SPI (Superintendencia de Insolvencia): designa al liquidador. Preferencias concursales: arts. 2472 y 2473 CC.",
+        },
+        {
+            "pregunta": "¿Qué es la letra de cambio en el derecho chileno? Explique sus elementos esenciales, el proceso de aceptación y las acciones cambiarias disponibles ante el no pago.",
+            "tema": "Títulos de Crédito — Letra de Cambio",
+            "pauta": "Ley 18.092. Elementos esenciales: enunciaciones del art. 1 (mención 'letra de cambio', lugar y fecha de emisión, orden incondicional de pagar, nombre del librado, monto, vencimiento, nombre del beneficiario, firma del librador). Aceptación: librado firma la letra, quedando obligado cambiariamente. Acciones: directa (contra aceptante y su avalista) o de reembolso (contra librador, endosantes y sus avalistas). Prescripción: 1 año desde el vencimiento para la acción directa.",
+        },
+        {
+            "pregunta": "Explique el contrato de seguro en el Código de Comercio chileno. ¿Cuáles son sus elementos esenciales? ¿Qué es el interés asegurable y la buena fe en el seguro?",
+            "tema": "Contrato de Seguro",
+            "pauta": "Arts. 512-601 CCom (Ley 20.667, 2013). Elementos esenciales: el riesgo asegurado, la prima, la obligación del asegurador. Interés asegurable: relación económica lícita del asegurado con la cosa o persona asegurada que implique que ante el siniestro sufre un perjuicio. Uberrimae fidei: máxima buena fe → deber de declaración exacta del riesgo; reticencia o inexactitud dolosa permite al asegurador resciliar y retener la prima. Subrogación del asegurador en los derechos del asegurado contra el responsable del daño.",
+        },
+        {
+            "pregunta": "Analice el cheque como instrumento de pago en Chile. ¿Qué es? ¿Cuáles son las acciones disponibles ante el giro de un cheque sin fondos? ¿Qué modificaciones introdujo la Ley 21.521?",
+            "tema": "Cheque — Ley 21.521",
+            "pauta": "Ley 7.498 sobre cuentas corrientes bancarias y cheques. Cheque: orden de pago a la vista librada contra un banco. Ante protestos: acción ejecutiva cambiaria y querella criminal por giro doloso de cheque (art. 22 Ley). Ley 21.521 (2023, 'Ley Fintech'): despenaliza el giro de cheques sin fondos salvo dolo acreditado; elimina la querella como mecanismo de cobro automático; establece que el protesto no implica dolo per se. Acción civil subsiste.",
+        },
+        {
+            "pregunta": "¿Qué es el derecho de opción preferente (derecho a retiro) en las sociedades anónimas cerradas? ¿Cuándo procede y cómo se ejercita?",
+            "tema": "SA Cerrada — Derecho a Retiro",
+            "pauta": "Art. 69 Ley 18.046. Derecho a retiro: accionistas disidentes o que no concurrieron a la junta que adoptó ciertos acuerdos pueden retirarse de la sociedad exigiendo la compra de sus acciones al valor libro. Causales: transformación, fusión, división, modificaciones estatutarias que vulneren derechos de los accionistas. Precio: valor libro (activo neto / número de acciones). Plazo: 30 días desde la adopción del acuerdo.",
+        },
+        {
+            "pregunta": "Explique el contrato de cuenta corriente mercantil. ¿Cómo se diferencia de la cuenta corriente bancaria? ¿Cuáles son sus efectos jurídicos?",
+            "tema": "Cuenta Corriente Mercantil",
+            "pauta": "Arts. 602-619 CCom. Cuenta corriente mercantil: contrato por el que dos comerciantes se obligan a anotar en cuenta sus créditos y deudas recíprocas, y a liquidarla a intervalos convenidos, siendo solo exigible el saldo resultante. Diferencias con bancaria: entre comerciantes (no con banco); créditos y débitos de diversa naturaleza; saldo exigible al cierre. Efectos: novación de créditos (se extinguen para nacer en la cuenta), compensación final, el saldo tiene mérito ejecutivo.",
+        },
+        {
+            "pregunta": "Analice la responsabilidad de los directores de una sociedad anónima chilena. ¿Cuándo responden personalmente? ¿Qué es el deber de cuidado y el deber de lealtad?",
+            "tema": "Directores SA — Responsabilidad",
+            "pauta": "Art. 41 Ley 18.046. Deber de cuidado: actuar con el cuidado y diligencia que los hombres emplean ordinariamente en sus negocios propios. Deber de lealtad: velar por el interés social por sobre el personal; prohibición de conflictos de interés (art. 44). Responsabilidad solidaria por daños causados a la sociedad y accionistas por dolo o culpa. Business judgment rule: no responden por decisiones de negocios adoptadas de buena fe con información suficiente.",
+        },
+        {
+            "pregunta": "¿Qué es el arbitraje mercantil en Chile? ¿Cuáles son los tipos de árbitros? ¿Cuándo es obligatorio el arbitraje en materia comercial?",
+            "tema": "Arbitraje Comercial",
+            "pauta": "COT arts. 222-243. Tipos: árbitro de derecho (falla según la ley, tramitación según CPC); árbitro arbitrador o amigable componedor (falla según equidad, procedimiento libre); mixto (falla según ley, tramita según equidad). Arbitraje forzoso en materia comercial: liquidación de sociedades (art. 227 N°2 COT), partición de bienes (N°3), disputas entre socios de SA (N°4). Cláusula compromisoria: válida si designa tribunal arbitral o establece mecanismo de designación.",
+        },
     ],
 }

@@ -1,0 +1,50 @@
+name: Tests AntonIA
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    name: Bancos y Utilidades
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install test dependencies
+        run: |
+          pip install pytest pytest-cov
+          # Instalar solo las dependencias necesarias para los tests (sin torch ni chromadb)
+          pip install streamlit anthropic || true
+
+      - name: Run tests (sin API key — solo bancos y utils)
+        run: |
+          pytest tests/test_bancos.py -v --tb=short \
+            --ignore=tests/test_integration.py 2>&1
+
+      - name: Coverage summary
+        if: always()
+        run: |
+          pytest tests/test_bancos.py \
+            --cov=streamlit_app \
+            --cov-report=term-missing \
+            --cov-report=json \
+            -q 2>&1 || true
+
+      - name: Upload coverage
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: coverage.json
+          retention-days: 14

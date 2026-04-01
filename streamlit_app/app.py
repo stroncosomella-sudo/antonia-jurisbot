@@ -676,7 +676,7 @@ with st.sidebar:
 
     # ── LOGO ─────────────────────────────────────────────────────
     st.markdown("""
-    <div style="padding:1.4rem 1rem 0.9rem;border-bottom:1px solid rgba(201,150,58,0.1);">
+    <div style="padding:1.4rem 1rem 0.6rem;border-bottom:1px solid rgba(201,150,58,0.1);">
       <div style="display:flex;align-items:center;gap:0.7rem;">
         <svg width="36" height="36" viewBox="0 0 38 38" fill="none">
           <circle cx="19" cy="19" r="17" stroke="rgba(201,150,58,0.45)"
@@ -694,15 +694,15 @@ with st.sidebar:
                       letter-spacing:0.12em;margin-top:2px;">LegalTech Chile</div>
         </div>
       </div>
-      <button onclick="window.location.reload()" style="margin-top:0.8rem;width:100%;
-              padding:0.45rem;background:rgba(201,150,58,0.08);
-              border:1px solid rgba(201,150,58,0.2);border-radius:6px;cursor:pointer;
-              font-family:'Playfair Display',serif;font-size:0.95rem;font-weight:600;
-              color:#c9963a;font-style:italic;letter-spacing:0.03em;">
-        Anton<span style="color:#e8d4a0;">IA</span>
-      </button>
     </div>
     """, unsafe_allow_html=True)
+    # Botón AntonIA — usa st.button para preservar session_state (no window.reload)
+    if st.button("⚖️ Anton**IA**", key="logo_home_btn",
+                 use_container_width=True,
+                 help="Volver al inicio sin perder tu progreso"):
+        st.session_state.nav = "HOME"
+        st.session_state.main_section = None
+        st.rerun()
 
     st.markdown('<div style="height:0.6rem"></div>', unsafe_allow_html=True)
 
@@ -785,7 +785,7 @@ with st.sidebar:
                 unsafe_allow_html=True)
 
             NAV_ALUMNO = [
-                ("🧠", "ENTRENA",                  "Quiz legal infinito con IA"),
+                ("🧠", "ENTRENA",                  "Quiz interactivo con IA"),
                 ("📄", "DOCUMENTO",                "Genera contratos y escritos"),
                 ("📋", "RESUMEN EJECUTIVO",         "Resume casos y normativa"),
                 ("🔍", "ANÁLISIS",                  "Análisis jurídico profundo"),
@@ -793,7 +793,7 @@ with st.sidebar:
                 ("📚", "DOCTRINA RELACIONADA",      "Doctrina y artículos 2025"),
                 ("📖", "GLOSARIO LEGAL",            "Definiciones jurídicas"),
                 ("🗺️", "MAPA CONCEPTUAL",           "Visualiza conexiones"),
-                ("🎤", "PREPARA TU ALEGATO",        "Prepara argumentos orales"),
+                ("🎤", "ALEGATO ORAL",              "Prepara argumentos orales"),
                 ("💬", "CONSULTORÍA VIRTUAL",       "Pregunta a AntonIA"),
                 ("🏛",  "BIBLIOTECA DOCTRINA",      "Obras y artículos"),
                 ("📂", "BANCO DE CASOS",            "250+ casos reales"),

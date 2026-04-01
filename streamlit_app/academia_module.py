@@ -227,42 +227,109 @@ def _gen(tipo, llm):
     nombre = _full(cid)
     prev   = _hist_str()
 
+    # Sanitizar historial antes de incluirlo en el prompt (anti-injection)
+    try:
+        from utils.llm_resilient import sanitize_prompt_input
+        prev_safe = sanitize_prompt_input(prev, max_len=400)
+    except ImportError:
+        prev_safe = prev[:400]
+
     prompts = {
-        "mcq": f"""Eres un profesor de derecho chileno.
-Genera UNA pregunta de alternativas (4 opciones) sobre {nombre} para universitarios en Chile.
-TEMAS YA USADOS — PROHIBIDO REPETIR: {prev}
-Elige un tema completamente distinto. Varía entre: definiciones, requisitos, efectos, plazos, artículos, distinciones doctrinarias.
-Responde SOLO con JSON, sin texto adicional:
-{{"pregunta":"...","opciones":["A. ...","B. ...","C. ...","D. ..."],"correcta":0,"fundamento":"cita artículo o autor chileno","tema":"tema breve"}}
-"correcta" es índice entero (0=A,1=B,2=C,3=D).""",
+        "mcq": f"""<system>Eres un profesor de Derecho chileno con 20 años de experiencia. Generas preguntas de examen universitario de alta calidad.</system>
 
-        "vf": f"""Eres un profesor de derecho chileno.
-Genera UNA afirmación Verdadero/Falso sobre {nombre} para universitarios en Chile.
-TEMAS YA USADOS — PROHIBIDO REPETIR: {prev}
-Elige un tema distinto. Alterna deliberadamente entre verdaderas y falsas.
-Responde SOLO con JSON, sin texto adicional:
-{{"afirmacion":"...","respuesta":true,"fundamento":"cita artículo o autor chileno","tema":"tema breve"}}""",
+<task>Genera UNA pregunta de alternativas múltiples sobre {nombre} para estudiantes universitarios de Derecho en Chile.</task>
 
-        "flashcard": f"""Eres un profesor de derecho chileno.
-Genera UNA flashcard sobre {nombre} para memorizar conceptos clave.
-TEMAS YA USADOS — PROHIBIDO REPETIR: {prev}
-Rota entre: definiciones, elementos, plazos, requisitos, diferencias entre figuras, artículos clave.
-Responde SOLO con JSON, sin texto adicional:
-{{"frente":"pregunta o concepto (máx 15 palabras)","reverso":"respuesta precisa con fundamento legal chileno","tema":"tema breve"}}""",
+<requirements>
+- Nivel: universitario, años 2-4 de la carrera
+- Jurisdicción: Chile exclusivamente (CC, CPC, CPP, CPR, leyes especiales)
+- La opción correcta debe estar en posición aleatoria (no siempre A)
+- Los 3 distractores deben ser jurídicamente plausibles, no absurdos
+- Variar entre: conceptos, requisitos, efectos, plazos, artículos clave, distinciones doctrinarias
+- Citar artículo específico o autor doctrinario en el fundamento
+</requirements>
 
-        "desarrollo": f"""Eres un profesor de derecho chileno.
-Genera UNA pregunta de desarrollo para examen de {nombre} en Chile.
-TEMAS YA USADOS — PROHIBIDO REPETIR: {prev}
-Elige un tema distinto que exija análisis jurídico profundo.
-Responde SOLO con JSON, sin texto adicional:
-{{"pregunta":"texto completo de la pregunta","tema":"tema breve"}}""",
+<used_topics>NO REPETIR estos temas ya vistos: {prev_safe}</used_topics>
 
-        "caso": f"""Eres un profesor de derecho chileno.
-Genera UN caso práctico de {nombre} con 3 preguntas de análisis jurídico.
-CASOS YA USADOS — PROHIBIDO REPETIR: {prev}
-Crea un caso distinto con nombres ficticios y hechos específicos. Aplica derecho chileno vigente.
-Responde SOLO con JSON, sin texto adicional:
-{{"titulo":"título breve","enunciado":"hechos del caso en 4-6 líneas","preguntas":["p1","p2","p3"],"tema":"tema breve"}}""",
+<output>
+Responde ÚNICAMENTE con JSON válido. Sin texto extra. Sin markdown.
+{{"pregunta":"texto completo 1-3 oraciones","opciones":["A. texto","B. texto","C. texto","D. texto"],"correcta":0,"fundamento":"Art. X del CC / Doctrina: explicación 1-2 líneas","tema":"2-3 palabras"}}
+"correcta" es índice entero: 0=A, 1=B, 2=C, 3=D
+</output>""",
+
+        "vf": f"""<system>Eres un profesor de Derecho chileno. Generas afirmaciones Verdadero/Falso para examen universitario.</system>
+
+<task>Genera UNA afirmación Verdadero/Falso sobre {nombre} para universitarios de Derecho en Chile.</task>
+
+<requirements>
+- Nivel: universitario
+- Derecho chileno vigente (CC, CPP, CPR, CT, leyes especiales)
+- Alterna intencionalmente entre afirmaciones verdaderas y falsas
+- Las afirmaciones falsas deben serlo por un error jurídico sutil, no obvio
+- Citar fundamento específico
+</requirements>
+
+<used_topics>NO REPETIR: {prev_safe}</used_topics>
+
+<output>
+Solo JSON válido, sin texto adicional:
+{{"afirmacion":"texto completo de la afirmación","respuesta":true,"fundamento":"Art. X del cuerpo legal / explicación breve","tema":"2-3 palabras"}}
+</output>""",
+
+        "flashcard": f"""<system>Eres un profesor de Derecho chileno. Creas flashcards para memorización efectiva de conceptos jurídicos.</system>
+
+<task>Genera UNA flashcard de {nombre} para estudiantes universitarios de Derecho en Chile.</task>
+
+<requirements>
+- Frente: pregunta o concepto clave (máx 15 palabras)
+- Reverso: respuesta precisa con fundamento legal chileno (máx 50 palabras)
+- Rotar entre: definiciones, elementos esenciales, plazos, requisitos, diferencias entre figuras, artículos clave
+- Nivel: universitario
+</requirements>
+
+<used_topics>NO REPETIR: {prev_safe}</used_topics>
+
+<output>
+Solo JSON válido, sin texto adicional:
+{{"frente":"pregunta o concepto","reverso":"respuesta con fundamento legal","tema":"2-3 palabras"}}
+</output>""",
+
+        "desarrollo": f"""<system>Eres un profesor de Derecho chileno. Redactas preguntas de desarrollo para examen universitario que exigen análisis jurídico profundo.</system>
+
+<task>Genera UNA pregunta de desarrollo sobre {nombre} para examen universitario de Derecho en Chile.</task>
+
+<requirements>
+- Debe exigir análisis jurídico, no solo memorización
+- Aplicar derecho chileno vigente con citas de artículos
+- Nivel: examen final de ramo universitario
+- La pregunta debe ser clara y específica (no ambigua)
+- Extensión ideal de respuesta esperada: 200-400 palabras
+</requirements>
+
+<used_topics>NO REPETIR estos temas: {prev_safe}</used_topics>
+
+<output>
+Solo JSON válido, sin texto adicional:
+{{"pregunta":"texto completo de la pregunta (2-4 oraciones)","tema":"2-4 palabras"}}
+</output>""",
+
+        "caso": f"""<system>Eres un profesor de Derecho chileno. Creas casos prácticos realistas para análisis jurídico en sala.</system>
+
+<task>Genera UN caso práctico de {nombre} con 3 preguntas de análisis jurídico para universitarios en Chile.</task>
+
+<requirements>
+- Nombres ficticios para personas y empresas
+- Hechos específicos y verosímiles (no vagos)
+- Derecho chileno vigente aplicable
+- Las 3 preguntas deben abordar ángulos distintos del caso
+- Nivel: universitario (puede incluir complejidad moderada)
+</requirements>
+
+<used_topics>NO REPETIR situaciones similares a: {prev_safe}</used_topics>
+
+<output>
+Solo JSON válido, sin texto adicional:
+{{"titulo":"título descriptivo breve","enunciado":"hechos del caso en 4-6 oraciones","preguntas":["pregunta 1","pregunta 2","pregunta 3"],"tema":"2-3 palabras"}}
+</output>""",
     }
 
     for intento in range(3):
@@ -339,9 +406,9 @@ _CID_SUBTEMA = {
     "procesal":    ("procesal", None),
     "constitucional": ("constitucional", None),
     "laboral":     ("laboral", None),
-    "comercial":   ("civil",  ["Contratos y Cuasicontratos"]),
-    "ambiental":   ("civil",  None),
-    "internacional": ("constitucional", None),
+    "comercial":   ("civil",  ["Contratos y Cuasicontratos"]),   # banco propio desde v4.2
+    "ambiental":   ("civil",  None),                             # sin banco de casos propio aún
+    "internacional": ("constitucional", None),                   # sin banco de casos propio aún
 }
 
 # Preguntas de emergencia embebidas — se usan si TODOS los imports fallan
@@ -363,15 +430,26 @@ def _fallback_desarrollo(cid: str):
     Devuelve una pregunta de desarrollo del BANCO_DEV usando rotación sin repetición.
     Intenta con el cid exacto; si no hay, busca con claves relacionadas.
     """
-    # Mapeo de cursos con muchos subtemas → rama base del banco
+    # Mapeo de cursos → clave en BANCO_DEV.
+    # Para ramos sin banco propio, usar el ramo más afín (no Civil I por defecto).
     _cid_dev_map = {
-        "civil": "civil", "bienes": "bienes", "obligaciones": "obligaciones",
-        "familia": "familia", "sucesorio": "sucesorio",
-        "penal": "penal", "procesal": "procesal",
-        "constitucional": "constitucional", "laboral": "laboral",
-        "comercial": "civil", "ambiental": "constitucional",
-        "internacional": "constitucional",
+        "civil":          "civil",
+        "bienes":         "bienes",
+        "obligaciones":   "obligaciones",
+        "familia":        "familia",
+        "sucesorio":      "sucesorio",
+        "penal":          "penal",
+        "procesal":       "procesal",
+        "constitucional": "constitucional",
+        "laboral":        "laboral",
+        # Ramos con banco propio desde v4.2:
+        "comercial":      "comercial",
+        # Ramos aún sin banco propio → ramo más cercano:
+        "ambiental":      "constitucional",   # Derecho ambiental tiene base constitucional (art.19 N°8)
+        "internacional":  "constitucional",   # DIP vinculado a CPR y tratados (art.5 inc.2)
     }
+    # Ramos que aún no tienen banco propio — mostrar aviso al usuario
+    _RAMOS_BANCO_PARCIAL = {"ambiental", "internacional"}
     banco_key = _cid_dev_map.get(cid, cid)
     banco = BANCO_DEV.get(banco_key, [])
     if not banco:

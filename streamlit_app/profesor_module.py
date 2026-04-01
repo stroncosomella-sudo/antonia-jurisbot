@@ -125,24 +125,44 @@ def render_profesor(get_llm_fn=None):
         ("📚", "recursos",       "Recursos"),
     ]
 
-    tab_cols = st.columns(len(TABS))
-    for col, (icon, tid, label) in zip(tab_cols, TABS):
-        active = st.session_state.prof_tab == tid
-        with col:
-            if active:
-                st.markdown(
-                    f'<div style="text-align:center;padding:0.4rem 0;'
-                    f'border-bottom:2px solid {_GOLD};color:{_GOLD};'
-                    f'font-size:0.72rem;font-weight:700;text-transform:uppercase;">'
-                    f'{icon} {label}</div>',
+    # ── Navegación en 2 filas para evitar columnas microscópicas ──
+    # CSS: botón activo con fondo dorado; inactivo gris translúcido
+    st.markdown(f"""<style>
+    /* Tab activo — override del gradiente global */
+    [data-testid="stMainBlockContainer"] .prof-tab-active {{
+        display:block;
+        padding:0.38rem 0.4rem;
+        background:rgba(201,150,58,0.18) !important;
+        border:1px solid {_GOLD} !important;
+        border-radius:6px;
+        text-align:center;
+        font-size:0.72rem;
+        font-weight:700;
+        color:{_GOLD};
+        font-family:'Inter',sans-serif;
+        letter-spacing:0.02em;
+        white-space:nowrap;
+    }}
+    </style>""", unsafe_allow_html=True)
+
+    def _tab_row(subset):
+        cols = st.columns(len(subset))
+        for col, (icon, tid, label) in zip(cols, subset):
+            if st.session_state.prof_tab == tid:
+                col.markdown(
+                    f'<div class="prof-tab-active">{icon} {label}</div>',
                     unsafe_allow_html=True)
             else:
-                if st.button(f"{icon} {label}", key=f"prof_t_{tid}",
-                             use_container_width=True):
+                if col.button(f"{icon} {label}", key=f"prof_t_{tid}",
+                              use_container_width=True):
                     st.session_state.prof_tab = tid
                     st.rerun()
 
-    st.markdown('<hr style="border-color:rgba(201,150,58,0.15);margin:0.8rem 0 1.2rem;">', unsafe_allow_html=True)
+    _tab_row(TABS[:6])   # Fila 1: Evalúa · Crea Eval. · Examen Oral · Plan Clase · Libro Notas · Banco Preg.
+    st.markdown('<div style="height:0.3rem"></div>', unsafe_allow_html=True)
+    _tab_row(TABS[6:])   # Fila 2: Rendimiento · Investigación · Asistencia · Obs. Alumnos · Recursos
+
+    st.markdown('<hr style="border-color:rgba(201,150,58,0.15);margin:0.6rem 0 1.2rem;">', unsafe_allow_html=True)
 
     tab = st.session_state.prof_tab
 

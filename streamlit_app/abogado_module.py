@@ -250,25 +250,42 @@ def render_abogado(get_llm_fn=None):
         ("📄", "documentos",  "Documentos"),
         ("💰", "honorarios",  "Honorarios"),
     ]
-    tab_cols = st.columns(len(TABS))
-    for col, (icon, tid, label) in zip(tab_cols, TABS):
-        active = st.session_state.abg_tab == tid
-        col.markdown(
-            f'<div style="text-align:center;padding:.3rem .05rem;'
-            f'border-bottom:2px solid {"#c9963a" if active else "transparent"};'
-            f'cursor:pointer;">'
-            f'<span style="font-size:.85rem;line-height:1;">{icon}</span>'
-            f'<div style="font-size:.58rem;font-weight:{"700" if active else "500"};'
-            f'color:{"#c9963a" if active else "#9a8e7e"};text-transform:uppercase;'
-            f'letter-spacing:.04em;margin-top:2px;line-height:1.1;">{label}</div>'
-            f'</div>', unsafe_allow_html=True)
-        if not active:
-            if col.button(f"{icon} {label}", key=f"abg_tab_{tid}",
-                          use_container_width=True):
-                st.session_state.abg_tab = tid
-                st.rerun()
+    # ── Navegación en 2 filas: 5 + 4 tabs ──
+    st.markdown(f"""<style>
+    [data-testid="stMainBlockContainer"] .abg-tab-active {{
+        display:block;
+        padding:0.38rem 0.4rem;
+        background:rgba(201,150,58,0.18) !important;
+        border:1px solid {_GOLD} !important;
+        border-radius:6px;
+        text-align:center;
+        font-size:0.73rem;
+        font-weight:700;
+        color:{_GOLD};
+        font-family:'Inter',sans-serif;
+        letter-spacing:0.02em;
+        white-space:nowrap;
+    }}
+    </style>""", unsafe_allow_html=True)
 
-    st.markdown('<hr style="border-color:rgba(201,150,58,.2);margin:.4rem 0 1rem;">', unsafe_allow_html=True)
+    def _abg_tab_row(subset):
+        cols = st.columns(len(subset))
+        for col, (icon, tid, label) in zip(cols, subset):
+            if st.session_state.abg_tab == tid:
+                col.markdown(
+                    f'<div class="abg-tab-active">{icon} {label}</div>',
+                    unsafe_allow_html=True)
+            else:
+                if col.button(f"{icon} {label}", key=f"abg_tab_{tid}",
+                              use_container_width=True):
+                    st.session_state.abg_tab = tid
+                    st.rerun()
+
+    _abg_tab_row(TABS[:5])   # Fila 1: Causas · Tiempo · Plazos · Reportes · Consulta PJ
+    st.markdown('<div style="height:0.3rem"></div>', unsafe_allow_html=True)
+    _abg_tab_row(TABS[5:])   # Fila 2: Correos · Pendientes · Documentos · Honorarios
+
+    st.markdown('<hr style="border-color:rgba(201,150,58,.2);margin:.5rem 0 1rem;">', unsafe_allow_html=True)
     tab = st.session_state.abg_tab
 
     # ═══════════════════════════════════════════════════════════════════════════
