@@ -13,18 +13,32 @@ BIBLIOTECA_MANIFEST = _APP_DIR / "data" / "biblioteca_manifest.json"
 BIBLIOTECA_COLLECTION = "biblioteca_doctrina"
 
 import streamlit as st
-from jurisbot.config import settings
-from jurisbot.ingestion.orchestrator import IngestionOrchestrator
-from jurisbot.nlp.classifier import LegalClassifier
-from jurisbot.nlp.llm_client import LLMClient
-from jurisbot.study.generator import StudyGenerator
 from academia_module import render_academia
-from jurisbot.rag.engine import RAGEngine
 from abogado_module import render_abogado
 from profesor_module import render_profesor
 from consulta_legal_module import render_consulta_legal
 from examen_simulado_module import render_examen_simulado
 from calculadora_plazos_module import render_calculadora_plazos
+
+# Importaciones pesadas (chromadb) de forma lazy para evitar crash en Python 3.14+
+try:
+    from jurisbot.config import settings
+    from jurisbot.ingestion.orchestrator import IngestionOrchestrator
+    from jurisbot.nlp.classifier import LegalClassifier
+    from jurisbot.nlp.llm_client import LLMClient
+    from jurisbot.study.generator import StudyGenerator
+    from jurisbot.rag.engine import RAGEngine
+    _JURISBOT_OK = True
+except Exception as _e:
+    _JURISBOT_OK = False
+    import types
+    settings = types.SimpleNamespace(anthropic_api_key=None)
+    class _Stub:
+        def __init__(self, *a, **kw): pass
+        def __getattr__(self, n): return lambda *a, **kw: None
+    IngestionOrchestrator = LegalClassifier = LLMClient = StudyGenerator = RAGEngine = _Stub
+    import streamlit as _st
+    _st.error(f"⚠️ Error cargando módulos RAG: {_e}. Algunas funciones avanzadas no estarán disponibles.", icon="🔧")
 
 # ─────────────────────────────────────────────
 # CONFIGURACIÓN
