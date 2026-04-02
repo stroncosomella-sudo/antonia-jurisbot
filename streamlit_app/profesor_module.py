@@ -26,11 +26,11 @@ _CSS = """
 <style>
 .prof-header {
     font-family: 'Playfair Display', Georgia, serif;
-    font-size: 1.6rem; font-weight: 700;
+    font-size: 1.8rem; font-weight: 700;
     color: #f5f0e8; margin-bottom: 0.2rem;
 }
 .prof-sub {
-    font-size: 0.92rem; color: #a09070;
+    font-size: 1.0rem; color: #7a6040;
     margin-bottom: 1.2rem; letter-spacing: 0.02em;
 }
 .prof-card {
@@ -52,14 +52,14 @@ _CSS = """
 .nota-media { color: #fbbf24; font-weight: 700; font-size: 1rem; }
 .nota-baja  { color: #ef4444; font-weight: 700; font-size: 1rem; }
 /* Textos de label generales */
-div[data-testid="stMarkdownContainer"] p { font-size: 0.95rem !important; }
+div[data-testid="stMarkdownContainer"] p { font-size: 1.0rem !important; }
 div[data-testid="stTextInput"] label,
 div[data-testid="stSelectbox"] label,
 div[data-testid="stTextArea"] label,
 div[data-testid="stNumberInput"] label,
-div[data-testid="stSlider"] label { font-size: 0.9rem !important; }
+div[data-testid="stSlider"] label { font-size: 1.05rem !important; font-weight: 600 !important; }
 div[data-testid="stTextInput"] input,
-div[data-testid="stTextArea"] textarea { font-size: 0.92rem !important; }
+div[data-testid="stTextArea"] textarea { font-size: 1.0rem !important; }
 </style>
 """
 
@@ -118,6 +118,7 @@ def render_profesor(get_llm_fn=None):
         ("🗓️", "plan_clase",    "Plan de Clase"),
         ("📊", "notas",          "Libro Notas"),
         ("🗂",  "banco",         "Banco Preg."),
+        ("🤖", "chat_ia",        "Chat IA"),
         ("📈", "rendimiento",    "Rendimiento"),
         ("🔬", "investigacion",  "Investigación"),
         ("📋", "asistencia",     "Asistencia"),
@@ -158,9 +159,9 @@ def render_profesor(get_llm_fn=None):
                     st.session_state.prof_tab = tid
                     st.rerun()
 
-    _tab_row(TABS[:6])   # Fila 1: Evalúa · Crea Eval. · Examen Oral · Plan Clase · Libro Notas · Banco Preg.
+    _tab_row(TABS[:6])   # Fila 1
     st.markdown('<div style="height:0.3rem"></div>', unsafe_allow_html=True)
-    _tab_row(TABS[6:])   # Fila 2: Rendimiento · Investigación · Asistencia · Obs. Alumnos · Recursos
+    _tab_row(TABS[6:])   # Fila 2
 
     st.markdown('<hr style="border-color:rgba(201,150,58,0.15);margin:0.6rem 0 1.2rem;">', unsafe_allow_html=True)
 
@@ -222,7 +223,7 @@ def render_profesor(get_llm_fn=None):
                     with st.spinner("Revisando con IA…"):
                         try:
                             llm = get_llm_fn()
-                            resp = llm.generate(prompt, system=" ", max_tokens=1200)
+                            resp = llm.generate(prompt, system="Eres AntonIA, asistente jurídico académico especializado en el Derecho chileno vigente. Responde siempre en español formal chileno.", max_tokens=1200)
                             st.session_state.prof_eval_result = resp
                             # Guardar en nómina si hay nombre
                             if alumno_eval and st.session_state.prof_curso_sel:
@@ -314,7 +315,7 @@ def render_profesor(get_llm_fn=None):
                     with st.spinner("Creando evaluación…"):
                         try:
                             llm = get_llm_fn()
-                            resp = llm.generate(prompt, system=" ", max_tokens=2000)
+                            resp = llm.generate(prompt, system="Eres AntonIA, asistente jurídico académico especializado en el Derecho chileno vigente. Responde siempre en español formal chileno.", max_tokens=2000)
                             st.session_state.prof_rubrica_result = resp
                             st.session_state.prof_evals.append({
                                 "ramo":    ramo_ne,
@@ -463,7 +464,7 @@ def render_profesor(get_llm_fn=None):
                     with st.spinner("Investigando…"):
                         try:
                             llm = get_llm_fn()
-                            resp = llm.generate(prompt, system=" ", max_tokens=1800)
+                            resp = llm.generate(prompt, system="Eres AntonIA, asistente jurídico académico especializado en el Derecho chileno vigente. Responde siempre en español formal chileno.", max_tokens=1800)
                             st.session_state.prof_investigacion_result = resp
                         except Exception as e:
                             st.error(f"Error: {e}")
@@ -614,7 +615,7 @@ def render_profesor(get_llm_fn=None):
                             with st.spinner("Generando retroalimentación…"):
                                 try:
                                     llm = get_llm_fn()
-                                    resp = llm.generate(prompt, system=" ", max_tokens=600)
+                                    resp = llm.generate(prompt, system="Eres AntonIA, asistente jurídico académico especializado en el Derecho chileno vigente. Responde siempre en español formal chileno.", max_tokens=600)
                                     st.session_state[f"retro_{alumno_sel}"] = resp
                                 except Exception as e:
                                     st.error(f"Error: {e}")
@@ -685,7 +686,7 @@ def render_profesor(get_llm_fn=None):
                     with st.spinner("Generando material…"):
                         try:
                             llm = get_llm_fn()
-                            resp = llm.generate(prompt, system=" ", max_tokens=1800)
+                            resp = llm.generate(prompt, system="Eres AntonIA, asistente jurídico académico especializado en el Derecho chileno vigente. Responde siempre en español formal chileno.", max_tokens=1800)
                             st.session_state.prof_recursos_result = resp
                         except Exception as e:
                             st.error(f"Error: {e}")
@@ -829,7 +830,7 @@ def render_profesor(get_llm_fn=None):
                         )
                         with st.spinner("Generando preguntas…"):
                             try:
-                                resultado = llm.generate(prompt, system=" ", max_tokens=1500)
+                                resultado = llm.generate(prompt, system="Eres AntonIA, asistente jurídico académico especializado en el Derecho chileno vigente. Responde siempre en español formal chileno.", max_tokens=1500)
                                 st.session_state.prof_banco_gen_result = resultado
                             except Exception as e:
                                 st.error(f"Error: {e}")
@@ -1057,7 +1058,7 @@ def render_profesor(get_llm_fn=None):
                     )
                     with st.spinner("Analizando rendimiento…"):
                         try:
-                            diag = llm_r.generate(prompt_r, system=" ", max_tokens=800)
+                            diag = llm_r.generate(prompt_r, system="Eres AntonIA, asistente jurídico académico especializado en el Derecho chileno vigente. Responde siempre en español formal chileno.", max_tokens=800)
                             st.markdown(diag)
                         except Exception as e:
                             st.error(f"Error: {e}")
@@ -1117,7 +1118,7 @@ def render_profesor(get_llm_fn=None):
                     with st.spinner("Generando examen oral…"):
                         try:
                             llm = get_llm_fn()
-                            resp = llm.generate(prompt, system=" ", max_tokens=2500)
+                            resp = llm.generate(prompt, system="Eres AntonIA, asistente jurídico académico especializado en el Derecho chileno vigente. Responde siempre en español formal chileno.", max_tokens=2500)
                             st.session_state.prof_oral_result = resp
                         except Exception as e:
                             st.error(f"Error: {e}")
@@ -1224,7 +1225,7 @@ def render_profesor(get_llm_fn=None):
                     with st.spinner("Generando plan de clase…"):
                         try:
                             llm = get_llm_fn()
-                            resp = llm.generate(prompt, system=" ", max_tokens=2500)
+                            resp = llm.generate(prompt, system="Eres AntonIA, asistente jurídico académico especializado en el Derecho chileno vigente. Responde siempre en español formal chileno.", max_tokens=2500)
                             st.session_state.prof_plan_result = resp
                         except Exception as e:
                             st.error(f"Error: {e}")

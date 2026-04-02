@@ -595,6 +595,7 @@ DEFAULTS = {
     "persona": "alumno",       # alumno | abogado | profesor | consulta
     "nav": "HOME",             # HOME = landing page
     "main_section": None,      # None | "universidad" | "abogados" | "consulta" | "prueba"
+    "univ_perfil_elegido": False,  # True cuando el usuario eligió alumno/profesor en la landing
     "ingestion_result": None, "classification": None,
     "chat_history": [], "quiz_data": [], "quiz_answers": {},
     "quiz_submitted": False, "flashcards": [], "fc_idx": 0,
@@ -632,6 +633,7 @@ def set_persona(p):
     st.session_state.nav = defaults_nav.get(p, "ENTRENA")
     if p in ("alumno", "profesor"):
         st.session_state.main_section = "universidad"
+        st.session_state.univ_perfil_elegido = True
     elif p == "abogado":
         st.session_state.main_section = "abogados"
     elif p == "consulta":
@@ -645,10 +647,22 @@ def set_main_section(s):
     elif s == "consulta":
         st.session_state.persona = "consulta"
         st.session_state.nav = "CONSULTA"
+    elif s == "universidad":
+        # No pre-seleccionar persona — mostrar chooser en página principal
+        st.session_state.univ_perfil_elegido = False
+        st.session_state.nav = "HOME"
     elif s == "prueba":
         st.session_state.persona = "alumno"
+        st.session_state.univ_perfil_elegido = True
         st.session_state.main_section = "universidad"
         st.session_state.nav = "ENTRENA"
+
+def set_univ_perfil(p):
+    """Llamado desde la Universidad landing cuando el usuario elige Alumno o Profesor."""
+    st.session_state.persona = p
+    st.session_state.univ_perfil_elegido = True
+    defaults_nav = {"alumno": "ENTRENA", "profesor": "PROFESOR"}
+    st.session_state.nav = defaults_nav.get(p, "ENTRENA")
 
 
 # ─────────────────────────────────────────────
@@ -1083,14 +1097,31 @@ if nav == "HOME" or st.session_state.get("main_section") is None:
 @keyframes fadeInUp{from{opacity:0;transform:translateY(28px)}to{opacity:1;transform:translateY(0)}}
 @keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(201,150,58,.65)}50%{box-shadow:0 0 0 10px rgba(201,150,58,0)}}
 @keyframes gradBg{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
-.ant-hero{position:relative;padding:80px 20px 70px;background:linear-gradient(135deg,#0d0b09 0%,#1a1511 50%,#0d0b09 100%);background-size:200% 200%;animation:gradBg 8s ease infinite;overflow:hidden;text-align:center;}
-.ant-hero::before{content:'';position:absolute;inset:0;background:radial-gradient(circle at 20% 50%,rgba(201,150,58,.1) 0%,transparent 55%),radial-gradient(circle at 80% 80%,rgba(201,150,58,.06) 0%,transparent 50%);pointer-events:none;}
-.ant-ptcl{position:absolute;font-size:1.8rem;animation:float 7s ease-in-out infinite;pointer-events:none;}
-.ant-ptcl:nth-child(1){top:10%;left:8%;animation-delay:0s}
-.ant-ptcl:nth-child(2){top:18%;right:12%;animation-delay:1.2s;animation-name:floatSlow}
-.ant-ptcl:nth-child(3){bottom:18%;left:16%;animation-delay:2s}
-.ant-ptcl:nth-child(4){top:42%;right:6%;animation-delay:1.7s;animation-name:floatSlow}
-.ant-ptcl:nth-child(5){bottom:25%;right:18%;animation-delay:2.8s}
+@keyframes cityScroll{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+@keyframes lightBlink{0%,100%{opacity:.4}50%{opacity:.9}}
+@keyframes carMove{from{transform:translateX(-120px)}to{transform:translateX(calc(100vw + 120px))}}
+@keyframes carMove2{from{transform:translateX(calc(100vw + 120px))}to{transform:translateX(-120px)}}
+.ant-hero{position:relative;padding:90px 20px 80px;background:linear-gradient(180deg,#050407 0%,#0a0810 35%,#0d0b14 60%,#070510 100%);overflow:hidden;text-align:center;}
+.ant-hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 30% 40%,rgba(201,150,58,.12) 0%,transparent 50%),radial-gradient(ellipse at 70% 60%,rgba(120,80,180,.08) 0%,transparent 45%);pointer-events:none;}
+/* Stars */
+.ant-stars{position:absolute;top:0;left:0;width:100%;height:60%;pointer-events:none;overflow:hidden;}
+.ant-star{position:absolute;width:2px;height:2px;background:#fff;border-radius:50%;animation:lightBlink 3s ease-in-out infinite;}
+/* City skyline scrolling */
+.ant-city-wrap{position:absolute;bottom:0;left:0;width:100%;height:220px;pointer-events:none;overflow:hidden;}
+.ant-city{display:flex;width:200%;height:100%;animation:cityScroll 30s linear infinite;}
+.ant-city-bg,.ant-city-fg{display:flex;width:50%;height:100%;flex-shrink:0;}
+/* Buildings */
+.ant-bld{position:relative;background:linear-gradient(180deg,#1a1520 0%,#0e0c12 100%);flex-shrink:0;margin-right:2px;border-top-left-radius:2px;border-top-right-radius:2px;}
+.ant-bld::before{content:'';position:absolute;inset:4px 3px;background:repeating-linear-gradient(180deg,transparent 0px,transparent 8px,rgba(201,150,58,.05) 8px,rgba(201,150,58,.05) 9px),repeating-linear-gradient(90deg,transparent 0px,transparent 10px,rgba(201,150,58,.04) 10px,rgba(201,150,58,.04) 11px);}
+.ant-win{position:absolute;width:4px;height:4px;background:rgba(255,220,120,.0);border-radius:1px;}
+.ant-win.on{background:rgba(255,215,100,.75);box-shadow:0 0 4px rgba(255,200,80,.5);animation:lightBlink var(--bd) ease-in-out infinite;}
+/* Road */
+.ant-road{position:absolute;bottom:0;left:0;width:100%;height:28px;background:linear-gradient(180deg,#1a1520,#0a0810);}
+.ant-road::after{content:'';position:absolute;top:50%;left:0;width:100%;height:2px;background:repeating-linear-gradient(90deg,rgba(201,150,58,.5) 0px,rgba(201,150,58,.5) 20px,transparent 20px,transparent 40px);}
+/* Cars */
+.ant-car{position:absolute;bottom:6px;height:8px;border-radius:2px;animation:carMove var(--spd) linear infinite;}
+.ant-car2{position:absolute;bottom:14px;height:6px;border-radius:2px;animation:carMove2 var(--spd) linear infinite;}
+.ant-ptcl{display:none;}
 .ant-hero-inner{position:relative;z-index:2;animation:fadeInUp .9s ease-out .15s both;}
 .ant-tag{font-family:'Inter',sans-serif;font-size:.82rem;color:var(--gold);text-transform:uppercase;letter-spacing:.18em;margin-bottom:18px;font-weight:600;}
 .ant-h1{font-family:'Playfair Display',serif;font-size:clamp(2.2rem,5vw,3.6rem);font-weight:900;color:var(--parchment);margin-bottom:20px;line-height:1.18;}
@@ -1103,10 +1134,10 @@ if nav == "HOME" or st.session_state.get("main_section") is None:
 .ant-btn-s:hover{background:rgba(201,150,58,.1);transform:translateY(-2px);}
 .ant-stats{display:flex;justify-content:center;gap:clamp(20px,4vw,48px);padding:28px 20px;background:rgba(201,150,58,.05);border-top:1px solid rgba(201,150,58,.12);border-bottom:1px solid rgba(201,150,58,.12);flex-wrap:wrap;}
 .ant-stat-n{font-family:'Playfair Display',serif;font-size:1.8rem;font-weight:800;color:var(--gold);}
-.ant-stat-l{font-size:.72rem;color:rgba(240,232,218,.5);text-transform:uppercase;letter-spacing:.08em;margin-top:2px;}
+.ant-stat-l{font-size:.72rem;color:#7a6040;text-transform:uppercase;letter-spacing:.08em;margin-top:2px;}
 .ant-sec{padding:55px 20px;max-width:900px;margin:0 auto;}
-.ant-sec-t{font-family:'Playfair Display',serif;font-size:1.9rem;font-weight:800;color:var(--parchment);text-align:center;margin-bottom:8px;}
-.ant-sec-s{font-size:.92rem;color:rgba(240,232,218,.5);text-align:center;margin-bottom:36px;}
+.ant-sec-t{font-family:'Playfair Display',serif;font-size:1.9rem;font-weight:800;color:#1a1813;text-align:center;margin-bottom:8px;}
+.ant-sec-s{font-size:.92rem;color:#6a5a3a;text-align:center;margin-bottom:36px;}
 .ant-grid-4{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;}
 .ant-card{background:var(--card-dark);border:1px solid rgba(201,150,58,.15);border-radius:12px;padding:24px 20px;transition:all .28s ease;cursor:pointer;}
 .ant-card:hover{border-color:rgba(201,150,58,.45);transform:translateY(-4px);box-shadow:0 16px 40px rgba(0,0,0,.35);}
@@ -1115,23 +1146,80 @@ if nav == "HOME" or st.session_state.get("main_section") is None:
 .ant-card-d{font-size:.78rem;color:rgba(240,232,218,.48);line-height:1.55;}
 .ant-steps{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:10px;}
 .ant-step{flex:1;min-width:160px;max-width:220px;text-align:center;padding:22px 16px;background:rgba(201,150,58,.05);border:1px solid rgba(201,150,58,.12);border-radius:10px;}
-.ant-step-n{font-family:'Playfair Display',serif;font-size:2rem;font-weight:900;color:rgba(201,150,58,.4);line-height:1;}
-.ant-step-t{font-size:.83rem;font-weight:700;color:var(--parchment);margin:8px 0 5px;}
-.ant-step-d{font-size:.73rem;color:rgba(240,232,218,.45);line-height:1.5;}
+.ant-step-n{font-family:'Playfair Display',serif;font-size:2rem;font-weight:900;color:var(--gold);line-height:1;}
+.ant-step-t{font-size:.88rem;font-weight:700;color:#1a1813;margin:8px 0 5px;}
+.ant-step-d{font-size:.78rem;color:#6a5a3a;line-height:1.5;}
 .ant-tools{display:grid;grid-template-columns:repeat(auto-fit,minmax(175px,1fr));gap:12px;}
 .ant-tool{background:rgba(201,150,58,.04);border:1px solid rgba(201,150,58,.12);border-radius:9px;padding:16px 14px;display:flex;align-items:flex-start;gap:10px;transition:all .22s ease;}
 .ant-tool:hover{border-color:rgba(201,150,58,.38);background:rgba(201,150,58,.07);}
 .ant-tool-icon{font-size:1.35rem;min-width:1.6rem;}
-.ant-tool-t{font-size:.78rem;font-weight:700;color:var(--parchment);margin-bottom:3px;}
-.ant-tool-d{font-size:.68rem;color:rgba(240,232,218,.42);line-height:1.45;}
+.ant-tool-t{font-size:.82rem;font-weight:700;color:#1a1813;margin-bottom:3px;}
+.ant-tool-d{font-size:.72rem;color:#6a5a3a;line-height:1.45;}
 .ant-cta{text-align:center;padding:55px 20px;background:linear-gradient(135deg,rgba(201,150,58,.08),rgba(201,150,58,.03));border-top:1px solid rgba(201,150,58,.12);}
-.ant-cta-t{font-family:'Playfair Display',serif;font-size:1.7rem;font-weight:800;color:var(--parchment);margin-bottom:12px;}
-.ant-cta-s{font-size:.92rem;color:rgba(240,232,218,.5);margin-bottom:28px;}
+.ant-cta-t{font-family:'Playfair Display',serif;font-size:1.7rem;font-weight:800;color:#1a1813;margin-bottom:12px;}
+.ant-cta-s{font-size:.92rem;color:#6a5a3a;margin-bottom:28px;}
 </style>
 
 <div class="ant-hero">
-  <div class="ant-ptcl">⚖️</div><div class="ant-ptcl">📜</div>
-  <div class="ant-ptcl">🏛️</div><div class="ant-ptcl">📖</div><div class="ant-ptcl">⚡</div>
+  <!-- Stars -->
+  <div class="ant-stars">
+    <div class="ant-star" style="top:5%;left:10%;animation-delay:0s;--bd:2.1s"></div>
+    <div class="ant-star" style="top:12%;left:25%;animation-delay:.5s;--bd:3.2s;width:1px;height:1px"></div>
+    <div class="ant-star" style="top:8%;left:45%;animation-delay:1s;--bd:2.8s"></div>
+    <div class="ant-star" style="top:18%;left:60%;animation-delay:.3s;--bd:1.9s;width:3px;height:3px"></div>
+    <div class="ant-star" style="top:6%;left:78%;animation-delay:1.5s;--bd:2.5s"></div>
+    <div class="ant-star" style="top:22%;left:88%;animation-delay:.8s;--bd:3.5s;width:1px;height:1px"></div>
+    <div class="ant-star" style="top:3%;left:35%;animation-delay:2s;--bd:2.2s;width:1px;height:1px"></div>
+    <div class="ant-star" style="top:15%;left:72%;animation-delay:1.2s;--bd:2.7s"></div>
+    <div class="ant-star" style="top:25%;left:15%;animation-delay:.6s;--bd:3.1s;width:1px;height:1px"></div>
+    <div class="ant-star" style="top:20%;left:50%;animation-delay:1.8s;--bd:2.4s"></div>
+  </div>
+  <!-- City Skyline -->
+  <div class="ant-city-wrap">
+    <div class="ant-city">
+      <!-- First copy of city -->
+      <div class="ant-city-fg" style="align-items:flex-end;">
+        <div class="ant-bld" style="width:30px;height:160px;"><div class="ant-win on" style="top:20px;left:8px;--bd:2.1s"></div><div class="ant-win on" style="top:20px;left:18px;--bd:3.2s"></div><div class="ant-win" style="top:32px;left:8px;--bd:2.5s"></div><div class="ant-win on" style="top:44px;left:18px;--bd:1.9s"></div><div class="ant-win on" style="top:56px;left:8px;--bd:2.8s"></div><div class="ant-win" style="top:68px;left:18px;--bd:3.1s"></div></div>
+        <div class="ant-bld" style="width:55px;height:200px;"><div class="ant-win on" style="top:15px;left:8px;--bd:2.3s"></div><div class="ant-win on" style="top:15px;left:20px;--bd:1.8s"></div><div class="ant-win on" style="top:15px;left:32px;--bd:2.6s"></div><div class="ant-win on" style="top:30px;left:8px;--bd:3.0s"></div><div class="ant-win" style="top:30px;left:20px;--bd:2.1s"></div><div class="ant-win on" style="top:30px;left:32px;--bd:1.7s"></div><div class="ant-win on" style="top:45px;left:8px;--bd:2.9s"></div><div class="ant-win on" style="top:60px;left:20px;--bd:2.4s"></div><div class="ant-win on" style="top:75px;left:32px;--bd:3.3s"></div></div>
+        <div class="ant-bld" style="width:25px;height:120px;"><div class="ant-win on" style="top:18px;left:6px;--bd:2.0s"></div><div class="ant-win on" style="top:18px;left:14px;--bd:3.4s"></div><div class="ant-win on" style="top:34px;left:6px;--bd:2.7s"></div><div class="ant-win" style="top:50px;left:14px;--bd:1.8s"></div></div>
+        <div class="ant-bld" style="width:70px;height:240px;"><div class="ant-win on" style="top:10px;left:10px;--bd:2.2s"></div><div class="ant-win on" style="top:10px;left:25px;--bd:1.6s"></div><div class="ant-win on" style="top:10px;left:40px;--bd:2.9s"></div><div class="ant-win on" style="top:28px;left:10px;--bd:3.1s"></div><div class="ant-win" style="top:28px;left:25px;--bd:2.0s"></div><div class="ant-win on" style="top:28px;left:40px;--bd:2.4s"></div><div class="ant-win on" style="top:46px;left:10px;--bd:1.9s"></div><div class="ant-win on" style="top:64px;left:25px;--bd:3.2s"></div><div class="ant-win on" style="top:82px;left:40px;--bd:2.7s"></div><div class="ant-win on" style="top:100px;left:10px;--bd:2.1s"></div></div>
+        <div class="ant-bld" style="width:35px;height:140px;"><div class="ant-win on" style="top:20px;left:8px;--bd:3.0s"></div><div class="ant-win on" style="top:20px;left:20px;--bd:2.3s"></div><div class="ant-win on" style="top:38px;left:8px;--bd:1.8s"></div><div class="ant-win on" style="top:56px;left:20px;--bd:2.6s"></div><div class="ant-win on" style="top:74px;left:8px;--bd:3.1s"></div></div>
+        <div class="ant-bld" style="width:45px;height:180px;"><div class="ant-win on" style="top:15px;left:8px;--bd:2.5s"></div><div class="ant-win" style="top:15px;left:25px;--bd:1.9s"></div><div class="ant-win on" style="top:30px;left:8px;--bd:3.2s"></div><div class="ant-win on" style="top:30px;left:25px;--bd:2.1s"></div><div class="ant-win on" style="top:45px;left:8px;--bd:2.8s"></div><div class="ant-win on" style="top:60px;left:25px;--bd:1.7s"></div></div>
+        <div class="ant-bld" style="width:28px;height:100px;"><div class="ant-win on" style="top:15px;left:7px;--bd:2.4s"></div><div class="ant-win on" style="top:15px;left:16px;--bd:3.0s"></div><div class="ant-win on" style="top:32px;left:7px;--bd:2.2s"></div><div class="ant-win" style="top:48px;left:16px;--bd:1.8s"></div></div>
+        <div class="ant-bld" style="width:60px;height:220px;"><div class="ant-win on" style="top:12px;left:10px;--bd:2.7s"></div><div class="ant-win on" style="top:12px;left:28px;--bd:1.9s"></div><div class="ant-win on" style="top:12px;left:44px;--bd:3.3s"></div><div class="ant-win on" style="top:30px;left:10px;--bd:2.0s"></div><div class="ant-win on" style="top:48px;left:28px;--bd:2.5s"></div><div class="ant-win on" style="top:66px;left:44px;--bd:1.7s"></div><div class="ant-win on" style="top:84px;left:10px;--bd:3.1s"></div></div>
+        <div class="ant-bld" style="width:40px;height:160px;"><div class="ant-win on" style="top:18px;left:8px;--bd:2.3s"></div><div class="ant-win on" style="top:18px;left:24px;--bd:1.8s"></div><div class="ant-win on" style="top:36px;left:8px;--bd:2.9s"></div><div class="ant-win on" style="top:54px;left:24px;--bd:3.2s"></div></div>
+        <div class="ant-bld" style="width:50px;height:200px;"><div class="ant-win on" style="top:14px;left:8px;--bd:2.1s"></div><div class="ant-win on" style="top:14px;left:25px;--bd:2.8s"></div><div class="ant-win on" style="top:32px;left:8px;--bd:1.7s"></div><div class="ant-win on" style="top:32px;left:25px;--bd:3.0s"></div><div class="ant-win on" style="top:50px;left:8px;--bd:2.4s"></div></div>
+        <div class="ant-bld" style="width:32px;height:130px;"><div class="ant-win on" style="top:16px;left:7px;--bd:3.1s"></div><div class="ant-win on" style="top:16px;left:19px;--bd:2.0s"></div><div class="ant-win on" style="top:34px;left:7px;--bd:2.7s"></div><div class="ant-win on" style="top:52px;left:19px;--bd:1.9s"></div></div>
+        <div class="ant-bld" style="width:75px;height:260px;"><div class="ant-win on" style="top:8px;left:10px;--bd:1.8s"></div><div class="ant-win on" style="top:8px;left:28px;--bd:2.5s"></div><div class="ant-win on" style="top:8px;left:48px;--bd:3.2s"></div><div class="ant-win on" style="top:26px;left:10px;--bd:2.1s"></div><div class="ant-win" style="top:26px;left:28px;--bd:2.8s"></div><div class="ant-win on" style="top:44px;left:48px;--bd:1.7s"></div><div class="ant-win on" style="top:62px;left:10px;--bd:3.0s"></div><div class="ant-win on" style="top:80px;left:28px;--bd:2.3s"></div></div>
+        <div class="ant-bld" style="width:38px;height:150px;"><div class="ant-win on" style="top:18px;left:8px;--bd:2.6s"></div><div class="ant-win on" style="top:18px;left:22px;--bd:1.9s"></div><div class="ant-win on" style="top:36px;left:8px;--bd:3.3s"></div><div class="ant-win on" style="top:54px;left:22px;--bd:2.1s"></div><div class="ant-win on" style="top:72px;left:8px;--bd:2.7s"></div></div>
+        <div class="ant-bld" style="width:55px;height:190px;"><div class="ant-win on" style="top:14px;left:8px;--bd:2.9s"></div><div class="ant-win on" style="top:14px;left:26px;--bd:1.8s"></div><div class="ant-win on" style="top:14px;left:40px;--bd:3.1s"></div><div class="ant-win on" style="top:32px;left:8px;--bd:2.2s"></div><div class="ant-win on" style="top:50px;left:26px;--bd:2.5s"></div></div>
+      </div>
+      <!-- Second copy (identical for seamless loop) -->
+      <div class="ant-city-fg" style="align-items:flex-end;">
+        <div class="ant-bld" style="width:30px;height:160px;"><div class="ant-win on" style="top:20px;left:8px;--bd:2.1s"></div><div class="ant-win on" style="top:20px;left:18px;--bd:3.2s"></div><div class="ant-win on" style="top:44px;left:18px;--bd:1.9s"></div><div class="ant-win on" style="top:56px;left:8px;--bd:2.8s"></div></div>
+        <div class="ant-bld" style="width:55px;height:200px;"><div class="ant-win on" style="top:15px;left:8px;--bd:2.3s"></div><div class="ant-win on" style="top:15px;left:20px;--bd:1.8s"></div><div class="ant-win on" style="top:15px;left:32px;--bd:2.6s"></div><div class="ant-win on" style="top:45px;left:8px;--bd:2.9s"></div><div class="ant-win on" style="top:60px;left:20px;--bd:2.4s"></div></div>
+        <div class="ant-bld" style="width:25px;height:120px;"><div class="ant-win on" style="top:18px;left:6px;--bd:2.0s"></div><div class="ant-win on" style="top:34px;left:14px;--bd:2.7s"></div></div>
+        <div class="ant-bld" style="width:70px;height:240px;"><div class="ant-win on" style="top:10px;left:10px;--bd:2.2s"></div><div class="ant-win on" style="top:10px;left:25px;--bd:1.6s"></div><div class="ant-win on" style="top:28px;left:40px;--bd:2.4s"></div><div class="ant-win on" style="top:64px;left:25px;--bd:3.2s"></div><div class="ant-win on" style="top:100px;left:10px;--bd:2.1s"></div></div>
+        <div class="ant-bld" style="width:35px;height:140px;"><div class="ant-win on" style="top:20px;left:8px;--bd:3.0s"></div><div class="ant-win on" style="top:38px;left:20px;--bd:1.8s"></div><div class="ant-win on" style="top:74px;left:8px;--bd:3.1s"></div></div>
+        <div class="ant-bld" style="width:45px;height:180px;"><div class="ant-win on" style="top:15px;left:25px;--bd:1.9s"></div><div class="ant-win on" style="top:30px;left:8px;--bd:3.2s"></div><div class="ant-win on" style="top:45px;left:8px;--bd:2.8s"></div></div>
+        <div class="ant-bld" style="width:60px;height:220px;"><div class="ant-win on" style="top:12px;left:10px;--bd:2.7s"></div><div class="ant-win on" style="top:12px;left:44px;--bd:3.3s"></div><div class="ant-win on" style="top:48px;left:28px;--bd:2.5s"></div><div class="ant-win on" style="top:84px;left:10px;--bd:3.1s"></div></div>
+        <div class="ant-bld" style="width:75px;height:260px;"><div class="ant-win on" style="top:8px;left:10px;--bd:1.8s"></div><div class="ant-win on" style="top:8px;left:48px;--bd:3.2s"></div><div class="ant-win on" style="top:44px;left:28px;--bd:1.7s"></div><div class="ant-win on" style="top:80px;left:10px;--bd:2.3s"></div></div>
+        <div class="ant-bld" style="width:50px;height:200px;"><div class="ant-win on" style="top:14px;left:8px;--bd:2.1s"></div><div class="ant-win on" style="top:32px;left:25px;--bd:3.0s"></div><div class="ant-win on" style="top:50px;left:8px;--bd:2.4s"></div></div>
+        <div class="ant-bld" style="width:32px;height:130px;"><div class="ant-win on" style="top:16px;left:7px;--bd:3.1s"></div><div class="ant-win on" style="top:34px;left:19px;--bd:2.7s"></div></div>
+        <div class="ant-bld" style="width:55px;height:190px;"><div class="ant-win on" style="top:14px;left:8px;--bd:2.9s"></div><div class="ant-win on" style="top:14px;left:40px;--bd:3.1s"></div><div class="ant-win on" style="top:50px;left:26px;--bd:2.5s"></div></div>
+        <div class="ant-bld" style="width:38px;height:150px;"><div class="ant-win on" style="top:18px;left:8px;--bd:2.6s"></div><div class="ant-win on" style="top:36px;left:22px;--bd:3.3s"></div><div class="ant-win on" style="top:72px;left:8px;--bd:2.7s"></div></div>
+        <div class="ant-bld" style="width:40px;height:160px;"><div class="ant-win on" style="top:18px;left:24px;--bd:1.8s"></div><div class="ant-win on" style="top:54px;left:8px;--bd:3.2s"></div></div>
+      </div>
+    </div>
+    <!-- Road -->
+    <div class="ant-road">
+      <div class="ant-car" style="width:35px;background:rgba(255,200,80,.35);left:0;bottom:5px;--spd:6s;animation-delay:0s;"></div>
+      <div class="ant-car" style="width:28px;background:rgba(180,150,255,.3);left:0;bottom:5px;--spd:9s;animation-delay:2s;"></div>
+      <div class="ant-car" style="width:40px;background:rgba(200,220,255,.25);left:0;bottom:5px;--spd:7.5s;animation-delay:4s;"></div>
+      <div class="ant-car2" style="width:32px;background:rgba(255,180,100,.3);--spd:8s;animation-delay:1s;bottom:12px;"></div>
+      <div class="ant-car2" style="width:24px;background:rgba(200,255,180,.25);--spd:11s;animation-delay:3.5s;bottom:12px;"></div>
+    </div>
+  </div>
   <div class="ant-hero-inner">
     <div class="ant-tag">AntonIA · Mar.IA Group · LegalTech Chile</div>
     <div class="ant-h1">Domina el Derecho chileno<br>con <span>Inteligencia Artificial</span></div>
@@ -1146,8 +1234,78 @@ if nav == "HOME" or st.session_state.get("main_section") is None:
 <div class="ant-stats">
   <div style="text-align:center"><div class="ant-stat-n">10.000+</div><div class="ant-stat-l">Preguntas de práctica</div></div>
   <div style="text-align:center"><div class="ant-stat-n">250+</div><div class="ant-stat-l">Casos reales</div></div>
+  <div style="text-align:center"><div class="ant-stat-n">443</div><div class="ant-stat-l">Obras en biblioteca</div></div>
   <div style="text-align:center"><div class="ant-stat-n">12</div><div class="ant-stat-l">Ramos disponibles</div></div>
   <div style="text-align:center"><div class="ant-stat-n">4</div><div class="ant-stat-l">Perfiles distintos</div></div>
+</div>
+
+<!-- DEMO SECTION -->
+<div style="background:#0d0b10;padding:60px 20px;border-top:1px solid rgba(201,150,58,.1);border-bottom:1px solid rgba(201,150,58,.1);">
+  <div style="max-width:920px;margin:0 auto;">
+    <div style="text-align:center;margin-bottom:8px;">
+      <span style="font-family:Inter,sans-serif;font-size:.78rem;color:#c9963a;text-transform:uppercase;letter-spacing:.15em;font-weight:600;">▶ Demo interactivo</span>
+    </div>
+    <div style="font-family:'Playfair Display',serif;font-size:1.85rem;font-weight:800;color:#f5f0e8;text-align:center;margin-bottom:8px;">AntonIA en acción</div>
+    <div style="font-size:.92rem;color:rgba(240,232,218,.5);text-align:center;margin-bottom:36px;">Descubre las funciones más poderosas del primer asistente jurídico IA para el Derecho chileno</div>
+
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:20px;">
+      <!-- Demo 1: Quiz IA -->
+      <div style="background:#13101a;border:1px solid rgba(201,150,58,.18);border-radius:12px;overflow:hidden;">
+        <div style="background:linear-gradient(135deg,#1a1520,#0e0c14);padding:20px;min-height:160px;position:relative;display:flex;flex-direction:column;justify-content:flex-end;">
+          <div style="position:absolute;top:16px;left:16px;font-size:1.6rem;">🧠</div>
+          <div style="background:#1e1b28;border:1px solid rgba(201,150,58,.2);border-radius:8px;padding:12px;">
+            <div style="font-size:.68rem;color:#c9963a;font-weight:700;margin-bottom:6px;">QUIZ INTERACTIVO · Civil III</div>
+            <div style="font-size:.82rem;color:#f0e8d8;line-height:1.5;">¿Cuál es el efecto de la condición resolutoria cumplida?</div>
+            <div style="margin-top:10px;display:flex;flex-direction:column;gap:5px;">
+              <div style="background:rgba(46,144,85,.15);border:1px solid rgba(46,144,85,.3);border-radius:4px;padding:4px 8px;font-size:.72rem;color:#4ade80;">✓ Se extingue retroactivamente la obligación</div>
+              <div style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:4px;padding:4px 8px;font-size:.72rem;color:rgba(240,232,218,.5);">No tiene efectos retroactivos</div>
+            </div>
+          </div>
+        </div>
+        <div style="padding:14px 16px;">
+          <div style="font-size:.85rem;font-weight:700;color:#f5f0e8;margin-bottom:4px;">Quiz con IA Infinito</div>
+          <div style="font-size:.76rem;color:rgba(240,232,218,.5);line-height:1.5;">Quiz adaptativo con retroalimentación jurídica detallada. Alternativas, V/F, Flashcards y casos prácticos.</div>
+        </div>
+      </div>
+
+      <!-- Demo 2: Análisis de Caso -->
+      <div style="background:#13101a;border:1px solid rgba(201,150,58,.18);border-radius:12px;overflow:hidden;">
+        <div style="background:linear-gradient(135deg,#1a1520,#0e0c14);padding:20px;min-height:160px;position:relative;display:flex;flex-direction:column;justify-content:flex-end;">
+          <div style="position:absolute;top:16px;left:16px;font-size:1.6rem;">🔍</div>
+          <div style="background:#1e1b28;border:1px solid rgba(201,150,58,.2);border-radius:8px;padding:12px;">
+            <div style="font-size:.68rem;color:#c9963a;font-weight:700;margin-bottom:6px;">ANÁLISIS JURÍDICO · Derecho Civil</div>
+            <div style="font-size:.8rem;color:#f0e8d8;font-style:italic;line-height:1.5;">"Contrato de compraventa · nulidad por objeto ilícito · Arts. 1462 y 1466 CC..."</div>
+            <div style="margin-top:8px;font-size:.72rem;color:rgba(201,150,58,.8);">→ Identificó 3 argumentos clave · 2 normas aplicables · 1 tendencia jurisprudencial</div>
+          </div>
+        </div>
+        <div style="padding:14px 16px;">
+          <div style="font-size:.85rem;font-weight:700;color:#f5f0e8;margin-bottom:4px;">Análisis Jurídico Profundo</div>
+          <div style="font-size:.76rem;color:rgba(240,232,218,.5);line-height:1.5;">Sube cualquier documento jurídico y AntonIA lo analiza en segundos con fundamentos del Derecho chileno.</div>
+        </div>
+      </div>
+
+      <!-- Demo 3: Redacción -->
+      <div style="background:#13101a;border:1px solid rgba(201,150,58,.18);border-radius:12px;overflow:hidden;">
+        <div style="background:linear-gradient(135deg,#1a1520,#0e0c14);padding:20px;min-height:160px;position:relative;display:flex;flex-direction:column;justify-content:flex-end;">
+          <div style="position:absolute;top:16px;left:16px;font-size:1.6rem;">📝</div>
+          <div style="background:#1e1b28;border:1px solid rgba(201,150,58,.2);border-radius:8px;padding:12px;">
+            <div style="font-size:.68rem;color:#c9963a;font-weight:700;margin-bottom:6px;">ESCRITO GENERADO · Demanda Civil</div>
+            <div style="font-size:.75rem;color:rgba(240,232,218,.65);line-height:1.6;font-family:monospace;">EN LO PRINCIPAL: Demanda ordinaria...<br>PRIMER OTROSÍ: Patrocinio y poder...<br><span style="color:#c9963a;">Art. 254 CPC · Art. 1489 CC ✓</span></div>
+          </div>
+        </div>
+        <div style="padding:14px 16px;">
+          <div style="font-size:.85rem;font-weight:700;color:#f5f0e8;margin-bottom:4px;">Redacción Forense con IA</div>
+          <div style="font-size:.76rem;color:rgba(240,232,218,.5);line-height:1.5;">Genera demandas, contratos, escritos y comunicaciones con el formato forense chileno correcto.</div>
+        </div>
+      </div>
+    </div>
+
+    <div style="text-align:center;margin-top:30px;">
+      <span style="font-family:Inter,sans-serif;font-size:.82rem;color:rgba(240,232,218,.4);">
+        Selecciona tu perfil en el panel izquierdo para comenzar · Prueba gratis sin registrarte
+      </span>
+    </div>
+  </div>
 </div>
 
 <div class="ant-sec">
@@ -1193,11 +1351,82 @@ if nav == "HOME" or st.session_state.get("main_section") is None:
   <div class="ant-cta-t">¿Listo para transformar tu práctica jurídica?</div>
   <div class="ant-cta-s">Únete a los estudiantes y profesionales que ya usan AntonIA</div>
   <span class="ant-btn-p" style="font-size:1rem;padding:15px 36px;">Comenzar ahora →</span>
-  <div style="margin-top:20px;font-size:.72rem;color:rgba(201,150,58,.4);font-family:'Inter',sans-serif;">
-    Anton<strong style="color:rgba(201,150,58,.6);">IA</strong> · Mar.IA Group · LegalTech Chile
+  <div style="margin-top:20px;font-size:.72rem;color:#9a8060;font-family:'Inter',sans-serif;">
+    Anton<strong style="color:#c9963a;">IA</strong> · Mar.IA Group · LegalTech Chile
   </div>
 </div>
     """, unsafe_allow_html=True)
+    st.stop()
+
+
+# ── UNIVERSIDAD LANDING — Mostrar cuando el usuario aún no eligió perfil ──
+if (st.session_state.get("main_section") == "universidad"
+        and not st.session_state.get("univ_perfil_elegido", False)
+        and nav in ("HOME",)):
+    st.markdown("""
+<style>
+.univ-landing{max-width:800px;margin:0 auto;padding:40px 20px;}
+.univ-title{font-family:'Playfair Display',serif;font-size:2.2rem;font-weight:800;color:#1a1813;text-align:center;margin-bottom:10px;}
+.univ-sub{font-size:1.0rem;color:#6a5a3a;text-align:center;margin-bottom:40px;}
+.univ-cards{display:grid;grid-template-columns:1fr 1fr;gap:24px;max-width:720px;margin:0 auto;}
+@media(max-width:600px){.univ-cards{grid-template-columns:1fr;}}
+.univ-card{background:#fff;border:1.5px solid #e2dbd0;border-radius:16px;padding:36px 28px;text-align:center;cursor:pointer;transition:all .25s ease;box-shadow:0 2px 16px rgba(20,18,10,.07);}
+.univ-card:hover{border-color:#c9963a;transform:translateY(-5px);box-shadow:0 12px 40px rgba(20,18,10,.13);}
+.univ-card-icon{font-size:3.5rem;margin-bottom:16px;}
+.univ-card-title{font-family:'Playfair Display',serif;font-size:1.4rem;font-weight:700;color:#1a1813;margin-bottom:8px;}
+.univ-card-desc{font-size:.88rem;color:#6a5a3a;line-height:1.65;margin-bottom:20px;}
+.univ-card-feats{text-align:left;margin-top:12px;}
+.univ-card-feat{font-size:.78rem;color:#5a4e3e;padding:5px 0;border-bottom:1px solid #ede8de;display:flex;align-items:center;gap:6px;}
+.univ-card-feat:last-child{border-bottom:none;}
+.univ-badge{display:inline-block;background:rgba(201,150,58,.1);color:#8a6800;font-size:.7rem;padding:4px 14px;border-radius:20px;border:1px solid rgba(201,150,58,.25);font-weight:600;margin-top:16px;}
+</style>
+<div class="univ-landing">
+  <div class="univ-title">Universidad · Área Académica</div>
+  <div class="univ-sub">¿Cuál es tu rol? Elige tu perfil para acceder a las herramientas diseñadas para ti.</div>
+  <div class="univ-cards">
+    <div class="univ-card" id="card-alumno">
+      <div class="univ-card-icon">👨‍🎓</div>
+      <div class="univ-card-title">Soy Alumno</div>
+      <div class="univ-card-desc">Prepara tus exámenes, estudia casos reales y domina el Derecho chileno con IA adaptativa.</div>
+      <div class="univ-card-feats">
+        <div class="univ-card-feat">🧠 Quiz interactivo con IA infinito</div>
+        <div class="univ-card-feat">📝 Examen simulado con nota 1-7</div>
+        <div class="univ-card-feat">🔍 Análisis jurídico de documentos</div>
+        <div class="univ-card-feat">⚖️ Jurisprudencia y doctrina relacionada</div>
+        <div class="univ-card-feat">📂 Banco de 250+ casos reales</div>
+        <div class="univ-card-feat">📈 Progreso y estadísticas de estudio</div>
+      </div>
+      <div class="univ-badge">Acceso gratuito disponible</div>
+    </div>
+    <div class="univ-card" id="card-profesor">
+      <div class="univ-card-icon">👩‍🏫</div>
+      <div class="univ-card-title">Soy Profesor</div>
+      <div class="univ-card-desc">Prepara clases, crea evaluaciones y gestiona tu curso con herramientas docentes avanzadas.</div>
+      <div class="univ-card-feats">
+        <div class="univ-card-feat">📝 Crea evaluaciones y rúbricas con IA</div>
+        <div class="univ-card-feat">📋 Materiales didácticos automáticos</div>
+        <div class="univ-card-feat">🎙️ Banco de preguntas de examen oral</div>
+        <div class="univ-card-feat">🤖 Chat IA + búsqueda de doctrina</div>
+        <div class="univ-card-feat">📊 Libro de notas y asistencia</div>
+        <div class="univ-card-feat">🔬 Asistente de investigación jurídica</div>
+      </div>
+      <div class="univ-badge">Panel docente completo</div>
+    </div>
+  </div>
+</div>
+    """, unsafe_allow_html=True)
+
+    col1, col2, col3, col4, col5 = st.columns([1,2,1,2,1])
+    with col2:
+        if st.button("👨‍🎓  Entrar como Alumno", use_container_width=True,
+                     help="Accede al área de alumnos con quiz, casos y análisis"):
+            set_univ_perfil("alumno")
+            st.rerun()
+    with col4:
+        if st.button("👩‍🏫  Entrar como Profesor", use_container_width=True,
+                     help="Accede al panel docente con evaluaciones y herramientas"):
+            set_univ_perfil("profesor")
+            st.rerun()
     st.stop()
 
 # ═══════════════════════════════════════════════

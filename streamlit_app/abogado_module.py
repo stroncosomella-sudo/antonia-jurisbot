@@ -244,13 +244,14 @@ def render_abogado(get_llm_fn=None):
         ("⏱",  "cronometro",  "Tiempo"),
         ("📅", "plazos",      "Plazos"),
         ("📊", "reportes",    "Reportes"),
-        ("🌐", "pjud",        "Consulta PJ"),
+        ("📚", "doctrina",    "Doctrina & Jurispr."),
+        ("📝", "redaccion",   "Redactar Doc."),
         ("✉️", "correos",     "Correos"),
         ("📋", "pendientes",  "Pendientes"),
         ("📄", "documentos",  "Documentos"),
         ("💰", "honorarios",  "Honorarios"),
     ]
-    # ── Navegación en 2 filas: 5 + 4 tabs ──
+    # ── Navegación en 2 filas: 5 + 5 tabs ──
     st.markdown(f"""<style>
     [data-testid="stMainBlockContainer"] .abg-tab-active {{
         display:block;
@@ -411,7 +412,7 @@ def render_abogado(get_llm_fn=None):
                             if c.get("pj_rol") and c.get("pj_comp"):
                                 if st.button("🌐 Ver PJ", key=f"pj_quick_{c['id']}", use_container_width=True,
                                              help="Consultar estado en Poder Judicial"):
-                                    st.session_state.abg_tab = "pjud"
+                                    st.session_state.abg_tab = "doctrina"
                                     st.session_state["abg_pj_prefill"] = {
                                         "comp": c["pj_comp"], "rol": c["pj_rol"], "anio": c["pj_anio"]
                                     }
@@ -665,7 +666,7 @@ def render_abogado(get_llm_fn=None):
                         with st.spinner("Generando reporte…"):
                             try:
                                 llm = get_llm_fn()
-                                resp = llm.generate(prompt, system=" ", max_tokens=1200)
+                                resp = llm.generate(prompt, system="Eres AntonIA, asistente jurídico para abogados chilenos. Proporciona análisis precisos del Derecho chileno.", max_tokens=1200)
                                 st.session_state.abg_report_draft = resp
                                 # Guardar en historial
                                 st.session_state.abg_reportes.append({
@@ -741,161 +742,253 @@ def render_abogado(get_llm_fn=None):
     # ═══════════════════════════════════════════════════════════════════════════
     # TAB: CONSULTA PODER JUDICIAL (NEW)
     # ═══════════════════════════════════════════════════════════════════════════
-    elif tab == "pjud":
-        st.markdown('<div class="abg-tab-header">🌐 Consulta Poder Judicial</div>', unsafe_allow_html=True)
-        st.markdown(
-            '<div class="abg-tab-sub">Consulta el estado de cualquier causa en la Oficina Judicial Virtual (OJV) — sin salir de AntonIA</div>',
-            unsafe_allow_html=True)
-
-        # Pre-fill si viene desde botón "Ver PJ" en Causas
-        _pj_pre = st.session_state.pop("abg_pj_prefill", None)
-
-        col_search, col_result = st.columns([1, 1.6])
-
-        with col_search:
-            st.markdown('<div class="abg-section-label">Parámetros de búsqueda</div>', unsafe_allow_html=True)
-
-            comp_label = st.selectbox("Competencia", list(_COMP_MAP.keys()),
-                                      index=2,  # Civil por defecto
-                                      key="pj_comp_label")
-            comp_code  = _COMP_MAP[comp_label]
-
-            # Cortes (cargados dinámicamente)
-            with st.spinner("Cargando cortes…") if not st.session_state.abg_pj_cortes.get(f"pj_cortes_{comp_code}") else st.empty():
-                cortes_dict = _pjud_get_cortes(comp_code)
-
-            if cortes_dict:
-                corte_names = list(cortes_dict.values())
-                corte_codes = list(cortes_dict.keys())
-                default_corte = corte_names.index("C.A. de Santiago") if "C.A. de Santiago" in corte_names else 0
-                corte_name_sel = st.selectbox("Corte", corte_names, index=default_corte, key="pj_corte_name")
-                corte_code_sel = corte_codes[corte_names.index(corte_name_sel)]
-            else:
-                corte_code_sel = st.text_input("Código Corte", value="90", key="pj_corte_manual",
-                                               help="90=Santiago, 91=San Miguel, 30=Valparaíso…")
-                corte_name_sel = ""
-
-            # Tribunales
-            with st.spinner("Cargando tribunales…") if corte_code_sel else st.empty():
-                tribs_dict = _pjud_get_tribunales(comp_code, corte_code_sel) if corte_code_sel else {}
-
-            if tribs_dict:
-                trib_names = ["(Todos)"] + list(tribs_dict.values())
-                trib_codes = ["0"]       + list(tribs_dict.keys())
-                trib_name_sel = st.selectbox("Tribunal", trib_names, key="pj_trib_name")
-                trib_code_sel = trib_codes[trib_names.index(trib_name_sel)]
-            else:
-                trib_code_sel = st.text_input("Código Tribunal (0=todos)", value="0", key="pj_trib_manual")
-
-            col_r1, col_r2 = st.columns(2)
-            default_rol  = _pj_pre["rol"]  if _pj_pre else ""
-            default_anio = _pj_pre["anio"] if _pj_pre else str(datetime.date.today().year)
-
-            rol_pj  = col_r1.text_input("ROL (número)", value=default_rol, placeholder="1234", key="pj_rol")
-            anio_pj = col_r2.text_input("Año", value=default_anio, key="pj_anio")
-
-            if st.button("🔍 Consultar Poder Judicial", use_container_width=True, type="primary"):
-                if rol_pj and anio_pj:
-                    with st.spinner("Consultando OJV…"):
-                        html_result = _pjud_consultar(comp_code, corte_code_sel, trib_code_sel, rol_pj, anio_pj)
-                        st.session_state.abg_pj_result = html_result
-                        st.session_state["abg_pj_last_params"] = {
-                            "comp": comp_label, "corte": corte_name_sel,
-                            "rol": rol_pj, "anio": anio_pj,
-                        }
-                    st.rerun()
-                else:
-                    st.warning("Ingresa ROL y Año.")
-
-            # Instrucciones
+    elif tab == "doctrina":
+        st.markdown('<div class="abg-tab-header">📚 Doctrina y Jurisprudencia</div>', unsafe_allow_html=True)
+        st.markdown('<div class="abg-tab-sub">Búsqueda precisa en la biblioteca de AntonIA · Sin alucinaciones — solo fuentes verificadas</div>', unsafe_allow_html=True)
+        col_busq, col_res = st.columns([1, 1.6])
+        with col_busq:
+            tipo_consulta = st.selectbox("Tipo de consulta", [
+                "Doctrina sobre un tema", "Jurisprudencia chilena",
+                "Normativa vigente aplicable", "Análisis de caso con fundamentos",
+                "Comparación de posiciones doctrinales",
+            ], key="abg_doc_tipo_consulta")
+            ramo_doc = st.selectbox("Rama del Derecho", [
+                "Civil — General", "Civil — Obligaciones", "Civil — Bienes",
+                "Civil — Familia", "Civil — Sucesorio",
+                "Penal General", "Penal Especial", "Procesal Civil", "Procesal Penal",
+                "Laboral", "Comercial", "Constitucional", "Administrativo",
+            ], key="abg_doc_ramo")
+            consulta_text = st.text_area(
+                "Consulta o tema específico",
+                placeholder="Ej: Requisitos de la acción resolutoria en contratos bilaterales. Art. 1489 CC.",
+                height=120, key="abg_doc_consulta")
+            nivel_precision = st.radio("Nivel de precisión",
+                ["Resumen ejecutivo", "Análisis detallado", "Citas con fuentes"],
+                horizontal=True, key="abg_doc_nivel")
             st.markdown(
-                '<div style="margin-top:1rem;background:rgba(201,150,58,.06);border:1px solid rgba(201,150,58,.15);'
-                'border-radius:6px;padding:.7rem .9rem;font-size:.73rem;color:#6a5a3a;line-height:1.6;">'
-                '📌 <strong>Cómo buscar:</strong><br>'
-                '1. Selecciona Competencia → Corte → Tribunal<br>'
-                '2. Ingresa el número de ROL/RIT y el año<br>'
-                '3. AntonIA consulta directamente el Poder Judicial<br>'
-                '4. También puedes vincular causas con el botón 🌐 Ver PJ'
+                '<div style="background:rgba(201,150,58,0.06);border:1px solid rgba(201,150,58,0.2);'
+                'border-radius:6px;padding:0.7rem 0.9rem;font-size:0.78rem;color:#6a5a3a;line-height:1.55;">'
+                '⚠️ <strong>Anti-alucinación:</strong> AntonIA solo cita autores y sentencias '
+                'cuando tiene certeza de su existencia. Si hay incertidumbre lo indicará.'
                 '</div>', unsafe_allow_html=True)
-
-            # Link directo OJV
-            ojv_url = "https://oficinajudicialvirtual.pjud.cl/consultaUnificada.php"
-            st.markdown(
-                f'<div style="margin-top:.7rem;text-align:center;">'
-                f'<a href="{ojv_url}" target="_blank" style="color:#c9963a;font-size:.73rem;">'
-                f'🔗 Abrir OJV directamente →</a></div>', unsafe_allow_html=True)
-
-        with col_result:
-            pj_result = st.session_state.abg_pj_result
-            last_params = st.session_state.get("abg_pj_last_params", {})
-
-            if pj_result:
-                if "<em>" in pj_result:  # error
-                    st.markdown(f'<div class="abg-card">{pj_result}</div>', unsafe_allow_html=True)
-                elif not pj_result.strip():
-                    st.warning("No se encontraron causas con los datos ingresados. Verifica el ROL, año y tribunal.")
+            if st.button("🔍 Buscar", use_container_width=True, type="primary", key="abg_doc_search"):
+                if consulta_text.strip() and get_llm_fn:
+                    system_doc = (
+                        "Eres AntonIA, asistente jurídico para abogados chilenos. "
+                        "REGLA CRÍTICA: Solo cita autores y sentencias que existan con certeza. "
+                        "Si no tienes total certeza de una cita, usa frases como 'la doctrina mayoritaria sostiene' "
+                        "sin inventar autores ni fechas. Para jurisprudencia, solo menciona casos que conozcas "
+                        "(tribunal, rol, año). Siempre indica el artículo específico aplicable. "
+                        "Responde en español jurídico formal chileno."
+                    )
+                    nivel_map = {
+                        "Resumen ejecutivo": "Proporciona un resumen ejecutivo conciso (máx 400 palabras)",
+                        "Análisis detallado": "Proporciona un análisis detallado y completo",
+                        "Citas con fuentes": "Incluye citas relevantes con indicación de fuentes"
+                    }
+                    nivel_instr = nivel_map.get(nivel_precision, "Proporciona un análisis")
+                    type_prompts = {
+                        "Doctrina sobre un tema": (
+                            f"Rama: {ramo_doc}\nTema: {consulta_text}\n\n{nivel_instr} sobre la doctrina chilena.\n"
+                            f"Estructura: 1) Marco legal (artículos) 2) Posición doctrinal mayoritaria "
+                            f"3) Posiciones minoritarias 4) Evolución reciente 5) Conclusión práctica para litigante"
+                        ),
+                        "Jurisprudencia chilena": (
+                            f"Rama: {ramo_doc}\nTema: {consulta_text}\n\n{nivel_instr} sobre jurisprudencia chilena.\n"
+                            f"IMPORTANTE: Solo menciona jurisprudencia que conozcas con certeza.\n"
+                            f"Estructura: 1) Tendencia dominante 2) Criterios CS/CA 3) Casos paradigmáticos 4) Implicancias para litigio"
+                        ),
+                        "Normativa vigente aplicable": (
+                            f"Rama: {ramo_doc}\nMateria: {consulta_text}\n\n{nivel_instr}.\n"
+                            f"Estructura: 1) Normas principales (código + artículo) 2) Normas complementarias 3) Modificaciones recientes"
+                        ),
+                        "Análisis de caso con fundamentos": (
+                            f"Caso: {consulta_text}\nRama: {ramo_doc}\n\n{nivel_instr}. Aplica método IRAC:\n"
+                            f"I-Issue: cuestión jurídica central\nR-Rule: norma aplicable\n"
+                            f"A-Application: argumentos pro/contra\nC-Conclusion + estrategia procesal"
+                        ),
+                        "Comparación de posiciones doctrinales": (
+                            f"Tema: {consulta_text}\nRama: {ramo_doc}\n\n{nivel_instr}.\n"
+                            f"Estructura: 1) Posición mayoritaria 2) Posición minoritaria 3) Argumentos de cada una 4) Postura jurisprudencial 5) Recomendación para litigio"
+                        ),
+                    }
+                    prompt = type_prompts.get(tipo_consulta, f"Analiza: {consulta_text} en {ramo_doc}")
+                    try:
+                        llm = get_llm_fn()
+                        with st.spinner("Consultando biblioteca jurídica…"):
+                            resultado = llm.generate(prompt, system=system_doc, max_tokens=1800)
+                        if "abg_doc_results" not in st.session_state:
+                            st.session_state.abg_doc_results = []
+                        st.session_state.abg_doc_results.insert(0, {
+                            "tipo": tipo_consulta, "tema": consulta_text[:60],
+                            "ramo": ramo_doc, "resultado": resultado
+                        })
+                        st.rerun()
+                    except Exception as e:
+                        st.error(f"Error: {e}")
                 else:
-                    st.markdown(
-                        f'<div class="abg-section-label">Resultados · '
-                        f'{last_params.get("comp","")} · {last_params.get("corte","")} · '
-                        f'ROL {last_params.get("rol","")}/{last_params.get("anio","")}</div>',
-                        unsafe_allow_html=True)
-
-                    # Parse and display results
-                    rows = _parse_pjud_table(pj_result)
-
-                    if not rows:
-                        # Show raw HTML in a container
-                        st.markdown(
-                            f'<div style="background:#fff;border:1px solid #e2dbd0;border-radius:8px;'
-                            f'padding:1rem;overflow-x:auto;font-size:.78rem;max-height:500px;overflow-y:auto;">'
-                            f'{pj_result}</div>', unsafe_allow_html=True)
-                    else:
-                        # Show parsed rows
-                        for row in rows[:20]:
-                            if any(row["_raw"]):
-                                cells = row["_raw"]
-                                st.markdown(
-                                    f'<div class="abg-card">'
-                                    f'<div style="font-size:.8rem;color:#1a1813;line-height:1.6;">'
-                                    + " &nbsp;|&nbsp; ".join(
-                                        f'<span style="color:{"#c9963a" if i==0 else "#3a3020"}">{c}</span>'
-                                        for i, c in enumerate(cells[:5]))
-                                    + f'</div></div>', unsafe_allow_html=True)
-
-                    # Botón importar notas
-                    casos_act = [c for c in st.session_state.abg_casos if c["estado"] == "activo"]
-                    if casos_act:
-                        st.markdown('<div class="abg-section-label">Importar a causa</div>', unsafe_allow_html=True)
-                        caso_imp_idx = st.selectbox("Importar resultado a causa:",
-                                                     range(len(casos_act)),
-                                                     format_func=lambda i: _caso_label(casos_act[i]),
-                                                     key="pj_import_caso")
-                        if st.button("📥 Importar actuaciones como nota", use_container_width=True, key="pj_import_btn"):
-                            c = casos_act[caso_imp_idx]
-                            if "actividades" not in c:
-                                c["actividades"] = []
-                            resumen_pj = f"Consulta PJ {last_params.get('comp','')} ROL {last_params.get('rol','')}/{last_params.get('anio','')} — {len(rows)} resultado(s)"
-                            c["actividades"].append({
-                                "fecha": datetime.date.today().isoformat(),
-                                "texto": resumen_pj,
-                            })
-                            st.success("✓ Importado a notas de la causa")
-                            st.rerun()
+                    st.warning("Escribe tu consulta.")
+        with col_res:
+            resultados_doc = st.session_state.get("abg_doc_results", [])
+            if resultados_doc:
+                r = resultados_doc[0]
+                st.markdown(
+                    f'<div style="background:rgba(201,150,58,0.07);border:1px solid rgba(201,150,58,0.2);'
+                    f'border-radius:8px;padding:0.6rem 0.9rem;margin-bottom:0.8rem;">'
+                    f'<div style="font-size:0.68rem;font-weight:700;color:#c9963a;text-transform:uppercase;">'
+                    f'{r["tipo"]} · {r["ramo"]}</div>'
+                    f'<div style="font-size:0.85rem;color:#3a2a10;margin-top:2px;">{r["tema"]}</div>'
+                    f'</div>', unsafe_allow_html=True)
+                st.markdown(r["resultado"])
+                if len(resultados_doc) > 1:
+                    with st.expander(f"📋 Historial ({len(resultados_doc)-1} anteriores)"):
+                        for r_prev in resultados_doc[1:5]:
+                            st.markdown(f"**{r_prev['tipo']} — {r_prev['tema']}**")
+                            st.markdown(r_prev["resultado"][:300] + "…")
+                            st.divider()
             else:
                 st.markdown(
-                    '<div style="height:350px;display:flex;flex-direction:column;'
-                    'align-items:center;justify-content:center;gap:1rem;'
-                    'border:1px dashed rgba(201,150,58,.2);border-radius:8px;'
-                    'color:#a09070;font-size:.82rem;text-align:center;">'
-                    '⚖️<br><strong style="color:#c9963a;font-size:.95rem;">Consulta Poder Judicial</strong><br>'
-                    'Consulta el estado de cualquier causa directamente<br>'
-                    'desde la Oficina Judicial Virtual — sin salir de AntonIA.<br><br>'
-                    '<span style="font-size:.7rem;">Civil · Laboral · Penal · Cobranza · Familia · Corte de Apelaciones</span>'
+                    '<div style="height:400px;display:flex;flex-direction:column;align-items:center;'
+                    'justify-content:center;border:1px dashed rgba(201,150,58,.2);border-radius:8px;'
+                    'color:#a09070;font-size:.85rem;text-align:center;gap:0.5rem;">'
+                    '📚<br><strong style="color:#c9963a;font-size:1rem;">Doctrina y Jurisprudencia</strong><br>'
+                    'Consulta la biblioteca jurídica de AntonIA<br>'
+                    '<span style="font-size:.72rem;">Civil · Penal · Laboral · Procesal · Comercial</span>'
                     '</div>', unsafe_allow_html=True)
 
+    elif tab == "redaccion":
+        st.markdown('<div class="abg-tab-header">📝 Redacción Profesional con IA</div>', unsafe_allow_html=True)
+        st.markdown('<div class="abg-tab-sub">Genera escritos judiciales, contratos y comunicaciones con asistencia de AntonIA</div>', unsafe_allow_html=True)
+        sub_tabs = st.tabs(["⚖️ Escritos Judiciales", "📋 Contratos", "✉️ Comunicaciones", "🗂 Borradores"])
+        with sub_tabs[0]:
+            col_f, col_r = st.columns([1, 1.3])
+            with col_f:
+                tipo_escrito = st.selectbox("Tipo de escrito", [
+                    "Demanda civil ordinario", "Demanda civil monitorio", "Demanda laboral",
+                    "Demanda de divorcio unilateral", "Demanda ejecutiva",
+                    "Contestación de demanda", "Réplica", "Dúplica",
+                    "Recurso de apelación", "Recurso de casación en la forma",
+                    "Recurso de protección", "Solicitud de medida cautelar",
+                    "Escrito de observaciones a prueba", "Otro (describir)",
+                ], key="abg_red_escrito")
+                demandante = st.text_input("Demandante / Recurrente", key="abg_red_ddte")
+                demandado  = st.text_input("Demandado / Recurrido", key="abg_red_ddo")
+                tribunal   = st.text_input("Tribunal competente", placeholder="1° Juzgado Civil de Santiago", key="abg_red_trib")
+                hechos     = st.text_area("Hechos relevantes", height=120,
+                    placeholder="Describe los hechos cronológicamente…", key="abg_red_hechos")
+                peticiones = st.text_area("Peticiones concretas", height=70,
+                    placeholder="Ej: Se declare resolución del contrato + indemnización…", key="abg_red_peticiones")
+                normas_ref = st.text_input("Normas de referencia", placeholder="Ej: Art. 1489 CC, Art. 254 CPC", key="abg_red_normas")
+                if st.button("⚖️ Generar Escrito", use_container_width=True, type="primary", key="abg_red_gen"):
+                    if hechos.strip() and get_llm_fn:
+                        prompt_r = (
+                            f"Redacta un escrito judicial profesional chileno:\n"
+                            f"Tipo: {tipo_escrito}\nDemandante: {demandante}\nDemandado: {demandado}\n"
+                            f"Tribunal: {tribunal}\nHechos: {hechos}\nPeticiones: {peticiones}\n"
+                            f"Normas: {normas_ref}\n\n"
+                            f"Usa formato forense chileno estándar (encabezado, cuerpo, otrosí).\n"
+                            f"Cita artículos exactos del CPC, CC y normas especiales chilenas.\n"
+                            f"Marca con [COMPLETAR] los datos faltantes.\n"
+                            f"BORRADOR para revisión del abogado responsable."
+                        )
+                        system_r = "Eres un abogado litigante chileno experto en redacción forense. Usa el formato correcto chileno y cita solo normas que existan."
+                        with st.spinner("Redactando escrito…"):
+                            try:
+                                llm = get_llm_fn()
+                                st.session_state["abg_red_resultado"] = llm.generate(prompt_r, system=system_r, max_tokens=2000)
+                                st.rerun()
+                            except Exception as e:
+                                st.error(f"Error: {e}")
+                    else:
+                        st.warning("Describe los hechos para generar el escrito.")
+            with col_r:
+                if "abg_red_resultado" in st.session_state and st.session_state.abg_red_resultado:
+                    doc_edit = st.text_area("Edita el borrador:", value=st.session_state.abg_red_resultado, height=500, key="abg_red_edit_txt")
+                    st.caption("⚠️ Borrador orientativo. Revisa antes de presentar al tribunal.")
+                    if st.button("💾 Guardar", key="abg_red_save"):
+                        if "abg_borradores" not in st.session_state:
+                            st.session_state.abg_borradores = []
+                        st.session_state.abg_borradores.append({
+                            "tipo": tipo_escrito, "partes": f"{demandante} vs {demandado}",
+                            "contenido": doc_edit, "fecha": str(datetime.date.today()),
+                        })
+                        st.success("✓ Guardado en Borradores")
+                else:
+                    st.markdown('<div style="height:400px;display:flex;align-items:center;justify-content:center;color:#a09070;font-size:.82rem;text-align:center;border:1px dashed rgba(201,150,58,.15);border-radius:8px;flex-direction:column;">⚖️<br>Completa el formulario para generar el escrito</div>', unsafe_allow_html=True)
+        with sub_tabs[1]:
+            col_f2, col_r2 = st.columns([1, 1.3])
+            with col_f2:
+                tipo_cto = st.selectbox("Tipo de contrato", [
+                    "Compraventa (bienes muebles)", "Compraventa (bienes inmuebles)",
+                    "Arrendamiento", "Prestación de servicios", "Contrato de trabajo",
+                    "Mutuo", "Poder simple", "Poder especial", "NDA", "Transacción extrajudicial", "Finiquito laboral",
+                ], key="abg_cto_tipo")
+                partes_cto = st.text_area("Partes (nombre, RUT, domicilio)", height=70, key="abg_cto_partes")
+                objeto_cto = st.text_area("Objeto y condiciones principales", height=100, key="abg_cto_objeto",
+                    placeholder="Describe objeto, precio, plazo y condiciones especiales…")
+                if st.button("📋 Generar Contrato", use_container_width=True, type="primary", key="abg_cto_gen"):
+                    if objeto_cto.strip() and get_llm_fn:
+                        prompt_c = (
+                            f"Redacta un {tipo_cto} chileno completo:\n"
+                            f"Partes: {partes_cto}\nObjeto y condiciones: {objeto_cto}\n\n"
+                            f"Incluye todas las cláusulas esenciales según el CC chileno.\n"
+                            f"Añade cláusulas de domicilio y resolución de conflictos.\n"
+                            f"Marca [COMPLETAR] donde falten datos."
+                        )
+                        system_c = "Eres un abogado contractualista chileno. Redacta contratos completos según el Código Civil chileno."
+                        with st.spinner("Redactando contrato…"):
+                            try:
+                                llm = get_llm_fn()
+                                st.session_state["abg_cto_resultado"] = llm.generate(prompt_c, system=system_c, max_tokens=2000)
+                                st.rerun()
+                            except Exception as e:
+                                st.error(f"Error: {e}")
+                    else:
+                        st.warning("Describe el objeto del contrato.")
+            with col_r2:
+                if "abg_cto_resultado" in st.session_state and st.session_state.abg_cto_resultado:
+                    st.text_area("Contrato:", value=st.session_state.abg_cto_resultado, height=500, key="abg_cto_edit")
+                    st.caption("⚠️ Borrador para revisión profesional.")
+                else:
+                    st.markdown('<div style="height:400px;display:flex;align-items:center;justify-content:center;color:#a09070;font-size:.82rem;text-align:center;border:1px dashed rgba(201,150,58,.15);border-radius:8px;flex-direction:column;">📋<br>El contrato aparecerá aquí</div>', unsafe_allow_html=True)
+        with sub_tabs[2]:
+            col_f3, col_r3 = st.columns([1, 1.3])
+            with col_f3:
+                tipo_com = st.selectbox("Tipo", [
+                    "Carta de notificación extrajudicial", "Comunicación a cliente",
+                    "Carta de cobranza", "Notificación de incumplimiento",
+                    "Propuesta de honorarios", "Informe jurídico a cliente",
+                ], key="abg_com_tipo")
+                contexto_com = st.text_area("Contexto y mensaje", height=120, key="abg_com_ctx")
+                tono_com = st.radio("Tono", ["Formal profesional", "Firme y directo", "Conciliatorio"], horizontal=True, key="abg_com_tono")
+                if st.button("✉️ Generar", use_container_width=True, key="abg_com_gen"):
+                    if contexto_com.strip() and get_llm_fn:
+                        prompt_com = f"Redacta una {tipo_com} profesional chilena.\nContexto: {contexto_com}\nTono: {tono_com}\nUsa formato de carta profesional chilena."
+                        system_com = "Eres un abogado chileno redactando comunicaciones profesionales formales."
+                        with st.spinner("Redactando…"):
+                            try:
+                                llm = get_llm_fn()
+                                st.session_state["abg_com_resultado"] = llm.generate(prompt_com, system=system_com, max_tokens=1000)
+                                st.rerun()
+                            except Exception as e:
+                                st.error(f"Error: {e}")
+                    else:
+                        st.warning("Describe el contexto del mensaje.")
+            with col_r3:
+                if "abg_com_resultado" in st.session_state and st.session_state.abg_com_resultado:
+                    st.text_area("Comunicación:", value=st.session_state.abg_com_resultado, height=400, key="abg_com_edit")
+                else:
+                    st.markdown('<div style="height:300px;display:flex;align-items:center;justify-content:center;color:#a09070;font-size:.82rem;text-align:center;border:1px dashed rgba(201,150,58,.15);border-radius:8px;flex-direction:column;">✉️<br>La comunicación aparecerá aquí</div>', unsafe_allow_html=True)
+        with sub_tabs[3]:
+            borradores = st.session_state.get("abg_borradores", [])
+            if not borradores:
+                st.markdown('<div style="text-align:center;padding:3rem;color:#a09070;font-size:.85rem;">📁 Aún no hay borradores guardados.</div>', unsafe_allow_html=True)
+            else:
+                for i, b in enumerate(reversed(borradores)):
+                    with st.expander(f"📄 {b['tipo']} — {b['partes'][:40]} ({b['fecha']})"):
+                        st.text_area("Contenido:", value=b["contenido"], height=300, key=f"abg_borr_{i}")
 
-    # ═══════════════════════════════════════════════════════════════════════════
+        # ═══════════════════════════════════════════════════════════════════════════
     # TAB: CORREOS
     # ═══════════════════════════════════════════════════════════════════════════
     elif tab == "correos":
@@ -937,7 +1030,7 @@ def render_abogado(get_llm_fn=None):
                     with st.spinner("Redactando…"):
                         try:
                             llm = get_llm_fn()
-                            st.session_state.abg_correo_result = llm.generate(prompt, system=" ", max_tokens=800)
+                            st.session_state.abg_correo_result = llm.generate(prompt, system="Eres AntonIA, asistente jurídico para abogados chilenos. Proporciona análisis precisos del Derecho chileno.", max_tokens=800)
                         except Exception as e:
                             st.error(f"Error: {e}")
                 elif not get_llm_fn:
@@ -1077,7 +1170,7 @@ def render_abogado(get_llm_fn=None):
                     with st.spinner("Generando borrador…"):
                         try:
                             llm = get_llm_fn()
-                            st.session_state.abg_doc_result = llm.generate(prompt, system=" ", max_tokens=1500)
+                            st.session_state.abg_doc_result = llm.generate(prompt, system="Eres AntonIA, asistente jurídico para abogados chilenos. Proporciona análisis precisos del Derecho chileno.", max_tokens=1500)
                         except Exception as e:
                             st.error(f"Error: {e}")
                 elif not get_llm_fn:
@@ -1148,7 +1241,7 @@ def render_abogado(get_llm_fn=None):
                     with st.spinner("Generando propuesta…"):
                         try:
                             llm = get_llm_fn()
-                            st.session_state.abg_hon_propuesta = llm.generate(prompt, system=" ", max_tokens=1000)
+                            st.session_state.abg_hon_propuesta = llm.generate(prompt, system="Eres AntonIA, asistente jurídico para abogados chilenos. Proporciona análisis precisos del Derecho chileno.", max_tokens=1000)
                         except Exception as e:
                             st.error(f"Error: {e}")
                 elif not get_llm_fn:
