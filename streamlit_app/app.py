@@ -1087,146 +1087,318 @@ nav     = st.session_state.nav
 persona = st.session_state.persona
 
 # ── HOME PAGE ────────────────────────────────────────────────────
-if nav == "HOME" or st.session_state.get("main_section") is None:
+# No mostrar HOME si el usuario está en el chooser de Universidad
+_is_univ_chooser = (
+    st.session_state.get("main_section") == "universidad"
+    and not st.session_state.get("univ_perfil_elegido", False)
+)
+if not _is_univ_chooser and (nav == "HOME" or st.session_state.get("main_section") is None):
     st.markdown("""
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 :root{--gold:#c9963a;--dark:#141210;--parchment:#f5f0e8;--card-dark:#1e1b16;}
-@keyframes float{0%,100%{transform:translateY(0) rotate(0);opacity:.3}50%{transform:translateY(-18px) rotate(2deg);opacity:.55}}
-@keyframes floatSlow{0%,100%{transform:translateY(0);opacity:.2}50%{transform:translateY(-25px);opacity:.45}}
-@keyframes fadeInUp{from{opacity:0;transform:translateY(28px)}to{opacity:1;transform:translateY(0)}}
-@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(201,150,58,.65)}50%{box-shadow:0 0 0 10px rgba(201,150,58,0)}}
-@keyframes gradBg{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
-@keyframes cityScroll{from{transform:translateX(0)}to{transform:translateX(-50%)}}
-@keyframes lightBlink{0%,100%{opacity:.4}50%{opacity:.9}}
-@keyframes carMove{from{transform:translateX(-120px)}to{transform:translateX(calc(100vw + 120px))}}
-@keyframes carMove2{from{transform:translateX(calc(100vw + 120px))}to{transform:translateX(-120px)}}
-.ant-hero{position:relative;padding:90px 20px 80px;background:linear-gradient(180deg,#050407 0%,#0a0810 35%,#0d0b14 60%,#070510 100%);overflow:hidden;text-align:center;}
-.ant-hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 30% 40%,rgba(201,150,58,.12) 0%,transparent 50%),radial-gradient(ellipse at 70% 60%,rgba(120,80,180,.08) 0%,transparent 45%);pointer-events:none;}
+@keyframes skySlide{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+@keyframes starGlow{0%,100%{opacity:.18}50%{opacity:.75}}
+@keyframes carGo{from{left:-80px}to{left:calc(100% + 80px)}}
+@keyframes carBack{from{right:-80px}to{right:calc(100% + 80px)}}
+@keyframes heroIn{from{opacity:0;transform:translateY(22px)}to{opacity:1;transform:translateY(0)}}
+@keyframes goldPulse{0%,100%{box-shadow:0 0 0 0 rgba(201,150,58,.5)}60%{box-shadow:0 0 0 12px rgba(201,150,58,0)}}
+
+/* ── HERO ─────────────────────────────── */
+.ant-hero{position:relative;padding:96px 20px 110px;
+  background:linear-gradient(180deg,#04030e 0%,#070517 40%,#0b0818 70%,#060410 100%);
+  overflow:hidden;text-align:center;}
+
 /* Stars */
-.ant-stars{position:absolute;top:0;left:0;width:100%;height:60%;pointer-events:none;overflow:hidden;}
-.ant-star{position:absolute;width:2px;height:2px;background:#fff;border-radius:50%;animation:lightBlink 3s ease-in-out infinite;}
-/* City skyline scrolling */
-.ant-city-wrap{position:absolute;bottom:0;left:0;width:100%;height:220px;pointer-events:none;overflow:hidden;}
-.ant-city{display:flex;width:200%;height:100%;animation:cityScroll 30s linear infinite;}
-.ant-city-bg,.ant-city-fg{display:flex;width:50%;height:100%;flex-shrink:0;}
-/* Buildings */
-.ant-bld{position:relative;background:linear-gradient(180deg,#1a1520 0%,#0e0c12 100%);flex-shrink:0;margin-right:2px;border-top-left-radius:2px;border-top-right-radius:2px;}
-.ant-bld::before{content:'';position:absolute;inset:4px 3px;background:repeating-linear-gradient(180deg,transparent 0px,transparent 8px,rgba(201,150,58,.05) 8px,rgba(201,150,58,.05) 9px),repeating-linear-gradient(90deg,transparent 0px,transparent 10px,rgba(201,150,58,.04) 10px,rgba(201,150,58,.04) 11px);}
-.ant-win{position:absolute;width:4px;height:4px;background:rgba(255,220,120,.0);border-radius:1px;}
-.ant-win.on{background:rgba(255,215,100,.75);box-shadow:0 0 4px rgba(255,200,80,.5);animation:lightBlink var(--bd) ease-in-out infinite;}
+.ant-s{position:absolute;border-radius:50%;background:#fff;animation:starGlow var(--d) ease-in-out infinite;animation-delay:var(--dl);}
+
+/* Gradient fade-in at top for seamless transition from sidebar */
+.ant-hero::before{content:'';position:absolute;top:0;left:0;width:100%;height:60px;
+  background:linear-gradient(180deg,rgba(4,3,14,1),transparent);pointer-events:none;z-index:4;}
+
+/* City SVG track */
+.ant-cv{position:absolute;bottom:24px;left:0;width:200%;pointer-events:none;
+  animation:skySlide 32s linear infinite;display:flex;}
+.ant-cv svg{width:50%;flex-shrink:0;}
+
 /* Road */
-.ant-road{position:absolute;bottom:0;left:0;width:100%;height:28px;background:linear-gradient(180deg,#1a1520,#0a0810);}
-.ant-road::after{content:'';position:absolute;top:50%;left:0;width:100%;height:2px;background:repeating-linear-gradient(90deg,rgba(201,150,58,.5) 0px,rgba(201,150,58,.5) 20px,transparent 20px,transparent 40px);}
+.ant-rd{position:absolute;bottom:0;left:0;width:100%;height:28px;
+  background:linear-gradient(0deg,#020108,#0a0815);
+  border-top:1px solid rgba(201,150,58,.1);}
+.ant-rd::after{content:'';position:absolute;top:50%;left:0;width:100%;height:2px;
+  background:repeating-linear-gradient(90deg,rgba(201,150,58,.5) 0 18px,transparent 18px 38px);}
+
 /* Cars */
-.ant-car{position:absolute;bottom:6px;height:8px;border-radius:2px;animation:carMove var(--spd) linear infinite;}
-.ant-car2{position:absolute;bottom:14px;height:6px;border-radius:2px;animation:carMove2 var(--spd) linear infinite;}
-.ant-ptcl{display:none;}
-.ant-hero-inner{position:relative;z-index:2;animation:fadeInUp .9s ease-out .15s both;}
-.ant-tag{font-family:'Inter',sans-serif;font-size:.82rem;color:var(--gold);text-transform:uppercase;letter-spacing:.18em;margin-bottom:18px;font-weight:600;}
-.ant-h1{font-family:'Playfair Display',serif;font-size:clamp(2.2rem,5vw,3.6rem);font-weight:900;color:var(--parchment);margin-bottom:20px;line-height:1.18;}
-.ant-h1 span{color:var(--gold);}
-.ant-sub{font-family:'Inter',sans-serif;font-size:1.05rem;color:#d4cfc8;margin:0 auto 38px;max-width:580px;line-height:1.65;}
-.ant-btns{display:flex;gap:16px;justify-content:center;flex-wrap:wrap;margin-bottom:10px;}
-.ant-btn-p{padding:13px 30px;background:var(--gold);color:#0d0b09;border:none;border-radius:8px;font-family:'Inter',sans-serif;font-size:.95rem;font-weight:700;cursor:pointer;animation:pulse 2.2s infinite;transition:all .28s ease;text-decoration:none;display:inline-block;}
-.ant-btn-p:hover{background:#dab157;transform:translateY(-2px);box-shadow:0 14px 36px rgba(201,150,58,.3);}
-.ant-btn-s{padding:13px 30px;background:transparent;color:var(--gold);border:2px solid var(--gold);border-radius:8px;font-family:'Inter',sans-serif;font-size:.95rem;font-weight:600;cursor:pointer;transition:all .28s ease;display:inline-block;}
-.ant-btn-s:hover{background:rgba(201,150,58,.1);transform:translateY(-2px);}
-.ant-stats{display:flex;justify-content:center;gap:clamp(20px,4vw,48px);padding:28px 20px;background:rgba(201,150,58,.05);border-top:1px solid rgba(201,150,58,.12);border-bottom:1px solid rgba(201,150,58,.12);flex-wrap:wrap;}
-.ant-stat-n{font-family:'Playfair Display',serif;font-size:1.8rem;font-weight:800;color:var(--gold);}
-.ant-stat-l{font-size:.72rem;color:#7a6040;text-transform:uppercase;letter-spacing:.08em;margin-top:2px;}
-.ant-sec{padding:55px 20px;max-width:900px;margin:0 auto;}
-.ant-sec-t{font-family:'Playfair Display',serif;font-size:1.9rem;font-weight:800;color:#1a1813;text-align:center;margin-bottom:8px;}
-.ant-sec-s{font-size:.92rem;color:#6a5a3a;text-align:center;margin-bottom:36px;}
-.ant-grid-4{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;}
-.ant-card{background:var(--card-dark);border:1px solid rgba(201,150,58,.15);border-radius:12px;padding:24px 20px;transition:all .28s ease;cursor:pointer;}
-.ant-card:hover{border-color:rgba(201,150,58,.45);transform:translateY(-4px);box-shadow:0 16px 40px rgba(0,0,0,.35);}
-.ant-card-icon{font-size:2rem;margin-bottom:12px;}
-.ant-card-t{font-family:'Inter',sans-serif;font-size:.88rem;font-weight:700;color:var(--parchment);margin-bottom:7px;}
-.ant-card-d{font-size:.78rem;color:rgba(240,232,218,.48);line-height:1.55;}
-.ant-steps{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:10px;}
-.ant-step{flex:1;min-width:160px;max-width:220px;text-align:center;padding:22px 16px;background:rgba(201,150,58,.05);border:1px solid rgba(201,150,58,.12);border-radius:10px;}
-.ant-step-n{font-family:'Playfair Display',serif;font-size:2rem;font-weight:900;color:var(--gold);line-height:1;}
-.ant-step-t{font-size:.88rem;font-weight:700;color:#1a1813;margin:8px 0 5px;}
-.ant-step-d{font-size:.78rem;color:#6a5a3a;line-height:1.5;}
-.ant-tools{display:grid;grid-template-columns:repeat(auto-fit,minmax(175px,1fr));gap:12px;}
-.ant-tool{background:rgba(201,150,58,.04);border:1px solid rgba(201,150,58,.12);border-radius:9px;padding:16px 14px;display:flex;align-items:flex-start;gap:10px;transition:all .22s ease;}
-.ant-tool:hover{border-color:rgba(201,150,58,.38);background:rgba(201,150,58,.07);}
-.ant-tool-icon{font-size:1.35rem;min-width:1.6rem;}
-.ant-tool-t{font-size:.82rem;font-weight:700;color:#1a1813;margin-bottom:3px;}
-.ant-tool-d{font-size:.72rem;color:#6a5a3a;line-height:1.45;}
-.ant-cta{text-align:center;padding:55px 20px;background:linear-gradient(135deg,rgba(201,150,58,.08),rgba(201,150,58,.03));border-top:1px solid rgba(201,150,58,.12);}
-.ant-cta-t{font-family:'Playfair Display',serif;font-size:1.7rem;font-weight:800;color:#1a1813;margin-bottom:12px;}
-.ant-cta-s{font-size:.92rem;color:#6a5a3a;margin-bottom:28px;}
+.ant-car{position:absolute;height:7px;border-radius:3px;bottom:5px;
+  animation:carGo var(--spd) linear infinite;animation-delay:var(--dl);}
+.ant-car2{position:absolute;height:6px;border-radius:3px;bottom:14px;
+  animation:carBack var(--spd) linear infinite;animation-delay:var(--dl);}
+
+/* Hero content */
+.ant-hc{position:relative;z-index:3;animation:heroIn .9s ease-out .15s both;}
+.ant-label{font-family:Inter,sans-serif;font-size:.78rem;color:var(--gold);
+  text-transform:uppercase;letter-spacing:.2em;font-weight:600;margin-bottom:20px;}
+.ant-h1{font-family:'Playfair Display',serif;font-size:clamp(2.1rem,5.2vw,3.7rem);
+  font-weight:900;color:#f5f0e8;line-height:1.16;margin-bottom:18px;}
+.ant-h1 em{font-style:normal;color:var(--gold);}
+.ant-sub{font-family:Inter,sans-serif;font-size:1.02rem;color:rgba(240,232,218,.68);
+  max-width:560px;margin:0 auto 36px;line-height:1.7;}
+.ant-btns{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;}
+.ant-bp{padding:12px 30px;background:var(--gold);color:#0d0b09;border-radius:8px;
+  font-family:Inter,sans-serif;font-size:.95rem;font-weight:700;display:inline-block;
+  animation:goldPulse 2.4s infinite;transition:.25s;}
+.ant-bp:hover{background:#daa840;transform:translateY(-2px);box-shadow:0 12px 32px rgba(201,150,58,.28);}
+.ant-bs{padding:12px 28px;background:transparent;color:var(--gold);
+  border:2px solid rgba(201,150,58,.6);border-radius:8px;font-family:Inter,sans-serif;
+  font-size:.95rem;font-weight:600;display:inline-block;transition:.25s;}
+.ant-bs:hover{background:rgba(201,150,58,.1);border-color:var(--gold);transform:translateY(-2px);}
+
+/* ── STATS ────────────────────────────── */
+.ant-stats{display:flex;justify-content:center;gap:clamp(16px,4vw,52px);
+  padding:26px 20px;background:rgba(201,150,58,.04);
+  border-top:1px solid rgba(201,150,58,.11);border-bottom:1px solid rgba(201,150,58,.11);flex-wrap:wrap;}
+.ant-stat-n{font-family:'Playfair Display',serif;font-size:1.85rem;font-weight:800;color:var(--gold);}
+.ant-stat-l{font-size:.7rem;color:#8a7850;text-transform:uppercase;letter-spacing:.08em;margin-top:3px;}
+
+/* ── SECTIONS (light bg) ─────────────── */
+.ant-sec{padding:52px 20px;max-width:900px;margin:0 auto;}
+.ant-sec-t{font-family:'Playfair Display',serif;font-size:1.85rem;font-weight:800;
+  color:#1a1813;text-align:center;margin-bottom:8px;}
+.ant-sec-s{font-size:.9rem;color:#6a5a3a;text-align:center;margin-bottom:34px;}
+
+/* ── CARDS (dark bg) ─────────────────── */
+.ant-grid-4{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:14px;}
+.ant-card{background:#1a1520;border:1px solid rgba(201,150,58,.14);border-radius:12px;
+  padding:22px 18px;transition:all .25s;}
+.ant-card:hover{border-color:rgba(201,150,58,.42);transform:translateY(-3px);
+  box-shadow:0 14px 38px rgba(0,0,0,.32);}
+.ant-card-icon{font-size:1.9rem;margin-bottom:10px;}
+.ant-card-t{font-family:Inter,sans-serif;font-size:.86rem;font-weight:700;
+  color:#f0e8d8;margin-bottom:6px;}
+.ant-card-d{font-size:.76rem;color:rgba(240,232,218,.45);line-height:1.55;}
+
+/* ── STEPS ───────────────────────────── */
+.ant-steps{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:8px;}
+.ant-step{flex:1;min-width:155px;max-width:215px;text-align:center;padding:20px 14px;
+  background:rgba(201,150,58,.045);border:1px solid rgba(201,150,58,.11);border-radius:10px;}
+.ant-step-n{font-family:'Playfair Display',serif;font-size:1.9rem;font-weight:900;
+  color:var(--gold);line-height:1;}
+.ant-step-t{font-size:.86rem;font-weight:700;color:#1a1813;margin:7px 0 4px;}
+.ant-step-d{font-size:.76rem;color:#6a5a3a;line-height:1.5;}
+
+/* ── TOOLS ───────────────────────────── */
+.ant-tools{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:11px;}
+.ant-tool{background:rgba(201,150,58,.035);border:1px solid rgba(201,150,58,.11);
+  border-radius:9px;padding:15px 13px;display:flex;align-items:flex-start;gap:9px;transition:.2s;}
+.ant-tool:hover{border-color:rgba(201,150,58,.36);background:rgba(201,150,58,.065);}
+.ant-tool-icon{font-size:1.3rem;min-width:1.5rem;}
+.ant-tool-t{font-size:.8rem;font-weight:700;color:#1a1813;margin-bottom:2px;}
+.ant-tool-d{font-size:.7rem;color:#6a5a3a;line-height:1.45;}
+
+/* ── CTA ─────────────────────────────── */
+.ant-cta{text-align:center;padding:52px 20px;
+  background:linear-gradient(135deg,rgba(201,150,58,.07),rgba(201,150,58,.025));
+  border-top:1px solid rgba(201,150,58,.11);}
+.ant-cta-t{font-family:'Playfair Display',serif;font-size:1.65rem;font-weight:800;
+  color:#1a1813;margin-bottom:10px;}
+.ant-cta-s{font-size:.9rem;color:#6a5a3a;margin-bottom:26px;}
 </style>
 
 <div class="ant-hero">
+
   <!-- Stars -->
-  <div class="ant-stars">
-    <div class="ant-star" style="top:5%;left:10%;animation-delay:0s;--bd:2.1s"></div>
-    <div class="ant-star" style="top:12%;left:25%;animation-delay:.5s;--bd:3.2s;width:1px;height:1px"></div>
-    <div class="ant-star" style="top:8%;left:45%;animation-delay:1s;--bd:2.8s"></div>
-    <div class="ant-star" style="top:18%;left:60%;animation-delay:.3s;--bd:1.9s;width:3px;height:3px"></div>
-    <div class="ant-star" style="top:6%;left:78%;animation-delay:1.5s;--bd:2.5s"></div>
-    <div class="ant-star" style="top:22%;left:88%;animation-delay:.8s;--bd:3.5s;width:1px;height:1px"></div>
-    <div class="ant-star" style="top:3%;left:35%;animation-delay:2s;--bd:2.2s;width:1px;height:1px"></div>
-    <div class="ant-star" style="top:15%;left:72%;animation-delay:1.2s;--bd:2.7s"></div>
-    <div class="ant-star" style="top:25%;left:15%;animation-delay:.6s;--bd:3.1s;width:1px;height:1px"></div>
-    <div class="ant-star" style="top:20%;left:50%;animation-delay:1.8s;--bd:2.4s"></div>
+  <div class="ant-s" style="width:2px;height:2px;top:7%;left:8%;--d:2.1s;--dl:0s;"></div>
+  <div class="ant-s" style="width:1px;height:1px;top:13%;left:22%;--d:3.0s;--dl:.4s;"></div>
+  <div class="ant-s" style="width:2px;height:2px;top:5%;left:40%;--d:2.5s;--dl:.9s;"></div>
+  <div class="ant-s" style="width:3px;height:3px;top:18%;left:58%;--d:1.8s;--dl:.2s;"></div>
+  <div class="ant-s" style="width:2px;height:2px;top:8%;left:75%;--d:2.8s;--dl:1.3s;"></div>
+  <div class="ant-s" style="width:1px;height:1px;top:23%;left:88%;--d:3.3s;--dl:.7s;"></div>
+  <div class="ant-s" style="width:1px;height:1px;top:4%;left:33%;--d:2.2s;--dl:1.8s;"></div>
+  <div class="ant-s" style="width:2px;height:2px;top:16%;left:68%;--d:2.7s;--dl:1.1s;"></div>
+  <div class="ant-s" style="width:1px;height:1px;top:28%;left:14%;--d:3.1s;--dl:.5s;"></div>
+  <div class="ant-s" style="width:2px;height:2px;top:21%;left:50%;--d:2.4s;--dl:1.6s;"></div>
+  <div class="ant-s" style="width:1px;height:1px;top:10%;left:92%;--d:2.9s;--dl:.3s;"></div>
+  <div class="ant-s" style="width:2px;height:2px;top:30%;left:78%;--d:2.0s;--dl:2.1s;"></div>
+
+  <!-- SVG City Skyline — Santiago-inspired, pure SVG path, no HTML building divs -->
+  <div class="ant-cv">
+    <svg viewBox="0 0 1200 200" preserveAspectRatio="xMidYMax meet" style="height:200px;">
+      <defs>
+        <linearGradient id="bGr" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#1e1830"/>
+          <stop offset="100%" stop-color="#0a0814"/>
+        </linearGradient>
+        <linearGradient id="skyGr" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#06040f"/>
+          <stop offset="100%" stop-color="#0d0b18"/>
+        </linearGradient>
+      </defs>
+      <!-- Sky fill -->
+      <rect width="1200" height="200" fill="url(#skyGr)"/>
+      <!-- City silhouette — single continuous path (Santiago skyline style) -->
+      <path fill="url(#bGr)" d="
+        M0,200 L0,145 L38,145 L38,110 L55,110 L55,82 L60,82 L60,68
+        L63,68 L63,52 L65,52 L65,38 L67,38 L67,52 L69,52 L69,68
+        L72,68 L72,82 L77,82 L77,68 L80,68 L80,55 L83,55 L83,45
+        L85,45 L85,38 L87,38 L87,45 L89,45 L89,55 L92,55 L92,68
+        L97,68 L97,82 L115,82 L115,100 L145,100 L145,72 L168,72
+        L168,55 L175,55 L175,45 L178,45 L178,55 L185,55 L185,72
+        L210,72 L210,105 L240,105 L240,80 L265,80 L265,60 L275,60
+        L275,48 L278,48 L278,40 L280,40 L280,48 L283,48 L283,60
+        L295,60 L295,80 L325,80 L325,108 L352,108 L352,82 L375,82
+        L375,62 L390,62 L390,52 L393,52 L393,44 L396,44 L396,38
+        L399,38 L399,44 L402,44 L402,52 L405,52 L405,62 L418,62
+        L418,82 L442,82 L442,115 L468,115 L468,88 L490,88 L490,68
+        L505,68 L505,58 L508,58 L508,50 L511,50 L511,58 L514,58
+        L514,68 L530,68 L530,88 L555,88 L555,112 L578,112 L578,85
+        L602,85 L602,65 L612,65 L612,55 L615,55 L615,46 L618,46
+        L618,38 L621,38 L621,46 L624,46 L624,55 L627,55 L627,65
+        L640,65 L640,85 L665,85 L665,108 L690,108 L690,78 L712,78
+        L712,58 L722,58 L722,48 L725,48 L725,40 L728,40 L728,48
+        L731,48 L731,58 L742,58 L742,78 L768,78 L768,102 L795,102
+        L795,75 L818,75 L818,55 L828,55 L828,45 L831,45 L831,38
+        L834,38 L834,45 L837,45 L837,55 L848,55 L848,75 L872,75
+        L872,105 L898,105 L898,80 L922,80 L922,60 L932,60 L932,50
+        L935,50 L935,42 L938,42 L938,50 L941,50 L941,60 L952,60
+        L952,80 L978,80 L978,108 L1005,108 L1005,78 L1028,78 L1028,58
+        L1042,58 L1042,48 L1045,48 L1045,40 L1048,40 L1048,48
+        L1051,48 L1051,58 L1065,58 L1065,78 L1090,78 L1090,105
+        L1115,105 L1115,80 L1138,80 L1138,60 L1148,60 L1148,50
+        L1151,50 L1151,38 L1154,38 L1154,50 L1157,50 L1157,60
+        L1168,60 L1168,80 L1200,80 L1200,200 Z"/>
+      <!-- Window glows -->
+      <g fill="rgba(255,218,90,0.72)">
+        <rect x="8" y="115" width="5" height="6" rx="1"/>
+        <rect x="20" y="115" width="5" height="6" rx="1"/>
+        <rect x="8" y="128" width="5" height="6" rx="1"/>
+        <rect x="20" y="128" width="5" height="6" rx="1"/>
+        <rect x="44" y="90" width="4" height="5" rx="1"/>
+        <rect x="44" y="103" width="4" height="5" rx="1"/>
+        <rect x="120" y="82" width="5" height="6" rx="1"/>
+        <rect x="132" y="82" width="5" height="6" rx="1"/>
+        <rect x="120" y="95" width="5" height="6" rx="1"/>
+        <rect x="150" y="55" width="5" height="6" rx="1"/>
+        <rect x="161" y="55" width="5" height="6" rx="1"/>
+        <rect x="150" y="67" width="5" height="6" rx="1"/>
+        <rect x="218" y="85" width="5" height="6" rx="1"/>
+        <rect x="230" y="85" width="5" height="6" rx="1"/>
+        <rect x="248" y="62" width="4" height="5" rx="1"/>
+        <rect x="248" y="73" width="4" height="5" rx="1"/>
+        <rect x="358" y="65" width="5" height="6" rx="1"/>
+        <rect x="370" y="65" width="5" height="6" rx="1"/>
+        <rect x="358" y="78" width="5" height="6" rx="1"/>
+        <rect x="450" y="95" width="5" height="6" rx="1"/>
+        <rect x="462" y="95" width="5" height="6" rx="1"/>
+        <rect x="562" y="92" width="5" height="6" rx="1"/>
+        <rect x="575" y="92" width="5" height="6" rx="1"/>
+        <rect x="562" y="103" width="5" height="6" rx="1"/>
+        <rect x="585" y="68" width="4" height="5" rx="1"/>
+        <rect x="595" y="68" width="4" height="5" rx="1"/>
+        <rect x="645" y="65" width="5" height="6" rx="1"/>
+        <rect x="657" y="65" width="5" height="6" rx="1"/>
+        <rect x="645" y="78" width="5" height="6" rx="1"/>
+        <rect x="696" y="60" width="5" height="6" rx="1"/>
+        <rect x="708" y="60" width="5" height="6" rx="1"/>
+        <rect x="775" y="58" width="5" height="6" rx="1"/>
+        <rect x="788" y="58" width="5" height="6" rx="1"/>
+        <rect x="775" y="70" width="5" height="6" rx="1"/>
+        <rect x="803" y="55" width="4" height="5" rx="1"/>
+        <rect x="855" y="58" width="5" height="6" rx="1"/>
+        <rect x="867" y="58" width="5" height="6" rx="1"/>
+        <rect x="905" y="62" width="5" height="6" rx="1"/>
+        <rect x="917" y="62" width="5" height="6" rx="1"/>
+        <rect x="905" y="75" width="5" height="6" rx="1"/>
+        <rect x="958" y="62" width="5" height="6" rx="1"/>
+        <rect x="970" y="62" width="5" height="6" rx="1"/>
+        <rect x="1012" y="60" width="5" height="6" rx="1"/>
+        <rect x="1024" y="60" width="5" height="6" rx="1"/>
+        <rect x="1072" y="60" width="5" height="6" rx="1"/>
+        <rect x="1095" y="85" width="5" height="6" rx="1"/>
+        <rect x="1107" y="85" width="5" height="6" rx="1"/>
+        <rect x="1120" y="62" width="5" height="6" rx="1"/>
+        <rect x="1143" y="62" width="5" height="6" rx="1"/>
+      </g>
+      <!-- Glow aura on tallest towers -->
+      <ellipse cx="66" cy="38" rx="5" ry="3" fill="rgba(201,150,58,.12)"/>
+      <ellipse cx="86" cy="38" rx="5" ry="3" fill="rgba(201,150,58,.10)"/>
+      <ellipse cx="280" cy="40" rx="4" ry="2.5" fill="rgba(201,150,58,.10)"/>
+      <ellipse cx="396" cy="38" rx="4" ry="2.5" fill="rgba(201,150,58,.10)"/>
+    </svg>
+    <!-- Second copy — identical for seamless loop -->
+    <svg viewBox="0 0 1200 200" preserveAspectRatio="xMidYMax meet" style="height:200px;">
+      <defs>
+        <linearGradient id="bGr2" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#1e1830"/>
+          <stop offset="100%" stop-color="#0a0814"/>
+        </linearGradient>
+      </defs>
+      <rect width="1200" height="200" fill="#0d0b18"/>
+      <path fill="url(#bGr2)" d="
+        M0,200 L0,145 L38,145 L38,110 L55,110 L55,82 L60,82 L60,68
+        L63,68 L63,52 L65,52 L65,38 L67,38 L67,52 L69,52 L69,68
+        L72,68 L72,82 L77,82 L77,68 L80,68 L80,55 L83,55 L83,45
+        L85,45 L85,38 L87,38 L87,45 L89,45 L89,55 L92,55 L92,68
+        L97,68 L97,82 L115,82 L115,100 L145,100 L145,72 L168,72
+        L168,55 L175,55 L175,45 L178,45 L178,55 L185,55 L185,72
+        L210,72 L210,105 L240,105 L240,80 L265,80 L265,60 L275,60
+        L275,48 L278,48 L278,40 L280,40 L280,48 L283,48 L283,60
+        L295,60 L295,80 L325,80 L325,108 L352,108 L352,82 L375,82
+        L375,62 L390,62 L390,52 L393,52 L393,44 L396,44 L396,38
+        L399,38 L399,44 L402,44 L402,52 L405,52 L405,62 L418,62
+        L418,82 L442,82 L442,115 L468,115 L468,88 L490,88 L490,68
+        L505,68 L505,58 L508,58 L508,50 L511,50 L511,58 L514,58
+        L514,68 L530,68 L530,88 L555,88 L555,112 L578,112 L578,85
+        L602,85 L602,65 L612,65 L612,55 L615,55 L615,46 L618,46
+        L618,38 L621,38 L621,46 L624,46 L624,55 L627,55 L627,65
+        L640,65 L640,85 L665,85 L665,108 L690,108 L690,78 L712,78
+        L712,58 L722,58 L722,48 L725,48 L725,40 L728,40 L728,48
+        L731,48 L731,58 L742,58 L742,78 L768,78 L768,102 L795,102
+        L795,75 L818,75 L818,55 L828,55 L828,45 L831,45 L831,38
+        L834,38 L834,45 L837,45 L837,55 L848,55 L848,75 L872,75
+        L872,105 L898,105 L898,80 L922,80 L922,60 L932,60 L932,50
+        L935,50 L935,42 L938,42 L938,50 L941,50 L941,60 L952,60
+        L952,80 L978,80 L978,108 L1005,108 L1005,78 L1028,78 L1028,58
+        L1042,58 L1042,48 L1045,48 L1045,40 L1048,40 L1048,48
+        L1051,48 L1051,58 L1065,58 L1065,78 L1090,78 L1090,105
+        L1115,105 L1115,80 L1138,80 L1138,60 L1148,60 L1148,50
+        L1151,50 L1151,38 L1154,38 L1154,50 L1157,50 L1157,60
+        L1168,60 L1168,80 L1200,80 L1200,200 Z"/>
+      <g fill="rgba(255,218,90,0.72)">
+        <rect x="8" y="115" width="5" height="6" rx="1"/>
+        <rect x="20" y="115" width="5" height="6" rx="1"/>
+        <rect x="120" y="82" width="5" height="6" rx="1"/>
+        <rect x="150" y="55" width="5" height="6" rx="1"/>
+        <rect x="248" y="62" width="4" height="5" rx="1"/>
+        <rect x="358" y="65" width="5" height="6" rx="1"/>
+        <rect x="562" y="92" width="5" height="6" rx="1"/>
+        <rect x="645" y="65" width="5" height="6" rx="1"/>
+        <rect x="696" y="60" width="5" height="6" rx="1"/>
+        <rect x="775" y="58" width="5" height="6" rx="1"/>
+        <rect x="855" y="58" width="5" height="6" rx="1"/>
+        <rect x="958" y="62" width="5" height="6" rx="1"/>
+        <rect x="1072" y="60" width="5" height="6" rx="1"/>
+        <rect x="1143" y="62" width="5" height="6" rx="1"/>
+      </g>
+    </svg>
   </div>
-  <!-- City Skyline -->
-  <div class="ant-city-wrap">
-    <div class="ant-city">
-      <!-- First copy of city -->
-      <div class="ant-city-fg" style="align-items:flex-end;">
-        <div class="ant-bld" style="width:30px;height:160px;"><div class="ant-win on" style="top:20px;left:8px;--bd:2.1s"></div><div class="ant-win on" style="top:20px;left:18px;--bd:3.2s"></div><div class="ant-win" style="top:32px;left:8px;--bd:2.5s"></div><div class="ant-win on" style="top:44px;left:18px;--bd:1.9s"></div><div class="ant-win on" style="top:56px;left:8px;--bd:2.8s"></div><div class="ant-win" style="top:68px;left:18px;--bd:3.1s"></div></div>
-        <div class="ant-bld" style="width:55px;height:200px;"><div class="ant-win on" style="top:15px;left:8px;--bd:2.3s"></div><div class="ant-win on" style="top:15px;left:20px;--bd:1.8s"></div><div class="ant-win on" style="top:15px;left:32px;--bd:2.6s"></div><div class="ant-win on" style="top:30px;left:8px;--bd:3.0s"></div><div class="ant-win" style="top:30px;left:20px;--bd:2.1s"></div><div class="ant-win on" style="top:30px;left:32px;--bd:1.7s"></div><div class="ant-win on" style="top:45px;left:8px;--bd:2.9s"></div><div class="ant-win on" style="top:60px;left:20px;--bd:2.4s"></div><div class="ant-win on" style="top:75px;left:32px;--bd:3.3s"></div></div>
-        <div class="ant-bld" style="width:25px;height:120px;"><div class="ant-win on" style="top:18px;left:6px;--bd:2.0s"></div><div class="ant-win on" style="top:18px;left:14px;--bd:3.4s"></div><div class="ant-win on" style="top:34px;left:6px;--bd:2.7s"></div><div class="ant-win" style="top:50px;left:14px;--bd:1.8s"></div></div>
-        <div class="ant-bld" style="width:70px;height:240px;"><div class="ant-win on" style="top:10px;left:10px;--bd:2.2s"></div><div class="ant-win on" style="top:10px;left:25px;--bd:1.6s"></div><div class="ant-win on" style="top:10px;left:40px;--bd:2.9s"></div><div class="ant-win on" style="top:28px;left:10px;--bd:3.1s"></div><div class="ant-win" style="top:28px;left:25px;--bd:2.0s"></div><div class="ant-win on" style="top:28px;left:40px;--bd:2.4s"></div><div class="ant-win on" style="top:46px;left:10px;--bd:1.9s"></div><div class="ant-win on" style="top:64px;left:25px;--bd:3.2s"></div><div class="ant-win on" style="top:82px;left:40px;--bd:2.7s"></div><div class="ant-win on" style="top:100px;left:10px;--bd:2.1s"></div></div>
-        <div class="ant-bld" style="width:35px;height:140px;"><div class="ant-win on" style="top:20px;left:8px;--bd:3.0s"></div><div class="ant-win on" style="top:20px;left:20px;--bd:2.3s"></div><div class="ant-win on" style="top:38px;left:8px;--bd:1.8s"></div><div class="ant-win on" style="top:56px;left:20px;--bd:2.6s"></div><div class="ant-win on" style="top:74px;left:8px;--bd:3.1s"></div></div>
-        <div class="ant-bld" style="width:45px;height:180px;"><div class="ant-win on" style="top:15px;left:8px;--bd:2.5s"></div><div class="ant-win" style="top:15px;left:25px;--bd:1.9s"></div><div class="ant-win on" style="top:30px;left:8px;--bd:3.2s"></div><div class="ant-win on" style="top:30px;left:25px;--bd:2.1s"></div><div class="ant-win on" style="top:45px;left:8px;--bd:2.8s"></div><div class="ant-win on" style="top:60px;left:25px;--bd:1.7s"></div></div>
-        <div class="ant-bld" style="width:28px;height:100px;"><div class="ant-win on" style="top:15px;left:7px;--bd:2.4s"></div><div class="ant-win on" style="top:15px;left:16px;--bd:3.0s"></div><div class="ant-win on" style="top:32px;left:7px;--bd:2.2s"></div><div class="ant-win" style="top:48px;left:16px;--bd:1.8s"></div></div>
-        <div class="ant-bld" style="width:60px;height:220px;"><div class="ant-win on" style="top:12px;left:10px;--bd:2.7s"></div><div class="ant-win on" style="top:12px;left:28px;--bd:1.9s"></div><div class="ant-win on" style="top:12px;left:44px;--bd:3.3s"></div><div class="ant-win on" style="top:30px;left:10px;--bd:2.0s"></div><div class="ant-win on" style="top:48px;left:28px;--bd:2.5s"></div><div class="ant-win on" style="top:66px;left:44px;--bd:1.7s"></div><div class="ant-win on" style="top:84px;left:10px;--bd:3.1s"></div></div>
-        <div class="ant-bld" style="width:40px;height:160px;"><div class="ant-win on" style="top:18px;left:8px;--bd:2.3s"></div><div class="ant-win on" style="top:18px;left:24px;--bd:1.8s"></div><div class="ant-win on" style="top:36px;left:8px;--bd:2.9s"></div><div class="ant-win on" style="top:54px;left:24px;--bd:3.2s"></div></div>
-        <div class="ant-bld" style="width:50px;height:200px;"><div class="ant-win on" style="top:14px;left:8px;--bd:2.1s"></div><div class="ant-win on" style="top:14px;left:25px;--bd:2.8s"></div><div class="ant-win on" style="top:32px;left:8px;--bd:1.7s"></div><div class="ant-win on" style="top:32px;left:25px;--bd:3.0s"></div><div class="ant-win on" style="top:50px;left:8px;--bd:2.4s"></div></div>
-        <div class="ant-bld" style="width:32px;height:130px;"><div class="ant-win on" style="top:16px;left:7px;--bd:3.1s"></div><div class="ant-win on" style="top:16px;left:19px;--bd:2.0s"></div><div class="ant-win on" style="top:34px;left:7px;--bd:2.7s"></div><div class="ant-win on" style="top:52px;left:19px;--bd:1.9s"></div></div>
-        <div class="ant-bld" style="width:75px;height:260px;"><div class="ant-win on" style="top:8px;left:10px;--bd:1.8s"></div><div class="ant-win on" style="top:8px;left:28px;--bd:2.5s"></div><div class="ant-win on" style="top:8px;left:48px;--bd:3.2s"></div><div class="ant-win on" style="top:26px;left:10px;--bd:2.1s"></div><div class="ant-win" style="top:26px;left:28px;--bd:2.8s"></div><div class="ant-win on" style="top:44px;left:48px;--bd:1.7s"></div><div class="ant-win on" style="top:62px;left:10px;--bd:3.0s"></div><div class="ant-win on" style="top:80px;left:28px;--bd:2.3s"></div></div>
-        <div class="ant-bld" style="width:38px;height:150px;"><div class="ant-win on" style="top:18px;left:8px;--bd:2.6s"></div><div class="ant-win on" style="top:18px;left:22px;--bd:1.9s"></div><div class="ant-win on" style="top:36px;left:8px;--bd:3.3s"></div><div class="ant-win on" style="top:54px;left:22px;--bd:2.1s"></div><div class="ant-win on" style="top:72px;left:8px;--bd:2.7s"></div></div>
-        <div class="ant-bld" style="width:55px;height:190px;"><div class="ant-win on" style="top:14px;left:8px;--bd:2.9s"></div><div class="ant-win on" style="top:14px;left:26px;--bd:1.8s"></div><div class="ant-win on" style="top:14px;left:40px;--bd:3.1s"></div><div class="ant-win on" style="top:32px;left:8px;--bd:2.2s"></div><div class="ant-win on" style="top:50px;left:26px;--bd:2.5s"></div></div>
-      </div>
-      <!-- Second copy (identical for seamless loop) -->
-      <div class="ant-city-fg" style="align-items:flex-end;">
-        <div class="ant-bld" style="width:30px;height:160px;"><div class="ant-win on" style="top:20px;left:8px;--bd:2.1s"></div><div class="ant-win on" style="top:20px;left:18px;--bd:3.2s"></div><div class="ant-win on" style="top:44px;left:18px;--bd:1.9s"></div><div class="ant-win on" style="top:56px;left:8px;--bd:2.8s"></div></div>
-        <div class="ant-bld" style="width:55px;height:200px;"><div class="ant-win on" style="top:15px;left:8px;--bd:2.3s"></div><div class="ant-win on" style="top:15px;left:20px;--bd:1.8s"></div><div class="ant-win on" style="top:15px;left:32px;--bd:2.6s"></div><div class="ant-win on" style="top:45px;left:8px;--bd:2.9s"></div><div class="ant-win on" style="top:60px;left:20px;--bd:2.4s"></div></div>
-        <div class="ant-bld" style="width:25px;height:120px;"><div class="ant-win on" style="top:18px;left:6px;--bd:2.0s"></div><div class="ant-win on" style="top:34px;left:14px;--bd:2.7s"></div></div>
-        <div class="ant-bld" style="width:70px;height:240px;"><div class="ant-win on" style="top:10px;left:10px;--bd:2.2s"></div><div class="ant-win on" style="top:10px;left:25px;--bd:1.6s"></div><div class="ant-win on" style="top:28px;left:40px;--bd:2.4s"></div><div class="ant-win on" style="top:64px;left:25px;--bd:3.2s"></div><div class="ant-win on" style="top:100px;left:10px;--bd:2.1s"></div></div>
-        <div class="ant-bld" style="width:35px;height:140px;"><div class="ant-win on" style="top:20px;left:8px;--bd:3.0s"></div><div class="ant-win on" style="top:38px;left:20px;--bd:1.8s"></div><div class="ant-win on" style="top:74px;left:8px;--bd:3.1s"></div></div>
-        <div class="ant-bld" style="width:45px;height:180px;"><div class="ant-win on" style="top:15px;left:25px;--bd:1.9s"></div><div class="ant-win on" style="top:30px;left:8px;--bd:3.2s"></div><div class="ant-win on" style="top:45px;left:8px;--bd:2.8s"></div></div>
-        <div class="ant-bld" style="width:60px;height:220px;"><div class="ant-win on" style="top:12px;left:10px;--bd:2.7s"></div><div class="ant-win on" style="top:12px;left:44px;--bd:3.3s"></div><div class="ant-win on" style="top:48px;left:28px;--bd:2.5s"></div><div class="ant-win on" style="top:84px;left:10px;--bd:3.1s"></div></div>
-        <div class="ant-bld" style="width:75px;height:260px;"><div class="ant-win on" style="top:8px;left:10px;--bd:1.8s"></div><div class="ant-win on" style="top:8px;left:48px;--bd:3.2s"></div><div class="ant-win on" style="top:44px;left:28px;--bd:1.7s"></div><div class="ant-win on" style="top:80px;left:10px;--bd:2.3s"></div></div>
-        <div class="ant-bld" style="width:50px;height:200px;"><div class="ant-win on" style="top:14px;left:8px;--bd:2.1s"></div><div class="ant-win on" style="top:32px;left:25px;--bd:3.0s"></div><div class="ant-win on" style="top:50px;left:8px;--bd:2.4s"></div></div>
-        <div class="ant-bld" style="width:32px;height:130px;"><div class="ant-win on" style="top:16px;left:7px;--bd:3.1s"></div><div class="ant-win on" style="top:34px;left:19px;--bd:2.7s"></div></div>
-        <div class="ant-bld" style="width:55px;height:190px;"><div class="ant-win on" style="top:14px;left:8px;--bd:2.9s"></div><div class="ant-win on" style="top:14px;left:40px;--bd:3.1s"></div><div class="ant-win on" style="top:50px;left:26px;--bd:2.5s"></div></div>
-        <div class="ant-bld" style="width:38px;height:150px;"><div class="ant-win on" style="top:18px;left:8px;--bd:2.6s"></div><div class="ant-win on" style="top:36px;left:22px;--bd:3.3s"></div><div class="ant-win on" style="top:72px;left:8px;--bd:2.7s"></div></div>
-        <div class="ant-bld" style="width:40px;height:160px;"><div class="ant-win on" style="top:18px;left:24px;--bd:1.8s"></div><div class="ant-win on" style="top:54px;left:8px;--bd:3.2s"></div></div>
-      </div>
-    </div>
-    <!-- Road -->
-    <div class="ant-road">
-      <div class="ant-car" style="width:35px;background:rgba(255,200,80,.35);left:0;bottom:5px;--spd:6s;animation-delay:0s;"></div>
-      <div class="ant-car" style="width:28px;background:rgba(180,150,255,.3);left:0;bottom:5px;--spd:9s;animation-delay:2s;"></div>
-      <div class="ant-car" style="width:40px;background:rgba(200,220,255,.25);left:0;bottom:5px;--spd:7.5s;animation-delay:4s;"></div>
-      <div class="ant-car2" style="width:32px;background:rgba(255,180,100,.3);--spd:8s;animation-delay:1s;bottom:12px;"></div>
-      <div class="ant-car2" style="width:24px;background:rgba(200,255,180,.25);--spd:11s;animation-delay:3.5s;bottom:12px;"></div>
-    </div>
+
+  <!-- Road with cars -->
+  <div class="ant-rd">
+    <div class="ant-car" style="width:34px;background:rgba(255,195,65,.38);--spd:7s;--dl:0s;"></div>
+    <div class="ant-car" style="width:26px;background:rgba(160,130,255,.32);--spd:10s;--dl:2.2s;"></div>
+    <div class="ant-car" style="width:40px;background:rgba(190,215,255,.28);--spd:6.8s;--dl:4.5s;"></div>
+    <div class="ant-car2" style="width:30px;background:rgba(255,170,90,.32);--spd:8.5s;--dl:1s;"></div>
+    <div class="ant-car2" style="width:22px;background:rgba(190,255,170,.26);--spd:12s;--dl:3.5s;"></div>
   </div>
-  <div class="ant-hero-inner">
-    <div class="ant-tag">AntonIA · Mar.IA Group · LegalTech Chile</div>
-    <div class="ant-h1">Domina el Derecho chileno<br>con <span>Inteligencia Artificial</span></div>
-    <div class="ant-sub">AntonIA es tu asistente jurídico inteligente — entrena para tus exámenes, analiza casos, redacta documentos y consulta con la IA más avanzada del sistema legal chileno.</div>
+
+  <!-- Hero text content -->
+  <div class="ant-hc">
+    <div class="ant-label">AntonIA · Mar.IA Group · LegalTech Chile</div>
+    <div class="ant-h1">Domina el Derecho chileno<br>con <em>Inteligencia Artificial</em></div>
+    <div class="ant-sub">Tu asistente jurídico inteligente — entrena para exámenes, analiza casos, redacta documentos y consulta con la IA más avanzada del sistema legal chileno.</div>
     <div class="ant-btns">
-      <span class="ant-btn-p">Comenzar gratis →</span>
-      <span class="ant-btn-s">▶ Ver demo</span>
+      <span class="ant-bp">Comenzar gratis →</span>
+      <span class="ant-bs">▶ Ver demo</span>
     </div>
   </div>
 </div>
@@ -1360,9 +1532,7 @@ if nav == "HOME" or st.session_state.get("main_section") is None:
 
 
 # ── UNIVERSIDAD LANDING — Mostrar cuando el usuario aún no eligió perfil ──
-if (st.session_state.get("main_section") == "universidad"
-        and not st.session_state.get("univ_perfil_elegido", False)
-        and nav in ("HOME",)):
+if _is_univ_chooser:
     st.markdown("""
 <style>
 .univ-landing{max-width:800px;margin:0 auto;padding:40px 20px;}
