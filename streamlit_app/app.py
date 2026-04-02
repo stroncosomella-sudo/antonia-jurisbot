@@ -1093,6 +1093,12 @@ _is_univ_chooser = (
     and not st.session_state.get("univ_perfil_elegido", False)
 )
 if not _is_univ_chooser and (nav == "HOME" or st.session_state.get("main_section") is None):
+    # ── VIDEO DE PRESENTACIÓN ─────────────────────────────────────
+    _vid_path = Path(__file__).parent / "static" / "promo.mp4"
+    if _vid_path.exists():
+        _vb64 = base64.b64encode(_vid_path.read_bytes()).decode()
+        st.markdown(f'<div style="background:#04030e;padding:40px 20px 24px;text-align:center;"><p style="font-family:Inter,sans-serif;font-size:.78rem;color:rgba(201,150,58,.85);text-transform:uppercase;letter-spacing:.18em;font-weight:600;margin-bottom:16px;">▶ Presentación AntonIA</p><video autoplay muted controls playsinline style="width:100%;max-width:860px;border-radius:14px;border:1px solid rgba(201,150,58,.22);box-shadow:0 16px 48px rgba(0,0,0,.55);"><source src="data:video/mp4;base64,{_vb64}" type="video/mp4"></video></div>', unsafe_allow_html=True)
+    # ── FIN VIDEO ─────────────────────────────────────────────────
     st.markdown("""
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
