@@ -1168,184 +1168,184 @@ if not _is_univ_chooser and (nav == "HOME" or st.session_state.get("main_section
 
   <!-- SVG City Skyline — Santiago-inspired, pure SVG path, no HTML building divs -->
   <div class="ant-cv">
-    <svg viewBox="0 0 1200 200" preserveAspectRatio="xMidYMax meet" style="height:200px;">
-      <defs>
-        <linearGradient id="bGr" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stop-color="#1e1830"/>
-          <stop offset="100%" stop-color="#0a0814"/>
-        </linearGradient>
-        <linearGradient id="skyGr" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stop-color="#06040f"/>
-          <stop offset="100%" stop-color="#0d0b18"/>
-        </linearGradient>
-      </defs>
-      <!-- Sky fill -->
-      <rect width="1200" height="200" fill="url(#skyGr)"/>
-      <!-- City silhouette — single continuous path (Santiago skyline style) -->
-      <path fill="url(#bGr)" d="
-        M0,200 L0,145 L38,145 L38,110 L55,110 L55,82 L60,82 L60,68
-        L63,68 L63,52 L65,52 L65,38 L67,38 L67,52 L69,52 L69,68
-        L72,68 L72,82 L77,82 L77,68 L80,68 L80,55 L83,55 L83,45
-        L85,45 L85,38 L87,38 L87,45 L89,45 L89,55 L92,55 L92,68
-        L97,68 L97,82 L115,82 L115,100 L145,100 L145,72 L168,72
-        L168,55 L175,55 L175,45 L178,45 L178,55 L185,55 L185,72
-        L210,72 L210,105 L240,105 L240,80 L265,80 L265,60 L275,60
-        L275,48 L278,48 L278,40 L280,40 L280,48 L283,48 L283,60
-        L295,60 L295,80 L325,80 L325,108 L352,108 L352,82 L375,82
-        L375,62 L390,62 L390,52 L393,52 L393,44 L396,44 L396,38
-        L399,38 L399,44 L402,44 L402,52 L405,52 L405,62 L418,62
-        L418,82 L442,82 L442,115 L468,115 L468,88 L490,88 L490,68
-        L505,68 L505,58 L508,58 L508,50 L511,50 L511,58 L514,58
-        L514,68 L530,68 L530,88 L555,88 L555,112 L578,112 L578,85
-        L602,85 L602,65 L612,65 L612,55 L615,55 L615,46 L618,46
-        L618,38 L621,38 L621,46 L624,46 L624,55 L627,55 L627,65
-        L640,65 L640,85 L665,85 L665,108 L690,108 L690,78 L712,78
-        L712,58 L722,58 L722,48 L725,48 L725,40 L728,40 L728,48
-        L731,48 L731,58 L742,58 L742,78 L768,78 L768,102 L795,102
-        L795,75 L818,75 L818,55 L828,55 L828,45 L831,45 L831,38
-        L834,38 L834,45 L837,45 L837,55 L848,55 L848,75 L872,75
-        L872,105 L898,105 L898,80 L922,80 L922,60 L932,60 L932,50
-        L935,50 L935,42 L938,42 L938,50 L941,50 L941,60 L952,60
-        L952,80 L978,80 L978,108 L1005,108 L1005,78 L1028,78 L1028,58
-        L1042,58 L1042,48 L1045,48 L1045,40 L1048,40 L1048,48
-        L1051,48 L1051,58 L1065,58 L1065,78 L1090,78 L1090,105
-        L1115,105 L1115,80 L1138,80 L1138,60 L1148,60 L1148,50
-        L1151,50 L1151,38 L1154,38 L1154,50 L1157,50 L1157,60
-        L1168,60 L1168,80 L1200,80 L1200,200 Z"/>
-      <!-- Window glows -->
-      <g fill="rgba(255,218,90,0.72)">
-        <rect x="8" y="115" width="5" height="6" rx="1"/>
-        <rect x="20" y="115" width="5" height="6" rx="1"/>
-        <rect x="8" y="128" width="5" height="6" rx="1"/>
-        <rect x="20" y="128" width="5" height="6" rx="1"/>
-        <rect x="44" y="90" width="4" height="5" rx="1"/>
-        <rect x="44" y="103" width="4" height="5" rx="1"/>
-        <rect x="120" y="82" width="5" height="6" rx="1"/>
-        <rect x="132" y="82" width="5" height="6" rx="1"/>
-        <rect x="120" y="95" width="5" height="6" rx="1"/>
-        <rect x="150" y="55" width="5" height="6" rx="1"/>
-        <rect x="161" y="55" width="5" height="6" rx="1"/>
-        <rect x="150" y="67" width="5" height="6" rx="1"/>
-        <rect x="218" y="85" width="5" height="6" rx="1"/>
-        <rect x="230" y="85" width="5" height="6" rx="1"/>
-        <rect x="248" y="62" width="4" height="5" rx="1"/>
-        <rect x="248" y="73" width="4" height="5" rx="1"/>
-        <rect x="358" y="65" width="5" height="6" rx="1"/>
-        <rect x="370" y="65" width="5" height="6" rx="1"/>
-        <rect x="358" y="78" width="5" height="6" rx="1"/>
-        <rect x="450" y="95" width="5" height="6" rx="1"/>
-        <rect x="462" y="95" width="5" height="6" rx="1"/>
-        <rect x="562" y="92" width="5" height="6" rx="1"/>
-        <rect x="575" y="92" width="5" height="6" rx="1"/>
-        <rect x="562" y="103" width="5" height="6" rx="1"/>
-        <rect x="585" y="68" width="4" height="5" rx="1"/>
-        <rect x="595" y="68" width="4" height="5" rx="1"/>
-        <rect x="645" y="65" width="5" height="6" rx="1"/>
-        <rect x="657" y="65" width="5" height="6" rx="1"/>
-        <rect x="645" y="78" width="5" height="6" rx="1"/>
-        <rect x="696" y="60" width="5" height="6" rx="1"/>
-        <rect x="708" y="60" width="5" height="6" rx="1"/>
-        <rect x="775" y="58" width="5" height="6" rx="1"/>
-        <rect x="788" y="58" width="5" height="6" rx="1"/>
-        <rect x="775" y="70" width="5" height="6" rx="1"/>
-        <rect x="803" y="55" width="4" height="5" rx="1"/>
-        <rect x="855" y="58" width="5" height="6" rx="1"/>
-        <rect x="867" y="58" width="5" height="6" rx="1"/>
-        <rect x="905" y="62" width="5" height="6" rx="1"/>
-        <rect x="917" y="62" width="5" height="6" rx="1"/>
-        <rect x="905" y="75" width="5" height="6" rx="1"/>
-        <rect x="958" y="62" width="5" height="6" rx="1"/>
-        <rect x="970" y="62" width="5" height="6" rx="1"/>
-        <rect x="1012" y="60" width="5" height="6" rx="1"/>
-        <rect x="1024" y="60" width="5" height="6" rx="1"/>
-        <rect x="1072" y="60" width="5" height="6" rx="1"/>
-        <rect x="1095" y="85" width="5" height="6" rx="1"/>
-        <rect x="1107" y="85" width="5" height="6" rx="1"/>
-        <rect x="1120" y="62" width="5" height="6" rx="1"/>
-        <rect x="1143" y="62" width="5" height="6" rx="1"/>
-      </g>
-      <!-- Glow aura on tallest towers -->
-      <ellipse cx="66" cy="38" rx="5" ry="3" fill="rgba(201,150,58,.12)"/>
-      <ellipse cx="86" cy="38" rx="5" ry="3" fill="rgba(201,150,58,.10)"/>
-      <ellipse cx="280" cy="40" rx="4" ry="2.5" fill="rgba(201,150,58,.10)"/>
-      <ellipse cx="396" cy="38" rx="4" ry="2.5" fill="rgba(201,150,58,.10)"/>
-    </svg>
-    <!-- Second copy — identical for seamless loop -->
-    <svg viewBox="0 0 1200 200" preserveAspectRatio="xMidYMax meet" style="height:200px;">
-      <defs>
-        <linearGradient id="bGr2" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stop-color="#1e1830"/>
-          <stop offset="100%" stop-color="#0a0814"/>
-        </linearGradient>
-      </defs>
-      <rect width="1200" height="200" fill="#0d0b18"/>
-      <path fill="url(#bGr2)" d="
-        M0,200 L0,145 L38,145 L38,110 L55,110 L55,82 L60,82 L60,68
-        L63,68 L63,52 L65,52 L65,38 L67,38 L67,52 L69,52 L69,68
-        L72,68 L72,82 L77,82 L77,68 L80,68 L80,55 L83,55 L83,45
-        L85,45 L85,38 L87,38 L87,45 L89,45 L89,55 L92,55 L92,68
-        L97,68 L97,82 L115,82 L115,100 L145,100 L145,72 L168,72
-        L168,55 L175,55 L175,45 L178,45 L178,55 L185,55 L185,72
-        L210,72 L210,105 L240,105 L240,80 L265,80 L265,60 L275,60
-        L275,48 L278,48 L278,40 L280,40 L280,48 L283,48 L283,60
-        L295,60 L295,80 L325,80 L325,108 L352,108 L352,82 L375,82
-        L375,62 L390,62 L390,52 L393,52 L393,44 L396,44 L396,38
-        L399,38 L399,44 L402,44 L402,52 L405,52 L405,62 L418,62
-        L418,82 L442,82 L442,115 L468,115 L468,88 L490,88 L490,68
-        L505,68 L505,58 L508,58 L508,50 L511,50 L511,58 L514,58
-        L514,68 L530,68 L530,88 L555,88 L555,112 L578,112 L578,85
-        L602,85 L602,65 L612,65 L612,55 L615,55 L615,46 L618,46
-        L618,38 L621,38 L621,46 L624,46 L624,55 L627,55 L627,65
-        L640,65 L640,85 L665,85 L665,108 L690,108 L690,78 L712,78
-        L712,58 L722,58 L722,48 L725,48 L725,40 L728,40 L728,48
-        L731,48 L731,58 L742,58 L742,78 L768,78 L768,102 L795,102
-        L795,75 L818,75 L818,55 L828,55 L828,45 L831,45 L831,38
-        L834,38 L834,45 L837,45 L837,55 L848,55 L848,75 L872,75
-        L872,105 L898,105 L898,80 L922,80 L922,60 L932,60 L932,50
-        L935,50 L935,42 L938,42 L938,50 L941,50 L941,60 L952,60
-        L952,80 L978,80 L978,108 L1005,108 L1005,78 L1028,78 L1028,58
-        L1042,58 L1042,48 L1045,48 L1045,40 L1048,40 L1048,48
-        L1051,48 L1051,58 L1065,58 L1065,78 L1090,78 L1090,105
-        L1115,105 L1115,80 L1138,80 L1138,60 L1148,60 L1148,50
-        L1151,50 L1151,38 L1154,38 L1154,50 L1157,50 L1157,60
-        L1168,60 L1168,80 L1200,80 L1200,200 Z"/>
-      <g fill="rgba(255,218,90,0.72)">
-        <rect x="8" y="115" width="5" height="6" rx="1"/>
-        <rect x="20" y="115" width="5" height="6" rx="1"/>
-        <rect x="120" y="82" width="5" height="6" rx="1"/>
-        <rect x="150" y="55" width="5" height="6" rx="1"/>
-        <rect x="248" y="62" width="4" height="5" rx="1"/>
-        <rect x="358" y="65" width="5" height="6" rx="1"/>
-        <rect x="562" y="92" width="5" height="6" rx="1"/>
-        <rect x="645" y="65" width="5" height="6" rx="1"/>
-        <rect x="696" y="60" width="5" height="6" rx="1"/>
-        <rect x="775" y="58" width="5" height="6" rx="1"/>
-        <rect x="855" y="58" width="5" height="6" rx="1"/>
-        <rect x="958" y="62" width="5" height="6" rx="1"/>
-        <rect x="1072" y="60" width="5" height="6" rx="1"/>
-        <rect x="1143" y="62" width="5" height="6" rx="1"/>
-      </g>
-    </svg>
+<svg viewBox="0 0 1200 200" preserveAspectRatio="xMidYMax meet" style="height:200px;">
+<defs>
+<linearGradient id="bGr" x1="0" y1="0" x2="0" y2="1">
+<stop offset="0%" stop-color="#1e1830"/>
+<stop offset="100%" stop-color="#0a0814"/>
+</linearGradient>
+<linearGradient id="skyGr" x1="0" y1="0" x2="0" y2="1">
+<stop offset="0%" stop-color="#06040f"/>
+<stop offset="100%" stop-color="#0d0b18"/>
+</linearGradient>
+</defs>
+<!-- Sky fill -->
+<rect width="1200" height="200" fill="url(#skyGr)"/>
+<!-- City silhouette — single continuous path (Santiago skyline style) -->
+<path fill="url(#bGr)" d="
+M0,200 L0,145 L38,145 L38,110 L55,110 L55,82 L60,82 L60,68
+L63,68 L63,52 L65,52 L65,38 L67,38 L67,52 L69,52 L69,68
+L72,68 L72,82 L77,82 L77,68 L80,68 L80,55 L83,55 L83,45
+L85,45 L85,38 L87,38 L87,45 L89,45 L89,55 L92,55 L92,68
+L97,68 L97,82 L115,82 L115,100 L145,100 L145,72 L168,72
+L168,55 L175,55 L175,45 L178,45 L178,55 L185,55 L185,72
+L210,72 L210,105 L240,105 L240,80 L265,80 L265,60 L275,60
+L275,48 L278,48 L278,40 L280,40 L280,48 L283,48 L283,60
+L295,60 L295,80 L325,80 L325,108 L352,108 L352,82 L375,82
+L375,62 L390,62 L390,52 L393,52 L393,44 L396,44 L396,38
+L399,38 L399,44 L402,44 L402,52 L405,52 L405,62 L418,62
+L418,82 L442,82 L442,115 L468,115 L468,88 L490,88 L490,68
+L505,68 L505,58 L508,58 L508,50 L511,50 L511,58 L514,58
+L514,68 L530,68 L530,88 L555,88 L555,112 L578,112 L578,85
+L602,85 L602,65 L612,65 L612,55 L615,55 L615,46 L618,46
+L618,38 L621,38 L621,46 L624,46 L624,55 L627,55 L627,65
+L640,65 L640,85 L665,85 L665,108 L690,108 L690,78 L712,78
+L712,58 L722,58 L722,48 L725,48 L725,40 L728,40 L728,48
+L731,48 L731,58 L742,58 L742,78 L768,78 L768,102 L795,102
+L795,75 L818,75 L818,55 L828,55 L828,45 L831,45 L831,38
+L834,38 L834,45 L837,45 L837,55 L848,55 L848,75 L872,75
+L872,105 L898,105 L898,80 L922,80 L922,60 L932,60 L932,50
+L935,50 L935,42 L938,42 L938,50 L941,50 L941,60 L952,60
+L952,80 L978,80 L978,108 L1005,108 L1005,78 L1028,78 L1028,58
+L1042,58 L1042,48 L1045,48 L1045,40 L1048,40 L1048,48
+L1051,48 L1051,58 L1065,58 L1065,78 L1090,78 L1090,105
+L1115,105 L1115,80 L1138,80 L1138,60 L1148,60 L1148,50
+L1151,50 L1151,38 L1154,38 L1154,50 L1157,50 L1157,60
+L1168,60 L1168,80 L1200,80 L1200,200 Z"/>
+<!-- Window glows -->
+<g fill="rgba(255,218,90,0.72)">
+<rect x="8" y="115" width="5" height="6" rx="1"/>
+<rect x="20" y="115" width="5" height="6" rx="1"/>
+<rect x="8" y="128" width="5" height="6" rx="1"/>
+<rect x="20" y="128" width="5" height="6" rx="1"/>
+<rect x="44" y="90" width="4" height="5" rx="1"/>
+<rect x="44" y="103" width="4" height="5" rx="1"/>
+<rect x="120" y="82" width="5" height="6" rx="1"/>
+<rect x="132" y="82" width="5" height="6" rx="1"/>
+<rect x="120" y="95" width="5" height="6" rx="1"/>
+<rect x="150" y="55" width="5" height="6" rx="1"/>
+<rect x="161" y="55" width="5" height="6" rx="1"/>
+<rect x="150" y="67" width="5" height="6" rx="1"/>
+<rect x="218" y="85" width="5" height="6" rx="1"/>
+<rect x="230" y="85" width="5" height="6" rx="1"/>
+<rect x="248" y="62" width="4" height="5" rx="1"/>
+<rect x="248" y="73" width="4" height="5" rx="1"/>
+<rect x="358" y="65" width="5" height="6" rx="1"/>
+<rect x="370" y="65" width="5" height="6" rx="1"/>
+<rect x="358" y="78" width="5" height="6" rx="1"/>
+<rect x="450" y="95" width="5" height="6" rx="1"/>
+<rect x="462" y="95" width="5" height="6" rx="1"/>
+<rect x="562" y="92" width="5" height="6" rx="1"/>
+<rect x="575" y="92" width="5" height="6" rx="1"/>
+<rect x="562" y="103" width="5" height="6" rx="1"/>
+<rect x="585" y="68" width="4" height="5" rx="1"/>
+<rect x="595" y="68" width="4" height="5" rx="1"/>
+<rect x="645" y="65" width="5" height="6" rx="1"/>
+<rect x="657" y="65" width="5" height="6" rx="1"/>
+<rect x="645" y="78" width="5" height="6" rx="1"/>
+<rect x="696" y="60" width="5" height="6" rx="1"/>
+<rect x="708" y="60" width="5" height="6" rx="1"/>
+<rect x="775" y="58" width="5" height="6" rx="1"/>
+<rect x="788" y="58" width="5" height="6" rx="1"/>
+<rect x="775" y="70" width="5" height="6" rx="1"/>
+<rect x="803" y="55" width="4" height="5" rx="1"/>
+<rect x="855" y="58" width="5" height="6" rx="1"/>
+<rect x="867" y="58" width="5" height="6" rx="1"/>
+<rect x="905" y="62" width="5" height="6" rx="1"/>
+<rect x="917" y="62" width="5" height="6" rx="1"/>
+<rect x="905" y="75" width="5" height="6" rx="1"/>
+<rect x="958" y="62" width="5" height="6" rx="1"/>
+<rect x="970" y="62" width="5" height="6" rx="1"/>
+<rect x="1012" y="60" width="5" height="6" rx="1"/>
+<rect x="1024" y="60" width="5" height="6" rx="1"/>
+<rect x="1072" y="60" width="5" height="6" rx="1"/>
+<rect x="1095" y="85" width="5" height="6" rx="1"/>
+<rect x="1107" y="85" width="5" height="6" rx="1"/>
+<rect x="1120" y="62" width="5" height="6" rx="1"/>
+<rect x="1143" y="62" width="5" height="6" rx="1"/>
+</g>
+<!-- Glow aura on tallest towers -->
+<ellipse cx="66" cy="38" rx="5" ry="3" fill="rgba(201,150,58,.12)"/>
+<ellipse cx="86" cy="38" rx="5" ry="3" fill="rgba(201,150,58,.10)"/>
+<ellipse cx="280" cy="40" rx="4" ry="2.5" fill="rgba(201,150,58,.10)"/>
+<ellipse cx="396" cy="38" rx="4" ry="2.5" fill="rgba(201,150,58,.10)"/>
+</svg>
+<!-- Second copy — identical for seamless loop -->
+<svg viewBox="0 0 1200 200" preserveAspectRatio="xMidYMax meet" style="height:200px;">
+<defs>
+<linearGradient id="bGr2" x1="0" y1="0" x2="0" y2="1">
+<stop offset="0%" stop-color="#1e1830"/>
+<stop offset="100%" stop-color="#0a0814"/>
+</linearGradient>
+</defs>
+<rect width="1200" height="200" fill="#0d0b18"/>
+<path fill="url(#bGr2)" d="
+M0,200 L0,145 L38,145 L38,110 L55,110 L55,82 L60,82 L60,68
+L63,68 L63,52 L65,52 L65,38 L67,38 L67,52 L69,52 L69,68
+L72,68 L72,82 L77,82 L77,68 L80,68 L80,55 L83,55 L83,45
+L85,45 L85,38 L87,38 L87,45 L89,45 L89,55 L92,55 L92,68
+L97,68 L97,82 L115,82 L115,100 L145,100 L145,72 L168,72
+L168,55 L175,55 L175,45 L178,45 L178,55 L185,55 L185,72
+L210,72 L210,105 L240,105 L240,80 L265,80 L265,60 L275,60
+L275,48 L278,48 L278,40 L280,40 L280,48 L283,48 L283,60
+L295,60 L295,80 L325,80 L325,108 L352,108 L352,82 L375,82
+L375,62 L390,62 L390,52 L393,52 L393,44 L396,44 L396,38
+L399,38 L399,44 L402,44 L402,52 L405,52 L405,62 L418,62
+L418,82 L442,82 L442,115 L468,115 L468,88 L490,88 L490,68
+L505,68 L505,58 L508,58 L508,50 L511,50 L511,58 L514,58
+L514,68 L530,68 L530,88 L555,88 L555,112 L578,112 L578,85
+L602,85 L602,65 L612,65 L612,55 L615,55 L615,46 L618,46
+L618,38 L621,38 L621,46 L624,46 L624,55 L627,55 L627,65
+L640,65 L640,85 L665,85 L665,108 L690,108 L690,78 L712,78
+L712,58 L722,58 L722,48 L725,48 L725,40 L728,40 L728,48
+L731,48 L731,58 L742,58 L742,78 L768,78 L768,102 L795,102
+L795,75 L818,75 L818,55 L828,55 L828,45 L831,45 L831,38
+L834,38 L834,45 L837,45 L837,55 L848,55 L848,75 L872,75
+L872,105 L898,105 L898,80 L922,80 L922,60 L932,60 L932,50
+L935,50 L935,42 L938,42 L938,50 L941,50 L941,60 L952,60
+L952,80 L978,80 L978,108 L1005,108 L1005,78 L1028,78 L1028,58
+L1042,58 L1042,48 L1045,48 L1045,40 L1048,40 L1048,48
+L1051,48 L1051,58 L1065,58 L1065,78 L1090,78 L1090,105
+L1115,105 L1115,80 L1138,80 L1138,60 L1148,60 L1148,50
+L1151,50 L1151,38 L1154,38 L1154,50 L1157,50 L1157,60
+L1168,60 L1168,80 L1200,80 L1200,200 Z"/>
+<g fill="rgba(255,218,90,0.72)">
+<rect x="8" y="115" width="5" height="6" rx="1"/>
+<rect x="20" y="115" width="5" height="6" rx="1"/>
+<rect x="120" y="82" width="5" height="6" rx="1"/>
+<rect x="150" y="55" width="5" height="6" rx="1"/>
+<rect x="248" y="62" width="4" height="5" rx="1"/>
+<rect x="358" y="65" width="5" height="6" rx="1"/>
+<rect x="562" y="92" width="5" height="6" rx="1"/>
+<rect x="645" y="65" width="5" height="6" rx="1"/>
+<rect x="696" y="60" width="5" height="6" rx="1"/>
+<rect x="775" y="58" width="5" height="6" rx="1"/>
+<rect x="855" y="58" width="5" height="6" rx="1"/>
+<rect x="958" y="62" width="5" height="6" rx="1"/>
+<rect x="1072" y="60" width="5" height="6" rx="1"/>
+<rect x="1143" y="62" width="5" height="6" rx="1"/>
+</g>
+</svg>
   </div>
 
   <!-- Road with cars -->
   <div class="ant-rd">
-    <div class="ant-car" style="width:34px;background:rgba(255,195,65,.38);--spd:7s;--dl:0s;"></div>
-    <div class="ant-car" style="width:26px;background:rgba(160,130,255,.32);--spd:10s;--dl:2.2s;"></div>
-    <div class="ant-car" style="width:40px;background:rgba(190,215,255,.28);--spd:6.8s;--dl:4.5s;"></div>
-    <div class="ant-car2" style="width:30px;background:rgba(255,170,90,.32);--spd:8.5s;--dl:1s;"></div>
-    <div class="ant-car2" style="width:22px;background:rgba(190,255,170,.26);--spd:12s;--dl:3.5s;"></div>
+<div class="ant-car" style="width:34px;background:rgba(255,195,65,.38);--spd:7s;--dl:0s;"></div>
+<div class="ant-car" style="width:26px;background:rgba(160,130,255,.32);--spd:10s;--dl:2.2s;"></div>
+<div class="ant-car" style="width:40px;background:rgba(190,215,255,.28);--spd:6.8s;--dl:4.5s;"></div>
+<div class="ant-car2" style="width:30px;background:rgba(255,170,90,.32);--spd:8.5s;--dl:1s;"></div>
+<div class="ant-car2" style="width:22px;background:rgba(190,255,170,.26);--spd:12s;--dl:3.5s;"></div>
   </div>
 
   <!-- Hero text content -->
   <div class="ant-hc">
-    <div class="ant-label">AntonIA · Mar.IA Group · LegalTech Chile</div>
-    <div class="ant-h1">Domina el Derecho chileno<br>con <em>Inteligencia Artificial</em></div>
-    <div class="ant-sub">Tu asistente jurídico inteligente — entrena para exámenes, analiza casos, redacta documentos y consulta con la IA más avanzada del sistema legal chileno.</div>
-    <div class="ant-btns">
-      <span class="ant-bp">Comenzar gratis →</span>
-      <span class="ant-bs">▶ Ver demo</span>
-    </div>
+<div class="ant-label">AntonIA · Mar.IA Group · LegalTech Chile</div>
+<div class="ant-h1">Domina el Derecho chileno<br>con <em>Inteligencia Artificial</em></div>
+<div class="ant-sub">Tu asistente jurídico inteligente — entrena para exámenes, analiza casos, redacta documentos y consulta con la IA más avanzada del sistema legal chileno.</div>
+<div class="ant-btns">
+<span class="ant-bp">Comenzar gratis →</span>
+<span class="ant-bs">▶ Ver demo</span>
+</div>
   </div>
 </div>
 
@@ -1360,69 +1360,69 @@ if not _is_univ_chooser and (nav == "HOME" or st.session_state.get("main_section
 <!-- DEMO SECTION -->
 <div style="background:#0d0b10;padding:60px 20px;border-top:1px solid rgba(201,150,58,.1);border-bottom:1px solid rgba(201,150,58,.1);">
   <div style="max-width:920px;margin:0 auto;">
-    <div style="text-align:center;margin-bottom:8px;">
-      <span style="font-family:Inter,sans-serif;font-size:.78rem;color:#c9963a;text-transform:uppercase;letter-spacing:.15em;font-weight:600;">▶ Demo interactivo</span>
-    </div>
-    <div style="font-family:'Playfair Display',serif;font-size:1.85rem;font-weight:800;color:#f5f0e8;text-align:center;margin-bottom:8px;">AntonIA en acción</div>
-    <div style="font-size:.92rem;color:rgba(240,232,218,.5);text-align:center;margin-bottom:36px;">Descubre las funciones más poderosas del primer asistente jurídico IA para el Derecho chileno</div>
+<div style="text-align:center;margin-bottom:8px;">
+<span style="font-family:Inter,sans-serif;font-size:.78rem;color:#c9963a;text-transform:uppercase;letter-spacing:.15em;font-weight:600;">▶ Demo interactivo</span>
+</div>
+<div style="font-family:'Playfair Display',serif;font-size:1.85rem;font-weight:800;color:#f5f0e8;text-align:center;margin-bottom:8px;">AntonIA en acción</div>
+<div style="font-size:.92rem;color:rgba(240,232,218,.5);text-align:center;margin-bottom:36px;">Descubre las funciones más poderosas del primer asistente jurídico IA para el Derecho chileno</div>
 
-    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:20px;">
-      <!-- Demo 1: Quiz IA -->
-      <div style="background:#13101a;border:1px solid rgba(201,150,58,.18);border-radius:12px;overflow:hidden;">
-        <div style="background:linear-gradient(135deg,#1a1520,#0e0c14);padding:20px;min-height:160px;position:relative;display:flex;flex-direction:column;justify-content:flex-end;">
-          <div style="position:absolute;top:16px;left:16px;font-size:1.6rem;">🧠</div>
-          <div style="background:#1e1b28;border:1px solid rgba(201,150,58,.2);border-radius:8px;padding:12px;">
-            <div style="font-size:.68rem;color:#c9963a;font-weight:700;margin-bottom:6px;">QUIZ INTERACTIVO · Civil III</div>
-            <div style="font-size:.82rem;color:#f0e8d8;line-height:1.5;">¿Cuál es el efecto de la condición resolutoria cumplida?</div>
-            <div style="margin-top:10px;display:flex;flex-direction:column;gap:5px;">
-              <div style="background:rgba(46,144,85,.15);border:1px solid rgba(46,144,85,.3);border-radius:4px;padding:4px 8px;font-size:.72rem;color:#4ade80;">✓ Se extingue retroactivamente la obligación</div>
-              <div style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:4px;padding:4px 8px;font-size:.72rem;color:rgba(240,232,218,.5);">No tiene efectos retroactivos</div>
-            </div>
-          </div>
-        </div>
-        <div style="padding:14px 16px;">
-          <div style="font-size:.85rem;font-weight:700;color:#f5f0e8;margin-bottom:4px;">Quiz con IA Infinito</div>
-          <div style="font-size:.76rem;color:rgba(240,232,218,.5);line-height:1.5;">Quiz adaptativo con retroalimentación jurídica detallada. Alternativas, V/F, Flashcards y casos prácticos.</div>
-        </div>
-      </div>
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:20px;">
+<!-- Demo 1: Quiz IA -->
+<div style="background:#13101a;border:1px solid rgba(201,150,58,.18);border-radius:12px;overflow:hidden;">
+<div style="background:linear-gradient(135deg,#1a1520,#0e0c14);padding:20px;min-height:160px;position:relative;display:flex;flex-direction:column;justify-content:flex-end;">
+<div style="position:absolute;top:16px;left:16px;font-size:1.6rem;">🧠</div>
+<div style="background:#1e1b28;border:1px solid rgba(201,150,58,.2);border-radius:8px;padding:12px;">
+<div style="font-size:.68rem;color:#c9963a;font-weight:700;margin-bottom:6px;">QUIZ INTERACTIVO · Civil III</div>
+<div style="font-size:.82rem;color:#f0e8d8;line-height:1.5;">¿Cuál es el efecto de la condición resolutoria cumplida?</div>
+<div style="margin-top:10px;display:flex;flex-direction:column;gap:5px;">
+<div style="background:rgba(46,144,85,.15);border:1px solid rgba(46,144,85,.3);border-radius:4px;padding:4px 8px;font-size:.72rem;color:#4ade80;">✓ Se extingue retroactivamente la obligación</div>
+<div style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:4px;padding:4px 8px;font-size:.72rem;color:rgba(240,232,218,.5);">No tiene efectos retroactivos</div>
+</div>
+</div>
+</div>
+<div style="padding:14px 16px;">
+<div style="font-size:.85rem;font-weight:700;color:#f5f0e8;margin-bottom:4px;">Quiz con IA Infinito</div>
+<div style="font-size:.76rem;color:rgba(240,232,218,.5);line-height:1.5;">Quiz adaptativo con retroalimentación jurídica detallada. Alternativas, V/F, Flashcards y casos prácticos.</div>
+</div>
+</div>
 
-      <!-- Demo 2: Análisis de Caso -->
-      <div style="background:#13101a;border:1px solid rgba(201,150,58,.18);border-radius:12px;overflow:hidden;">
-        <div style="background:linear-gradient(135deg,#1a1520,#0e0c14);padding:20px;min-height:160px;position:relative;display:flex;flex-direction:column;justify-content:flex-end;">
-          <div style="position:absolute;top:16px;left:16px;font-size:1.6rem;">🔍</div>
-          <div style="background:#1e1b28;border:1px solid rgba(201,150,58,.2);border-radius:8px;padding:12px;">
-            <div style="font-size:.68rem;color:#c9963a;font-weight:700;margin-bottom:6px;">ANÁLISIS JURÍDICO · Derecho Civil</div>
-            <div style="font-size:.8rem;color:#f0e8d8;font-style:italic;line-height:1.5;">"Contrato de compraventa · nulidad por objeto ilícito · Arts. 1462 y 1466 CC..."</div>
-            <div style="margin-top:8px;font-size:.72rem;color:rgba(201,150,58,.8);">→ Identificó 3 argumentos clave · 2 normas aplicables · 1 tendencia jurisprudencial</div>
-          </div>
-        </div>
-        <div style="padding:14px 16px;">
-          <div style="font-size:.85rem;font-weight:700;color:#f5f0e8;margin-bottom:4px;">Análisis Jurídico Profundo</div>
-          <div style="font-size:.76rem;color:rgba(240,232,218,.5);line-height:1.5;">Sube cualquier documento jurídico y AntonIA lo analiza en segundos con fundamentos del Derecho chileno.</div>
-        </div>
-      </div>
+<!-- Demo 2: Análisis de Caso -->
+<div style="background:#13101a;border:1px solid rgba(201,150,58,.18);border-radius:12px;overflow:hidden;">
+<div style="background:linear-gradient(135deg,#1a1520,#0e0c14);padding:20px;min-height:160px;position:relative;display:flex;flex-direction:column;justify-content:flex-end;">
+<div style="position:absolute;top:16px;left:16px;font-size:1.6rem;">🔍</div>
+<div style="background:#1e1b28;border:1px solid rgba(201,150,58,.2);border-radius:8px;padding:12px;">
+<div style="font-size:.68rem;color:#c9963a;font-weight:700;margin-bottom:6px;">ANÁLISIS JURÍDICO · Derecho Civil</div>
+<div style="font-size:.8rem;color:#f0e8d8;font-style:italic;line-height:1.5;">"Contrato de compraventa · nulidad por objeto ilícito · Arts. 1462 y 1466 CC..."</div>
+<div style="margin-top:8px;font-size:.72rem;color:rgba(201,150,58,.8);">→ Identificó 3 argumentos clave · 2 normas aplicables · 1 tendencia jurisprudencial</div>
+</div>
+</div>
+<div style="padding:14px 16px;">
+<div style="font-size:.85rem;font-weight:700;color:#f5f0e8;margin-bottom:4px;">Análisis Jurídico Profundo</div>
+<div style="font-size:.76rem;color:rgba(240,232,218,.5);line-height:1.5;">Sube cualquier documento jurídico y AntonIA lo analiza en segundos con fundamentos del Derecho chileno.</div>
+</div>
+</div>
 
-      <!-- Demo 3: Redacción -->
-      <div style="background:#13101a;border:1px solid rgba(201,150,58,.18);border-radius:12px;overflow:hidden;">
-        <div style="background:linear-gradient(135deg,#1a1520,#0e0c14);padding:20px;min-height:160px;position:relative;display:flex;flex-direction:column;justify-content:flex-end;">
-          <div style="position:absolute;top:16px;left:16px;font-size:1.6rem;">📝</div>
-          <div style="background:#1e1b28;border:1px solid rgba(201,150,58,.2);border-radius:8px;padding:12px;">
-            <div style="font-size:.68rem;color:#c9963a;font-weight:700;margin-bottom:6px;">ESCRITO GENERADO · Demanda Civil</div>
-            <div style="font-size:.75rem;color:rgba(240,232,218,.65);line-height:1.6;font-family:monospace;">EN LO PRINCIPAL: Demanda ordinaria...<br>PRIMER OTROSÍ: Patrocinio y poder...<br><span style="color:#c9963a;">Art. 254 CPC · Art. 1489 CC ✓</span></div>
-          </div>
-        </div>
-        <div style="padding:14px 16px;">
-          <div style="font-size:.85rem;font-weight:700;color:#f5f0e8;margin-bottom:4px;">Redacción Forense con IA</div>
-          <div style="font-size:.76rem;color:rgba(240,232,218,.5);line-height:1.5;">Genera demandas, contratos, escritos y comunicaciones con el formato forense chileno correcto.</div>
-        </div>
-      </div>
-    </div>
+<!-- Demo 3: Redacción -->
+<div style="background:#13101a;border:1px solid rgba(201,150,58,.18);border-radius:12px;overflow:hidden;">
+<div style="background:linear-gradient(135deg,#1a1520,#0e0c14);padding:20px;min-height:160px;position:relative;display:flex;flex-direction:column;justify-content:flex-end;">
+<div style="position:absolute;top:16px;left:16px;font-size:1.6rem;">📝</div>
+<div style="background:#1e1b28;border:1px solid rgba(201,150,58,.2);border-radius:8px;padding:12px;">
+<div style="font-size:.68rem;color:#c9963a;font-weight:700;margin-bottom:6px;">ESCRITO GENERADO · Demanda Civil</div>
+<div style="font-size:.75rem;color:rgba(240,232,218,.65);line-height:1.6;font-family:monospace;">EN LO PRINCIPAL: Demanda ordinaria...<br>PRIMER OTROSÍ: Patrocinio y poder...<br><span style="color:#c9963a;">Art. 254 CPC · Art. 1489 CC ✓</span></div>
+</div>
+</div>
+<div style="padding:14px 16px;">
+<div style="font-size:.85rem;font-weight:700;color:#f5f0e8;margin-bottom:4px;">Redacción Forense con IA</div>
+<div style="font-size:.76rem;color:rgba(240,232,218,.5);line-height:1.5;">Genera demandas, contratos, escritos y comunicaciones con el formato forense chileno correcto.</div>
+</div>
+</div>
+</div>
 
-    <div style="text-align:center;margin-top:30px;">
-      <span style="font-family:Inter,sans-serif;font-size:.82rem;color:rgba(240,232,218,.4);">
-        Selecciona tu perfil en el panel izquierdo para comenzar · Prueba gratis sin registrarte
-      </span>
-    </div>
+<div style="text-align:center;margin-top:30px;">
+<span style="font-family:Inter,sans-serif;font-size:.82rem;color:rgba(240,232,218,.4);">
+Selecciona tu perfil en el panel izquierdo para comenzar · Prueba gratis sin registrarte
+</span>
+</div>
   </div>
 </div>
 
@@ -1430,22 +1430,22 @@ if not _is_univ_chooser and (nav == "HOME" or st.session_state.get("main_section
   <div class="ant-sec-t">¿Para quién es AntonIA?</div>
   <div class="ant-sec-s">Selecciona tu perfil en el panel izquierdo para comenzar</div>
   <div class="ant-grid-4">
-    <div class="ant-card"><div class="ant-card-icon">🎓</div><div class="ant-card-t">Universidad</div><div class="ant-card-d">Plataforma completa para alumnos y profesores. Quiz infinito, análisis de casos, documentos legales y más.</div></div>
-    <div class="ant-card"><div class="ant-card-icon">⚖️</div><div class="ant-card-t">Abogados</div><div class="ant-card-d">Herramientas de alto nivel para litigantes. Jurisprudencia, análisis jurídico profundo, redacción de escritos.</div></div>
-    <div class="ant-card"><div class="ant-card-icon">💬</div><div class="ant-card-t">Consulta Legal</div><div class="ant-card-d">Asesoría jurídica inmediata basada en el derecho chileno vigente. Respuestas precisas y fundamentadas.</div></div>
-    <div class="ant-card"><div class="ant-card-icon">🆓</div><div class="ant-card-t">Prueba Gratis</div><div class="ant-card-d">Explora todas las funcionalidades sin compromiso. Descubre el poder de la IA aplicada al Derecho.</div></div>
+<div class="ant-card"><div class="ant-card-icon">🎓</div><div class="ant-card-t">Universidad</div><div class="ant-card-d">Plataforma completa para alumnos y profesores. Quiz infinito, análisis de casos, documentos legales y más.</div></div>
+<div class="ant-card"><div class="ant-card-icon">⚖️</div><div class="ant-card-t">Abogados</div><div class="ant-card-d">Herramientas de alto nivel para litigantes. Jurisprudencia, análisis jurídico profundo, redacción de escritos.</div></div>
+<div class="ant-card"><div class="ant-card-icon">💬</div><div class="ant-card-t">Consulta Legal</div><div class="ant-card-d">Asesoría jurídica inmediata basada en el derecho chileno vigente. Respuestas precisas y fundamentadas.</div></div>
+<div class="ant-card"><div class="ant-card-icon">🆓</div><div class="ant-card-t">Prueba Gratis</div><div class="ant-card-d">Explora todas las funcionalidades sin compromiso. Descubre el poder de la IA aplicada al Derecho.</div></div>
   </div>
 </div>
 
 <div style="background:rgba(201,150,58,.04);border-top:1px solid rgba(201,150,58,.1);border-bottom:1px solid rgba(201,150,58,.1);padding:50px 20px;">
   <div style="max-width:900px;margin:0 auto;">
-    <div class="ant-sec-t">Cómo funciona</div>
-    <div class="ant-sec-s" style="margin-bottom:28px;">Tres pasos para transformar tu práctica jurídica</div>
-    <div class="ant-steps">
-      <div class="ant-step"><div class="ant-step-n">01</div><div class="ant-step-t">Elige tu perfil</div><div class="ant-step-d">Selecciona si eres alumno, abogado, profesor o quieres una consulta.</div></div>
-      <div class="ant-step"><div class="ant-step-n">02</div><div class="ant-step-t">Selecciona la herramienta</div><div class="ant-step-d">Elige entre ENTRENA, DOCUMENTO, ANÁLISIS, JURISPRUDENCIA y más.</div></div>
-      <div class="ant-step"><div class="ant-step-n">03</div><div class="ant-step-t">AntonIA trabaja</div><div class="ant-step-d">La IA genera contenido jurídico preciso basado en el derecho chileno vigente.</div></div>
-    </div>
+<div class="ant-sec-t">Cómo funciona</div>
+<div class="ant-sec-s" style="margin-bottom:28px;">Tres pasos para transformar tu práctica jurídica</div>
+<div class="ant-steps">
+<div class="ant-step"><div class="ant-step-n">01</div><div class="ant-step-t">Elige tu perfil</div><div class="ant-step-d">Selecciona si eres alumno, abogado, profesor o quieres una consulta.</div></div>
+<div class="ant-step"><div class="ant-step-n">02</div><div class="ant-step-t">Selecciona la herramienta</div><div class="ant-step-d">Elige entre ENTRENA, DOCUMENTO, ANÁLISIS, JURISPRUDENCIA y más.</div></div>
+<div class="ant-step"><div class="ant-step-n">03</div><div class="ant-step-t">AntonIA trabaja</div><div class="ant-step-d">La IA genera contenido jurídico preciso basado en el derecho chileno vigente.</div></div>
+</div>
   </div>
 </div>
 
@@ -1453,15 +1453,15 @@ if not _is_univ_chooser and (nav == "HOME" or st.session_state.get("main_section
   <div class="ant-sec-t">Herramientas para estudiantes</div>
   <div class="ant-sec-s">Todo lo que necesitas para aprobar y destacar en Derecho</div>
   <div class="ant-tools">
-    <div class="ant-tool"><div class="ant-tool-icon">🧠</div><div><div class="ant-tool-t">ENTRENA</div><div class="ant-tool-d">Quiz legal infinito con IA. Alternativas, V/F, Flashcards, Desarrollo y Casos.</div></div></div>
-    <div class="ant-tool"><div class="ant-tool-icon">📄</div><div><div class="ant-tool-t">DOCUMENTO</div><div class="ant-tool-d">Genera contratos, escritos y documentos legales en segundos.</div></div></div>
-    <div class="ant-tool"><div class="ant-tool-icon">📋</div><div><div class="ant-tool-t">RESUMEN</div><div class="ant-tool-d">Resume casos, sentencias y normativa en formato estructurado.</div></div></div>
-    <div class="ant-tool"><div class="ant-tool-icon">🔍</div><div><div class="ant-tool-t">ANÁLISIS</div><div class="ant-tool-d">Análisis jurídico profundo con citas doctrinales y jurisprudenciales.</div></div></div>
-    <div class="ant-tool"><div class="ant-tool-icon">⚖️</div><div><div class="ant-tool-t">JURISPRUDENCIA</div><div class="ant-tool-d">Busca y analiza jurisprudencia chilena relevante para tu caso.</div></div></div>
-    <div class="ant-tool"><div class="ant-tool-icon">📚</div><div><div class="ant-tool-t">DOCTRINA</div><div class="ant-tool-d">Accede a la doctrina nacional más actualizada de 2025.</div></div></div>
-    <div class="ant-tool"><div class="ant-tool-icon">🎤</div><div><div class="ant-tool-t">ALEGATO</div><div class="ant-tool-d">Prepara argumentos orales, defensas y alegatos con IA.</div></div></div>
-    <div class="ant-tool"><div class="ant-tool-icon">📂</div><div><div class="ant-tool-t">BANCO DE CASOS</div><div class="ant-tool-d">250+ casos reales del Derecho chileno para practicar.</div></div></div>
-    <div class="ant-tool"><div class="ant-tool-icon">📈</div><div><div class="ant-tool-t">MI PROGRESO</div><div class="ant-tool-d">Estadísticas de estudio, rachas y áreas de mejora.</div></div></div>
+<div class="ant-tool"><div class="ant-tool-icon">🧠</div><div><div class="ant-tool-t">ENTRENA</div><div class="ant-tool-d">Quiz legal infinito con IA. Alternativas, V/F, Flashcards, Desarrollo y Casos.</div></div></div>
+<div class="ant-tool"><div class="ant-tool-icon">📄</div><div><div class="ant-tool-t">DOCUMENTO</div><div class="ant-tool-d">Genera contratos, escritos y documentos legales en segundos.</div></div></div>
+<div class="ant-tool"><div class="ant-tool-icon">📋</div><div><div class="ant-tool-t">RESUMEN</div><div class="ant-tool-d">Resume casos, sentencias y normativa en formato estructurado.</div></div></div>
+<div class="ant-tool"><div class="ant-tool-icon">🔍</div><div><div class="ant-tool-t">ANÁLISIS</div><div class="ant-tool-d">Análisis jurídico profundo con citas doctrinales y jurisprudenciales.</div></div></div>
+<div class="ant-tool"><div class="ant-tool-icon">⚖️</div><div><div class="ant-tool-t">JURISPRUDENCIA</div><div class="ant-tool-d">Busca y analiza jurisprudencia chilena relevante para tu caso.</div></div></div>
+<div class="ant-tool"><div class="ant-tool-icon">📚</div><div><div class="ant-tool-t">DOCTRINA</div><div class="ant-tool-d">Accede a la doctrina nacional más actualizada de 2025.</div></div></div>
+<div class="ant-tool"><div class="ant-tool-icon">🎤</div><div><div class="ant-tool-t">ALEGATO</div><div class="ant-tool-d">Prepara argumentos orales, defensas y alegatos con IA.</div></div></div>
+<div class="ant-tool"><div class="ant-tool-icon">📂</div><div><div class="ant-tool-t">BANCO DE CASOS</div><div class="ant-tool-d">250+ casos reales del Derecho chileno para practicar.</div></div></div>
+<div class="ant-tool"><div class="ant-tool-icon">📈</div><div><div class="ant-tool-t">MI PROGRESO</div><div class="ant-tool-d">Estadísticas de estudio, rachas y áreas de mejora.</div></div></div>
   </div>
 </div>
 
@@ -1470,7 +1470,7 @@ if not _is_univ_chooser and (nav == "HOME" or st.session_state.get("main_section
   <div class="ant-cta-s">Únete a los estudiantes y profesionales que ya usan AntonIA</div>
   <span class="ant-btn-p" style="font-size:1rem;padding:15px 36px;">Comenzar ahora →</span>
   <div style="margin-top:20px;font-size:.72rem;color:#9a8060;font-family:'Inter',sans-serif;">
-    Anton<strong style="color:#c9963a;">IA</strong> · Mar.IA Group · LegalTech Chile
+Anton<strong style="color:#c9963a;">IA</strong> · Mar.IA Group · LegalTech Chile
   </div>
 </div>
     """, unsafe_allow_html=True)
