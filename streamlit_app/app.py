@@ -1097,7 +1097,10 @@ if not _is_univ_chooser and (nav == "HOME" or st.session_state.get("main_section
     _vid_path = Path(__file__).parent / "static" / "promo.mp4"
     if _vid_path.exists():
         st.markdown('<div style="background:#04030e;padding:36px 20px 8px;text-align:center;"><p style="font-family:Inter,sans-serif;font-size:.78rem;color:rgba(201,150,58,.85);text-transform:uppercase;letter-spacing:.18em;font-weight:600;margin-bottom:12px;">▶ Presentación AntonIA</p></div>', unsafe_allow_html=True)
-        st.video(str(_vid_path), autoplay=True, muted=True)
+        try:
+            st.video(str(_vid_path), autoplay=True, muted=True)
+        except TypeError:
+            st.video(str(_vid_path))
         st.markdown('<div style="background:#04030e;padding:4px 0 8px;"></div>', unsafe_allow_html=True)
     # ── FIN VIDEO ─────────────────────────────────────────────────
     st.markdown("""
