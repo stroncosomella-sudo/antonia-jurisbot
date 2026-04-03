@@ -1102,6 +1102,13 @@ _is_univ_chooser = (
     and not st.session_state.get("univ_perfil_elegido", False)
 )
 if not _is_univ_chooser and (nav == "HOME" or st.session_state.get("main_section") is None):
+    # ── Promo video (autoplay on first visit) ──
+    import pathlib as _pathlib
+    _promo_home = _pathlib.Path(__file__).parent / "static" / "promo_home.mp4"
+    if _promo_home.exists():
+       st.markdown('<div style="max-width:780px;margin:0 auto 8px;border-radius:14px;overflow:hidden;border:1px solid rgba(201,150,58,.22);box-shadow:0 8px 32px rgba(0,0,0,.3);">', unsafe_allow_html=True)
+       st.video(str(_promo_home), autoplay=True, muted=True, loop=True)
+       st.markdown('</div>', unsafe_allow_html=True)
     st.markdown("""
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
@@ -1483,13 +1490,6 @@ Anton<strong style="color:#c9963a;">IA</strong> · Mar.IA Group · LegalTech Chi
   </div>
 </div>
     """, unsafe_allow_html=True)
-    # ── Promo video (autoplay on first visit) ──
-    import pathlib as _pathlib
-    _promo_home = _pathlib.Path(__file__).parent / "static" / "promo_home.mp4"
-    if _promo_home.exists():
-       st.markdown('<div style="max-width:720px;margin:18px auto 0;border-radius:12px;overflow:hidden;border:1px solid rgba(201,150,58,.18);">', unsafe_allow_html=True)
-       st.video(str(_promo_home), autoplay=True, muted=True, loop=True)
-       st.markdown('</div>', unsafe_allow_html=True)
     st.stop()
 
 
@@ -1507,6 +1507,77 @@ if _is_univ_chooser:
 .univ-card-icon{font-size:3.5rem;margin-bottom:16px;}
 .univ-card-title{font-family:'Playfair Display',serif;font-size:1.4rem;font-weight:700;color:#1a1813;margin-bottom:8px;}
 .univ-card-desc{font-size:.88rem;color:#9a8a6a;line-height:1.65;margin-bottom:20px;}
+.univ-card-feats{text-align:left;margin-top:12px;}
+.univ-card-feat{font-size:.78rem;color:#5a4e3e;padding:5px 0;border-bottom:1px solid #ede8de;display:flex;align-items:center;gap:6px;}
+.univ-card-feat:last-child{border-bottom:none;}
+.univ-badge{display:inline-block;background:rgba(201,150,58,.1);color:#8a6800;font-size:.7rem;padding:4px 14px;border-radius:20px;border:1px solid rgba(201,150,58,.25);font-weight:600;margin-top:16px;}
+</style>
+<div class="univ-landing">
+  <div class="univ-title">Universidad · Área Académica</div>
+  <div class="univ-sub">¿Cuál es tu rol? Elige tu perfil para acceder a las herramientas diseñadas para ti.</div>
+  <div class="univ-cards">
+    <div class="univ-card" id="card-alumno">
+      <div class="univ-card-icon">👨‍🎓</div>
+      <div class="univ-card-title">Soy Alumno</div>
+      <div class="univ-card-desc">Prepara tus exámenes, estudia casos reales y domina el Derecho chileno con IA adaptativa.</div>
+      <div class="univ-card-feats">
+        <div class="univ-card-feat">🧠 Quiz interactivo con IA infinito</div>
+        <div class="univ-card-feat">📝 Examen simulado con nota 1-7</div>
+        <div class="univ-card-feat">🔍 Análisis jurídico de documentos</div>
+        <div class="univ-card-feat">⚖️ Jurisprudencia y doctrina relacionada</div>
+        <div class="univ-card-feat">📂 Banco de 250+ casos reales</div>
+        <div class="univ-card-feat">📈 Progreso y estadísticas de estudio</div>
+      </div>
+      <div class="univ-badge">Acceso gratuito disponible</div>
+    </div>
+    <div class="univ-card" id="card-profesor">
+      <div class="univ-card-icon">👩‍🏫</div>
+      <div class="univ-card-title">Soy Profesor</div>
+      <div class="univ-card-desc">Prepara clases, crea evaluaciones y gestiona tu curso con herramientas docentes avanzadas.</div>
+      <div class="univ-card-feats">
+        <div class="univ-card-feat">📝 Crea evaluaciones y rúbricas con IA</div>
+        <div class="univ-card-feat">📋 Materiales didácticos automáticos</div>
+        <div class="univ-card-feat">🎙️ Banco de preguntas de examen oral</div>
+        <div class="univ-card-feat">🤖 Chat IA + búsqueda de doctrina</div>
+        <div class="univ-card-feat">📊 Libro de notas y asistencia</div>
+        <div class="univ-card-feat">🔬 Asistente de investigación jurídica</div>
+      </div>
+      <div class="univ-badge">Panel docente completo</div>
+    </div>
+  </div>
+</div>
+    """, unsafe_allow_html=True)
+
+    col1, col2, col3, col4, col5 = st.columns([1,2,1,2,1])
+    with col2:
+        if st.button("👨‍🎓  Entrar como Alumno", use_container_width=True,
+                     help="Accede al área de alumnos con quiz, casos y análisis"):
+            set_univ_perfil("alumno")
+            st.rerun()
+    with col4:
+        if st.button("👩‍🏫  Entrar como Profesor", use_container_width=True,
+                     help="Accede al panel docente con evaluaciones y herramientas"):
+            set_univ_perfil("profesor")
+            st.rerun()
+    st.stop()
+
+
+# ── UNIVERSIDAD LANDING — Mostrar cuando el usuario aún no eligió perfil ──
+if (st.session_state.get("main_section") == "universidad"
+        and not st.session_state.get("univ_perfil_elegido", False)
+        and nav in ("HOME",)):
+    st.markdown("""
+<style>
+.univ-landing{max-width:800px;margin:0 auto;padding:40px 20px;}
+.univ-title{font-family:'Playfair Display',serif;font-size:2.2rem;font-weight:800;color:#1a1813;text-align:center;margin-bottom:10px;}
+.univ-sub{font-size:1.0rem;color:#6a5a3a;text-align:center;margin-bottom:40px;}
+.univ-cards{display:grid;grid-template-columns:1fr 1fr;gap:24px;max-width:720px;margin:0 auto;}
+@media(max-width:600px){.univ-cards{grid-template-columns:1fr;}}
+.univ-card{background:#fff;border:1.5px solid #e2dbd0;border-radius:16px;padding:36px 28px;text-align:center;cursor:pointer;transition:all .25s ease;box-shadow:0 2px 16px rgba(20,18,10,.07);}
+.univ-card:hover{border-color:#c9963a;transform:translateY(-5px);box-shadow:0 12px 40px rgba(20,18,10,.13);}
+.univ-card-icon{font-size:3.5rem;margin-bottom:16px;}
+.univ-card-title{font-family:'Playfair Display',serif;font-size:1.4rem;font-weight:700;color:#1a1813;margin-bottom:8px;}
+.univ-card-desc{font-size:.88rem;color:#6a5a3a;line-height:1.65;margin-bottom:20px;}
 .univ-card-feats{text-align:left;margin-top:12px;}
 .univ-card-feat{font-size:.78rem;color:#5a4e3e;padding:5px 0;border-bottom:1px solid #ede8de;display:flex;align-items:center;gap:6px;}
 .univ-card-feat:last-child{border-bottom:none;}
