@@ -22,46 +22,18 @@ _WHITE = "#f5f0e8"
 _GREEN = "#22c55e"
 _RED   = "#ef4444"
 
-_CSS = """
-<style>
-.prof-header {
-    font-family: 'Playfair Display', Georgia, serif;
-    font-size: 1.8rem; font-weight: 700;
-    color: #f5f0e8; margin-bottom: 0.2rem;
-}
-.prof-sub {
-    font-size: 1.0rem; color: #7a6040;
-    margin-bottom: 1.2rem; letter-spacing: 0.02em;
-}
-.prof-card {
-    background: #1e1b16;
-    border: 1px solid rgba(201,150,58,0.18);
-    border-radius: 8px; padding: 1rem 1.2rem;
-    margin-bottom: 0.7rem;
-    font-size: 0.9rem;
-}
-.prof-alumno-btn {
-    padding: 0.4rem 0.8rem; border-radius: 20px;
-    font-size: 0.78rem; cursor: pointer;
-    background: rgba(201,150,58,0.1);
-    border: 1px solid rgba(201,150,58,0.2);
-    color: #c9963a; display: inline-block;
-    margin: 2px;
-}
-.nota-alta  { color: #22c55e; font-weight: 700; font-size: 1rem; }
-.nota-media { color: #fbbf24; font-weight: 700; font-size: 1rem; }
-.nota-baja  { color: #ef4444; font-weight: 700; font-size: 1rem; }
-/* Textos de label generales */
-div[data-testid="stMarkdownContainer"] p { font-size: 1.0rem !important; }
-div[data-testid="stTextInput"] label,
-div[data-testid="stSelectbox"] label,
-div[data-testid="stTextArea"] label,
-div[data-testid="stNumberInput"] label,
-div[data-testid="stSlider"] label { font-size: 1.05rem !important; font-weight: 600 !important; }
-div[data-testid="stTextInput"] input,
-div[data-testid="stTextArea"] textarea { font-size: 1.0rem !important; }
-</style>
-"""
+_CSS = ('<style>'
+'.prof-header{font-family:"Playfair Display",Georgia,serif;font-size:1.8rem;font-weight:700;color:#f5f0e8;margin-bottom:0.2rem;}'
+'.prof-sub{font-size:1.0rem;color:#7a6040;margin-bottom:1.2rem;letter-spacing:0.02em;}'
+'.prof-card{background:#1e1b16;border:1px solid rgba(201,150,58,0.18);border-radius:8px;padding:1rem 1.2rem;margin-bottom:0.7rem;font-size:0.9rem;}'
+'.prof-alumno-btn{padding:0.4rem 0.8rem;border-radius:20px;font-size:0.78rem;cursor:pointer;background:rgba(201,150,58,0.1);border:1px solid rgba(201,150,58,0.2);color:#c9963a;display:inline-block;margin:2px;}'
+'.nota-alta{color:#22c55e;font-weight:700;font-size:1rem;}'
+'.nota-media{color:#fbbf24;font-weight:700;font-size:1rem;}'
+'.nota-baja{color:#ef4444;font-weight:700;font-size:1rem;}'
+'div[data-testid="stMarkdownContainer"] p{font-size:1.0rem !important;}'
+'div[data-testid="stTextInput"] label,div[data-testid="stSelectbox"] label,div[data-testid="stTextArea"] label,div[data-testid="stNumberInput"] label,div[data-testid="stSlider"] label{font-size:1.05rem !important;font-weight:600 !important;}'
+'div[data-testid="stTextInput"] input,div[data-testid="stTextArea"] textarea{font-size:1.0rem !important;}'
+'</style>')
 
 def _init():
     defaults = {
@@ -110,6 +82,7 @@ def render_profesor(get_llm_fn=None):
     """Renderiza el área completa de Profesores."""
     _init()
     st.markdown(_CSS, unsafe_allow_html=True)
+    _llm = get_llm_fn() if get_llm_fn else None
 
     TABS = [
         ("📝", "evaluaciones",   "Evalúa"),
@@ -250,7 +223,7 @@ def render_profesor(get_llm_fn=None):
                     )
                     with st.spinner("Revisando con IA…"):
                         try:
-                            llm = get_llm_fn()
+                            llm = _llm
                             resp = llm.generate(prompt, system="Eres AntonIA, asistente jurídico académico especializado en el Derecho chileno vigente. Responde siempre en español formal chileno.", max_tokens=1200)
                             st.session_state.prof_eval_result = resp
                             # Guardar en nómina si hay nombre
@@ -342,7 +315,7 @@ def render_profesor(get_llm_fn=None):
                     )
                     with st.spinner("Creando evaluación…"):
                         try:
-                            llm = get_llm_fn()
+                            llm = _llm
                             resp = llm.generate(prompt, system="Eres AntonIA, asistente jurídico académico especializado en el Derecho chileno vigente. Responde siempre en español formal chileno.", max_tokens=2000)
                             st.session_state.prof_rubrica_result = resp
                             st.session_state.prof_evals.append({
@@ -491,7 +464,7 @@ def render_profesor(get_llm_fn=None):
                     )
                     with st.spinner("Investigando…"):
                         try:
-                            llm = get_llm_fn()
+                            llm = _llm
                             resp = llm.generate(prompt, system="Eres AntonIA, asistente jurídico académico especializado en el Derecho chileno vigente. Responde siempre en español formal chileno.", max_tokens=1800)
                             st.session_state.prof_investigacion_result = resp
                         except Exception as e:
@@ -642,7 +615,7 @@ def render_profesor(get_llm_fn=None):
                             )
                             with st.spinner("Generando retroalimentación…"):
                                 try:
-                                    llm = get_llm_fn()
+                                    llm = _llm
                                     resp = llm.generate(prompt, system="Eres AntonIA, asistente jurídico académico especializado en el Derecho chileno vigente. Responde siempre en español formal chileno.", max_tokens=600)
                                     st.session_state[f"retro_{alumno_sel}"] = resp
                                 except Exception as e:
@@ -713,7 +686,7 @@ def render_profesor(get_llm_fn=None):
                     )
                     with st.spinner("Generando material…"):
                         try:
-                            llm = get_llm_fn()
+                            llm = _llm
                             resp = llm.generate(prompt, system="Eres AntonIA, asistente jurídico académico especializado en el Derecho chileno vigente. Responde siempre en español formal chileno.", max_tokens=1800)
                             st.session_state.prof_recursos_result = resp
                         except Exception as e:
@@ -843,7 +816,7 @@ def render_profesor(get_llm_fn=None):
                 tipo_banco = st.radio("Tipo", ["Alternativas (4 opciones)", "Verdadero/Falso", "Desarrollo breve"], key="banco_tipo", horizontal=True)
                 if st.button("🤖 Generar preguntas", use_container_width=True, key="banco_gen_btn"):
                     if get_llm_fn and tema_banco:
-                        llm = get_llm_fn()
+                        llm = _llm
                         prompt = (
                             f"Eres profesor de Derecho chileno. Genera {n_pregs} preguntas de examen.\n"
                             f"Ramo: {ramo_banco} | Tema: {tema_banco} | Dificultad: {dif_banco} | Tipo: {tipo_banco}\n\n"
@@ -1145,7 +1118,7 @@ def render_profesor(get_llm_fn=None):
                     )
                     with st.spinner("Generando examen oral…"):
                         try:
-                            llm = get_llm_fn()
+                            llm = _llm
                             resp = llm.generate(prompt, system="Eres AntonIA, asistente jurídico académico especializado en el Derecho chileno vigente. Responde siempre en español formal chileno.", max_tokens=2500)
                             st.session_state.prof_oral_result = resp
                         except Exception as e:
@@ -1252,7 +1225,7 @@ def render_profesor(get_llm_fn=None):
                     )
                     with st.spinner("Generando plan de clase…"):
                         try:
-                            llm = get_llm_fn()
+                            llm = _llm
                             resp = llm.generate(prompt, system="Eres AntonIA, asistente jurídico académico especializado en el Derecho chileno vigente. Responde siempre en español formal chileno.", max_tokens=2500)
                             st.session_state.prof_plan_result = resp
                         except Exception as e:
@@ -1338,7 +1311,7 @@ def render_profesor(get_llm_fn=None):
                             for m in st.session_state.chat_ia_history[-8:]
                         )
                         prompt_chat = f"Historial de conversación:\n{history_ctx}"
-                        llm = get_llm_fn()
+                        llm = _llm
                         resp_chat = llm.generate(prompt_chat, system=_SYSTEM_CHAT_IA, max_tokens=1600)
                         st.markdown(resp_chat)
                         st.session_state.chat_ia_history.append({"role": "assistant", "content": resp_chat})

@@ -140,6 +140,7 @@ DEFAULTS = {
     "abg_pj_cortes":    {},
     "abg_pj_tribs":     {},
     "abg_caso_sel":     None,
+    "abg_promo_seen":   False,
 }
 
 def _init():
@@ -270,6 +271,22 @@ def _fmt_monto(m: int) -> str:
 def render_abogado(get_llm_fn=None):
     _init()
     st.markdown(_CSS, unsafe_allow_html=True)
+    _llm = get_llm_fn() if get_llm_fn else None
+
+    # ── VIDEO DE PRESENTACIÓN ABOGADOS ──────────────────────────
+    _vid_abg = _Path(__file__).parent / "static" / "promo_abogados.mp4"
+    if _vid_abg.exists() and not st.session_state.get("abg_promo_seen", False):
+        st.markdown('<div style="background:#0d0b09;padding:28px 20px 0;text-align:center;border-bottom:1px solid rgba(201,150,58,.2);"><p style="font-family:Inter,sans-serif;font-size:.72rem;color:#c9963a;text-transform:uppercase;letter-spacing:.2em;font-weight:700;margin-bottom:10px;">El Despacho del Futuro</p></div>', unsafe_allow_html=True)
+        try:
+            st.video(str(_vid_abg), autoplay=True, muted=True)
+        except TypeError:
+            st.video(str(_vid_abg))
+        st.markdown('<div style="background:linear-gradient(180deg,#0d0b09,#141210);padding:20px;text-align:center;"><p style="font-family:Playfair Display,serif;font-size:1.4rem;font-weight:800;color:#f5f0e8;margin-bottom:8px;">AntonIA no es una herramienta. Es tu socio estratégico.</p><p style="font-size:.88rem;color:rgba(201,150,58,.85);line-height:1.8;max-width:640px;margin:0 auto 20px;">Busca y jerarquiza jurisprudencia en segundos · Redacta escritos con precisión clínica · Anticipa contraargumentos antes que el juez · Convierte doctrina en argumentos ganadores</p></div>', unsafe_allow_html=True)
+        if st.button("Acceder al despacho →", type="primary", use_container_width=False):
+            st.session_state.abg_promo_seen = True
+            st.rerun()
+        st.stop()
+    # ── FIN VIDEO ────────────────────────────────────────────────
 
     TABS = [
         ("📁", "casos",       "Causas"),
@@ -697,7 +714,7 @@ def render_abogado(get_llm_fn=None):
                         )
                         with st.spinner("Generando reporte…"):
                             try:
-                                llm = get_llm_fn()
+                                llm = _llm
                                 resp = llm.generate(prompt, system="Eres AntonIA, asistente jurídico para abogados chilenos. Proporciona análisis precisos del Derecho chileno.", max_tokens=1200)
                                 st.session_state.abg_report_draft = resp
                                 # Guardar en historial
@@ -846,7 +863,7 @@ def render_abogado(get_llm_fn=None):
                                         "Usas terminología jurídica chilena vigente."
                                     )
                                     try:
-                                        llm = get_llm_fn()
+                                        llm = _llm
                                         resp_bib = llm.generate(prompt_bib, system=system_bib, max_tokens=2000)
                                         st.markdown(f"**📄 {archivo_bib}**")
                                         st.markdown(resp_bib)
@@ -925,7 +942,7 @@ def render_abogado(get_llm_fn=None):
                     }
                     prompt = type_prompts.get(tipo_consulta, f"Analiza: {consulta_text} en {ramo_doc}")
                     try:
-                        llm = get_llm_fn()
+                        llm = _llm
                         with st.spinner("Consultando biblioteca jurídica…"):
                             resultado = llm.generate(prompt, system=system_doc, max_tokens=1800)
                         if "abg_doc_results" not in st.session_state:
@@ -1005,7 +1022,7 @@ def render_abogado(get_llm_fn=None):
                         system_r = "Eres un abogado litigante chileno experto en redacción forense. Usa el formato correcto chileno y cita solo normas que existan."
                         with st.spinner("Redactando escrito…"):
                             try:
-                                llm = get_llm_fn()
+                                llm = _llm
                                 st.session_state["abg_red_resultado"] = llm.generate(prompt_r, system=system_r, max_tokens=2000)
                                 st.rerun()
                             except Exception as e:
@@ -1049,7 +1066,7 @@ def render_abogado(get_llm_fn=None):
                         system_c = "Eres un abogado contractualista chileno. Redacta contratos completos según el Código Civil chileno."
                         with st.spinner("Redactando contrato…"):
                             try:
-                                llm = get_llm_fn()
+                                llm = _llm
                                 st.session_state["abg_cto_resultado"] = llm.generate(prompt_c, system=system_c, max_tokens=2000)
                                 st.rerun()
                             except Exception as e:
@@ -1078,7 +1095,7 @@ def render_abogado(get_llm_fn=None):
                         system_com = "Eres un abogado chileno redactando comunicaciones profesionales formales."
                         with st.spinner("Redactando…"):
                             try:
-                                llm = get_llm_fn()
+                                llm = _llm
                                 st.session_state["abg_com_resultado"] = llm.generate(prompt_com, system=system_com, max_tokens=1000)
                                 st.rerun()
                             except Exception as e:
@@ -1140,7 +1157,7 @@ def render_abogado(get_llm_fn=None):
                     )
                     with st.spinner("Redactando…"):
                         try:
-                            llm = get_llm_fn()
+                            llm = _llm
                             st.session_state.abg_correo_result = llm.generate(prompt, system="Eres AntonIA, asistente jurídico para abogados chilenos. Proporciona análisis precisos del Derecho chileno.", max_tokens=800)
                         except Exception as e:
                             st.error(f"Error: {e}")
@@ -1280,7 +1297,7 @@ def render_abogado(get_llm_fn=None):
                     )
                     with st.spinner("Generando borrador…"):
                         try:
-                            llm = get_llm_fn()
+                            llm = _llm
                             st.session_state.abg_doc_result = llm.generate(prompt, system="Eres AntonIA, asistente jurídico para abogados chilenos. Proporciona análisis precisos del Derecho chileno.", max_tokens=1500)
                         except Exception as e:
                             st.error(f"Error: {e}")
@@ -1351,7 +1368,7 @@ def render_abogado(get_llm_fn=None):
                     )
                     with st.spinner("Generando propuesta…"):
                         try:
-                            llm = get_llm_fn()
+                            llm = _llm
                             st.session_state.abg_hon_propuesta = llm.generate(prompt, system="Eres AntonIA, asistente jurídico para abogados chilenos. Proporciona análisis precisos del Derecho chileno.", max_tokens=1000)
                         except Exception as e:
                             st.error(f"Error: {e}")
