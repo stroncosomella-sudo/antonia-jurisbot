@@ -196,9 +196,37 @@ def render_profesor(get_llm_fn=None):
                 height=80,
                 placeholder="Ej: 4 puntos por identificar correctamente los elementos del acto jurídico; 3 puntos por análisis de requisitos de existencia; 3 puntos por aplicación al caso concreto.",
                 key="prof_ev_pauta")
+            # ── ADJUNTAR DOCUMENTO DEL ALUMNO ──────────────────────────
+            uploaded_trabajo = st.file_uploader(
+                "📎 O adjuntar trabajo del alumno (opcional)",
+                type=["pdf", "docx", "txt"],
+                key="eval_file_upload",
+                help="Sube el archivo para que AntonIA extraiga el texto automáticamente"
+            )
+            _texto_desde_archivo = ""
+            if uploaded_trabajo is not None:
+                with st.spinner(f"Extrayendo texto de '{uploaded_trabajo.name}'…"):
+                    try:
+                        raw = uploaded_trabajo.read()
+                        if uploaded_trabajo.type == "application/pdf":
+                            import pypdf, io as _io
+                            reader = pypdf.PdfReader(_io.BytesIO(raw))
+                            _texto_desde_archivo = "\n".join(p.extract_text() or "" for p in reader.pages)
+                        elif "wordprocessingml" in (uploaded_trabajo.type or "") or uploaded_trabajo.name.endswith(".docx"):
+                            import docx as _docx, io as _io
+                            _texto_desde_archivo = "\n".join(p.text for p in _docx.Document(_io.BytesIO(raw)).paragraphs)
+                        else:
+                            _texto_desde_archivo = raw.decode("utf-8", errors="ignore")
+                        if _texto_desde_archivo.strip():
+                            st.success(f"✅ {len(_texto_desde_archivo):,} caracteres extraídos de '{uploaded_trabajo.name}'")
+                        else:
+                            st.warning("No se pudo extraer texto. El PDF puede ser una imagen escaneada.")
+                    except Exception as e:
+                        st.error(f"Error: {e}")
             respuesta    = st.text_area("Respuesta del alumno",
                 height=180,
-                placeholder="Pega aquí la respuesta del alumno…",
+                value=_texto_desde_archivo[:4000] if _texto_desde_archivo else "",
+                placeholder="Pega aquí la respuesta del alumno… o adjunta un archivo arriba.",
                 key="prof_ev_respuesta")
             nota_max     = st.number_input("Nota máxima", value=7.0, step=0.5, key="prof_ev_max")
 
@@ -1260,3 +1288,73 @@ def render_profesor(get_llm_fn=None):
                     '<span style="font-size:0.78rem;color:#6a5a3a;">Incluye estructura temporal,<br>'
                     'caso práctico, preguntas socráticas<br>y bibliografía chilena</span></div>',
                     unsafe_allow_html=True)
+
+    elif tab == "chat_ia":
+        st.markdown('<div class="prof-header">🤖 Chat con AntonIA</div>', unsafe_allow_html=True)
+        st.markdown('<div class="prof-sub">Asistente docente especializado en Derecho chileno · Pedagogía · Normativa · Investigación</div>', unsafe_allow_html=True)
+
+        _SYSTEM_CHAT_IA = (
+            "Eres AntonIA en modo Asistente Docente universitario. "
+            "Ayudas a profesores de Derecho chileno con: consultas pedagógicas, "
+            "normativa educacional vigente, diseño de evaluaciones, jurisprudencia relevante, "
+            "planificación curricular, orientación sobre metodologías activas de aprendizaje, "
+            "e investigación jurídica académica. "
+            "Respondes en español formal chileno con precisión jurídica y sensibilidad pedagógica. "
+            "Cuando cites normas, indica el texto legal chileno vigente. "
+            "Cuando des consejos pedagógicos, los fundamentas en evidencia y buenas prácticas. "
+            "NUNCA inventas artículos, autores o sentencias."
+        )
+
+        if "chat_ia_history" not in st.session_state:
+            st.session_state.chat_ia_history = []
+
+        if not st.session_state.chat_ia_history:
+            suggestions = [
+                "¿Cómo estructuro una rúbrica para un caso práctico de Civil III?",
+                "¿Cuáles son los requisitos del Art. 1489 del Código Civil?",
+                "Diseña una actividad socrática para clase de Derecho Penal",
+                "¿Cómo puedo evaluar pensamiento crítico jurídico?",
+            ]
+            st.markdown('<div style="font-size:.72rem;color:rgba(201,150,58,.7);text-transform:uppercase;letter-spacing:.1em;font-weight:700;margin-bottom:.6rem;">Inicio rápido</div>', unsafe_allow_html=True)
+            sug_cols = st.columns(len(suggestions))
+            for col, sug in zip(sug_cols, suggestions):
+                if col.button(sug[:35] + "…", key=f"chat_sug_{hash(sug)}", use_container_width=True):
+                    st.session_state.chat_ia_history.append({"role": "user", "content": sug})
+                    st.rerun()
+
+        for msg in st.session_state.chat_ia_history:
+            with st.chat_message(msg["role"]):
+                st.markdown(msg["content"])
+
+        if (st.session_state.chat_ia_history and
+                st.session_state.chat_ia_history[-1]["role"] == "user" and
+                get_llm_fn):
+            user_msg = st.session_state.chat_ia_history[-1]["content"]
+            with st.chat_message("assistant"):
+                with st.spinner("AntonIA está pensando…"):
+                    try:
+                        history_ctx = "\n".join(
+                            f"{'Profesor' if m['role'] == 'user' else 'AntonIA'}: {m['content']}"
+                            for m in st.session_state.chat_ia_history[-8:]
+                        )
+                        prompt_chat = f"Historial de conversación:\n{history_ctx}"
+                        llm = get_llm_fn()
+                        resp_chat = llm.generate(prompt_chat, system=_SYSTEM_CHAT_IA, max_tokens=1600)
+                        st.markdown(resp_chat)
+                        st.session_state.chat_ia_history.append({"role": "assistant", "content": resp_chat})
+                    except Exception as e:
+                        err_msg = f"Error al conectar: {e}"
+                        st.error(err_msg)
+
+        if user_input := st.chat_input("Escribe tu consulta al asistente docente…"):
+            st.session_state.chat_ia_history.append({"role": "user", "content": user_input})
+            st.rerun()
+
+        if st.session_state.chat_ia_history:
+            col_ctrl1, col_ctrl2, col_ctrl3 = st.columns([2, 1, 1])
+            with col_ctrl2:
+                if st.button("🗑️ Limpiar", use_container_width=True, key="chat_ia_clear"):
+                    st.session_state.chat_ia_history = []
+                    st.rerun()
+            with col_ctrl3:
+                st.caption(f"{len(st.session_state.chat_ia_history)} mensajes")

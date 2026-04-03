@@ -1,449 +1,143 @@
 """
-consulta_legal_module.py — AntonIA · Consulta Legal (No Abogados)
-Servicio de orientación legal accesible para personas sin formación jurídica.
-
-Funcionalidades:
-  · Explicar documentos legales en lenguaje simple
-  · Responder preguntas sobre situaciones legales cotidianas
-  · Identificar partes, plazos y acciones en documentos
-  · Guiar al usuario sobre qué hacer y a dónde ir
-  · (Próximamente) Consulta al Poder Judicial
+consulta_legal_module.py — AntonIA · Consulta Legal para Ciudadanos
+Asesoría jurídica basada en el Derecho chileno vigente.
+Sin alucinaciones — sin inventar normas — sin reemplazar al abogado.
 """
-
 import streamlit as st
-import os
+from pathlib import Path
 
-_GOLD  = "#c9963a"
-_DARK  = "#141210"
-_CARD  = "#1e1b16"
-_MUTED = "#a09070"
-_WHITE = "#f5f0e8"
-_GREEN = "#22c55e"
+_GOLD = "#c9963a"
+_DARK = "#141210"
 
-_CSS = """
-<style>
-.cl-hero-title {
-    font-family: 'Playfair Display', Georgia, serif;
-    font-size: clamp(1.5rem, 4vw, 2.1rem);
-    font-weight: 700; color: #f5f0e8;
-    line-height: 1.25; margin-bottom: 0.4rem;
-}
-.cl-hero-sub {
-    font-size: clamp(0.82rem, 2vw, 1rem);
-    color: #a09070; line-height: 1.55;
-    max-width: 560px; margin-bottom: 1.8rem;
-}
-.cl-price-card {
-    background: #1e1b16;
-    border: 1px solid rgba(201,150,58,0.22);
-    border-radius: 12px; padding: 1.5rem 1.4rem;
-    text-align: center;
-}
-.cl-price-card.featured {
-    border-color: #c9963a;
-    background: linear-gradient(135deg, #1e1b16 0%, #221e18 100%);
-}
-.cl-price-amount {
-    font-size: 2rem; font-weight: 700; color: #c9963a;
-    font-family: 'Playfair Display', serif;
-}
-.cl-price-period { font-size: 0.7rem; color: #a09070; }
-.cl-answer-box {
-    background: #1e1b16;
-    border: 1px solid rgba(201,150,58,0.2);
-    border-left: 3px solid #c9963a;
-    border-radius: 0 8px 8px 0;
-    padding: 1.2rem 1.4rem;
-    font-size: 0.85rem; color: #e8d8b8;
-    line-height: 1.7; margin-top: 1rem;
-}
-.cl-step {
-    display: flex; align-items: flex-start;
-    gap: 0.8rem; margin-bottom: 1rem;
-}
-.cl-step-num {
-    min-width: 28px; height: 28px;
-    background: rgba(201,150,58,0.15);
-    border: 1px solid rgba(201,150,58,0.35);
-    border-radius: 50%; display: flex;
-    align-items: center; justify-content: center;
-    font-size: 0.72rem; font-weight: 700; color: #c9963a;
-}
-.cl-step-text { font-size: 0.8rem; color: #c8b890; line-height: 1.5; }
-.cl-disclaimer {
-    background: rgba(201,150,58,0.05);
-    border: 1px solid rgba(201,150,58,0.12);
-    border-radius: 6px; padding: 0.7rem 0.9rem;
-    font-size: 0.67rem; color: #a09070;
-    line-height: 1.55; margin-top: 1rem;
-}
-@media (max-width: 640px) {
-    .cl-hero-title { font-size: 1.4rem; }
-    .cl-hero-sub   { font-size: 0.8rem; }
-}
-</style>
-"""
+_CSS = ('<style>'
+'.cl-header{font-family:"Playfair Display",serif;font-size:1.8rem;font-weight:700;color:#f5f0e8;margin-bottom:.2rem;}'
+'.cl-sub{font-size:1rem;color:#a08050;margin-bottom:1.2rem;}'
+'.cl-disclaimer{background:rgba(201,150,58,.08);border:1px solid rgba(201,150,58,.25);border-radius:8px;padding:.7rem 1rem;font-size:.78rem;color:#9a8a6a;line-height:1.6;margin-bottom:1.2rem;}'
+'</style>')
 
-def _init():
-    defaults = {
-        "cl_tab":         "consulta",
-        "cl_doc_text":    None,
-        "cl_pregunta":    "",
-        "cl_respuesta":   "",
-        "cl_query_count": 0,
-        "cl_modo":        "pregunta",   # "pregunta" | "documento"
-    }
-    for k, v in defaults.items():
-        if k not in st.session_state:
-            st.session_state[k] = v
+_SYSTEM_CONSULTA = (
+    "Eres AntonIA, asistente de consulta legal para ciudadanos chilenos. "
+    "Respondes preguntas legales basadas EXCLUSIVAMENTE en el Derecho chileno vigente. "
+    "Eres claro, preciso y accesible: no usas jerga técnica innecesaria, explicas los conceptos clave. "
+    "REGLAS CRÍTICAS: "
+    "1. NUNCA inventes normas, artículos, fechas ni sentencias — si no sabes, lo dices claramente. "
+    "2. SIEMPRE indica qué ley o artículo aplica cuando lo sabes con certeza. "
+    "3. SIEMPRE concluye si la situación requiere un abogado o no. "
+    "4. NO das consejos específicos de estrategia legal — describes el marco normativo aplicable. "
+    "5. Usas español chileno natural, sin rebuscamiento. "
+    "TEMAS QUE MANEJAS: contratos, arrendamiento, trabajo, familia, herencias, "
+    "consumidor, multas, deudas, accidentes, delitos comunes, trámites estatales."
+)
 
-_MAX_CONSULTAS_GRATIS = 3
-_FORMSPREE_ID         = "xpwzrjaz"
+_TOPICS = [
+    "🏠 Arrendamiento y vivienda",
+    "💼 Laboral y despidos",
+    "👨‍👩‍👧 Familia y divorcio",
+    "📋 Contratos",
+    "🛒 Derechos del consumidor",
+    "⚖️ Deudas y cobranzas",
+    "🚗 Accidentes y seguros",
+    "📜 Herencias y testamentos",
+    "🏛️ Trámites con el Estado",
+    "🔒 Privacidad y datos",
+    "💊 Salud y negligencia médica",
+    "🌐 Otro tema legal",
+]
 
-# ═══════════════════════════════════════════════════════════════════
-def render_consulta_legal(get_orch_fn=None, get_llm_fn=None):
-    """Renderiza el área de Consulta Legal para personas sin formación jurídica."""
-    _init()
+
+def render_consulta_legal(get_llm_fn=None):
+    """Renderiza el módulo de Consulta Legal para ciudadanos."""
     st.markdown(_CSS, unsafe_allow_html=True)
 
-    # ── Cabecera hero ──────────────────────────────────────────────
-    st.markdown("""
-    <div class="cl-hero-title">
-      ¿Tienes un problema legal?<br>
-      <span style="color:#c9963a;">Entendemos tu situación</span>
-    </div>
-    <div class="cl-hero-sub">
-      AntonIA explica documentos legales en lenguaje simple, te dice qué hacer
-      y adónde ir. Sin tecnicismos, sin complicaciones.
-    </div>
-    """, unsafe_allow_html=True)
+    # ── VIDEO DE PRESENTACIÓN ────────────────────────────────────
+    _vid_cl = Path(__file__).parent / "static" / "promo_consulta.mp4"
+    if _vid_cl.exists() and not st.session_state.get("cl_promo_seen", False):
+        st.markdown(
+            '<div style="background:#04030e;padding:28px 20px 0;text-align:center;border-bottom:1px solid rgba(201,150,58,.2);">'
+            '<p style="font-family:Inter,sans-serif;font-size:.72rem;color:#c9963a;text-transform:uppercase;letter-spacing:.2em;font-weight:700;margin-bottom:10px;">💬 Respuestas Legales Reales. En Segundos.</p>'
+            '</div>', unsafe_allow_html=True)
+        try:
+            st.video(str(_vid_cl), autoplay=True, muted=True)
+        except TypeError:
+            st.video(str(_vid_cl))
+        st.markdown(
+            '<div style="padding:20px;text-align:center;background:linear-gradient(180deg,#04030e,#0d0b09);">'
+            '<p style="font-family:\'Playfair Display\',serif;font-size:1.3rem;font-weight:800;color:#f5f0e8;margin-bottom:8px;">Por primera vez, el Derecho chileno está en tus manos.</p>'
+            '<p style="font-size:.88rem;color:rgba(240,232,218,.78);line-height:1.8;max-width:600px;margin:0 auto 16px;">'
+            '✦ Contratos · Despidos · Arriendos · Familia · Derechos del consumidor<br>'
+            '✦ Sin citas · Sin esperas · Sin honorarios por consulta<br>'
+            '✦ Basado en la ley chilena vigente · Sin alucinaciones</p>'
+            '<p style="font-size:.78rem;color:rgba(201,150,58,.6);font-style:italic;">No reemplaza a tu abogado — te prepara para hablar con él de igual a igual.</p>'
+            '</div>', unsafe_allow_html=True)
+        if st.button("Hacer mi consulta →", type="primary", use_container_width=False, key="cl_promo_btn"):
+            st.session_state.cl_promo_seen = True
+            st.rerun()
+        st.stop()
+    # ── FIN VIDEO ────────────────────────────────────────────────
 
-    # ── Selector de modo ───────────────────────────────────────────
-    modo_col1, modo_col2 = st.columns(2)
-    with modo_col1:
-        active_p = st.session_state.cl_modo == "pregunta"
-        if active_p:
-            st.markdown(
-                '<div style="text-align:center;padding:0.7rem 1rem;'
-                'background:rgba(201,150,58,0.12);border:1px solid rgba(201,150,58,0.4);'
-                'border-radius:8px;color:#c9963a;font-weight:700;font-size:0.82rem;cursor:default;">'
-                '💬 Tengo una pregunta</div>', unsafe_allow_html=True)
-        else:
-            if st.button("💬 Tengo una pregunta", use_container_width=True, key="cl_btn_preg"):
-                st.session_state.cl_modo = "pregunta"
+    # ── INICIALIZAR ESTADO ───────────────────────────────────────
+    if "cl_history" not in st.session_state:
+        st.session_state.cl_history = []
+    if "cl_topic" not in st.session_state:
+        st.session_state.cl_topic = None
+
+    # ── HEADER ──────────────────────────────────────────────────
+    st.markdown('<div class="cl-header">💬 Consulta Legal</div>', unsafe_allow_html=True)
+    st.markdown('<div class="cl-sub">Respuestas basadas en el Derecho chileno vigente · Sin honorarios por consulta</div>', unsafe_allow_html=True)
+    st.markdown(
+        '<div class="cl-disclaimer">'
+        '⚠️ <strong>Importante:</strong> AntonIA entrega información jurídica general. '
+        'No reemplaza la asesoría de un abogado. Para situaciones urgentes o complejas, '
+        'consulta con un profesional del Derecho.'
+        '</div>', unsafe_allow_html=True)
+
+    # ── SELECTOR DE TEMA (primera vez) ──────────────────────────
+    if not st.session_state.cl_history:
+        st.markdown('<div style="font-size:.78rem;color:rgba(201,150,58,.8);text-transform:uppercase;letter-spacing:.1em;font-weight:700;margin-bottom:.6rem;">¿Sobre qué tema es tu consulta?</div>', unsafe_allow_html=True)
+        topic_cols = st.columns(4)
+        for i, topic in enumerate(_TOPICS):
+            col = topic_cols[i % 4]
+            if col.button(topic, key=f"cl_topic_{i}", use_container_width=True):
+                st.session_state.cl_topic = topic
+                intro_msg = f"Quiero hacer una consulta sobre: {topic}"
+                st.session_state.cl_history.append({"role": "user", "content": intro_msg})
                 st.rerun()
 
-    with modo_col2:
-        active_d = st.session_state.cl_modo == "documento"
-        if active_d:
-            st.markdown(
-                '<div style="text-align:center;padding:0.7rem 1rem;'
-                'background:rgba(201,150,58,0.12);border:1px solid rgba(201,150,58,0.4);'
-                'border-radius:8px;color:#c9963a;font-weight:700;font-size:0.82rem;cursor:default;">'
-                '📄 Tengo un documento</div>', unsafe_allow_html=True)
-        else:
-            if st.button("📄 Tengo un documento", use_container_width=True, key="cl_btn_doc"):
-                st.session_state.cl_modo = "documento"
+    # ── HISTORIAL DE MENSAJES ────────────────────────────────────
+    for msg in st.session_state.cl_history:
+        with st.chat_message(msg["role"]):
+            st.markdown(msg["content"])
+
+    # ── RESPUESTA PENDIENTE ──────────────────────────────────────
+    if (st.session_state.cl_history and
+            st.session_state.cl_history[-1]["role"] == "user" and
+            get_llm_fn):
+        with st.chat_message("assistant"):
+            with st.spinner("Analizando tu consulta…"):
+                try:
+                    history_ctx = "\n".join(
+                        f"{'Ciudadano' if m['role'] == 'user' else 'AntonIA'}: {m['content']}"
+                        for m in st.session_state.cl_history[-8:]
+                    )
+                    prompt_cl = f"Conversación:\n{history_ctx}"
+                    llm = get_llm_fn()
+                    resp_cl = llm.generate(prompt_cl, system=_SYSTEM_CONSULTA, max_tokens=1400)
+                    st.markdown(resp_cl)
+                    st.session_state.cl_history.append({"role": "assistant", "content": resp_cl})
+                except Exception as e:
+                    st.error(f"Error al conectar: {e}")
+
+    # ── INPUT ────────────────────────────────────────────────────
+    if st.session_state.cl_history or st.session_state.cl_topic:
+        if user_cl := st.chat_input("Escribe tu consulta legal…"):
+            st.session_state.cl_history.append({"role": "user", "content": user_cl})
+            st.rerun()
+
+    # ── CONTROLES ────────────────────────────────────────────────
+    if st.session_state.cl_history:
+        col_x1, col_x2 = st.columns([5, 1])
+        with col_x2:
+            if st.button("Nueva consulta", key="cl_clear", use_container_width=True):
+                st.session_state.cl_history = []
+                st.session_state.cl_topic = None
                 st.rerun()
-
-    st.markdown('<hr style="border-color:rgba(201,150,58,0.12);margin:1.2rem 0;">', unsafe_allow_html=True)
-
-    consultas_usadas = st.session_state.cl_query_count
-    consultas_libres = max(0, _MAX_CONSULTAS_GRATIS - consultas_usadas)
-
-    # ── MODO PREGUNTA ──────────────────────────────────────────────
-    if st.session_state.cl_modo == "pregunta":
-
-        st.markdown("""
-        <div style="font-size:0.78rem;color:#c8b890;margin-bottom:0.8rem;">
-        Puedes preguntarme cosas como:
-        <em>"Me llegó una notificación judicial — ¿qué debo hacer?"</em>,
-        <em>"¿Qué es una demanda civil?"</em>,
-        <em>"Me despidieron — ¿tengo derecho a indemnización?"</em>
-        </div>
-        """, unsafe_allow_html=True)
-
-        pregunta = st.text_area(
-            "Tu consulta legal",
-            placeholder="Escribe aquí tu pregunta en tus propias palabras…",
-            height=110,
-            key="cl_preg_input",
-            label_visibility="collapsed")
-
-        if consultas_libres > 0:
-            st.markdown(
-                f'<div style="font-size:0.65rem;color:#a09070;margin-bottom:0.5rem;">'
-                f'Consultas gratuitas restantes: <strong style="color:#c9963a;">{consultas_libres}</strong></div>',
-                unsafe_allow_html=True)
-            btn_disabled = False
-        else:
-            st.markdown(
-                '<div style="font-size:0.75rem;color:#ef4444;margin-bottom:0.5rem;">'
-                'Has usado tus consultas gratuitas. Suscríbete para continuar.</div>',
-                unsafe_allow_html=True)
-            btn_disabled = True
-
-        if st.button("🔎 Consultar con AntonIA", use_container_width=True,
-                     type="primary", disabled=btn_disabled):
-            if pregunta and get_llm_fn:
-                prompt = (
-                    "Eres un asistente legal chileno que ayuda a personas sin formación jurídica.\n"
-                    "Tu estilo de comunicación es: claro, simple, empático y sin tecnicismos.\n"
-                    "NUNCA uses lenguaje jurídico sin explicarlo.\n\n"
-                    f"CONSULTA: {pregunta}\n\n"
-                    "INSTRUCCIONES DE RESPUESTA:\n"
-                    "1. Explica la situación en términos simples (2-3 párrafos)\n"
-                    "2. Indica qué ACCIONES concretas debe tomar el usuario (numeradas)\n"
-                    "3. Indica A DÓNDE debe ir o a quién llamar (ej: Juzgado de su comuna, Corporación de Asistencia Judicial, Inspección del Trabajo, etc.)\n"
-                    "4. Menciona PLAZOS importantes si corresponde\n"
-                    "5. Señala cuándo es urgente contratar un abogado\n"
-                    "Cierra con: '⚠️ Esta orientación es general. Para tu caso específico, te recomendamos consultar con un abogado.'"
-                )
-                with st.spinner("AntonIA está analizando tu consulta…"):
-                    try:
-                        llm = get_llm_fn()
-                        resp = llm.generate(prompt, system=" ", max_tokens=1000)
-                        st.session_state.cl_respuesta = resp
-                        st.session_state.cl_query_count += 1
-                        st.rerun()
-                    except Exception as e:
-                        st.error(f"Error: {e}")
-            elif not pregunta:
-                st.warning("Escribe tu consulta.")
-
-        if st.session_state.cl_respuesta:
-            st.markdown(
-                f'<div class="cl-answer-box">'
-                f'{st.session_state.cl_respuesta.replace(chr(10),"<br>")}'
-                f'</div>',
-                unsafe_allow_html=True)
-
-            # Siguiente acción del usuario
-            st.markdown('<br>', unsafe_allow_html=True)
-            col_a, col_b = st.columns(2)
-            with col_a:
-                if st.button("🔄 Nueva consulta", use_container_width=True):
-                    st.session_state.cl_respuesta = ""
-                    st.rerun()
-            with col_b:
-                if st.button("📄 Subir mi documento", use_container_width=True):
-                    st.session_state.cl_modo = "documento"
-                    st.session_state.cl_respuesta = ""
-                    st.rerun()
-
-    # ── MODO DOCUMENTO ─────────────────────────────────────────────
-    elif st.session_state.cl_modo == "documento":
-
-        st.markdown("""
-        <div style="font-size:0.78rem;color:#c8b890;margin-bottom:0.8rem;">
-        Sube un documento legal (demanda, notificación, contrato, carta, resolución…)
-        y AntonIA te explicará en términos simples qué dice y qué debes hacer.
-        </div>
-        """, unsafe_allow_html=True)
-
-        col_up, col_result = st.columns([1, 1.3])
-
-        with col_up:
-            doc_uploaded = st.file_uploader(
-                "Sube tu documento",
-                type=["pdf","docx","doc","txt"],
-                key="cl_doc_upload",
-                help="PDF, Word o texto. Máximo 10 MB.")
-
-            pregunta_doc = st.text_area(
-                "¿Qué quieres saber del documento?",
-                placeholder=(
-                    "Deja vacío para análisis completo, o pregunta algo específico:\n"
-                    "ej. '¿Qué me están cobrando?', '¿Cuánto tiempo tengo para responder?'"
-                ),
-                height=80,
-                key="cl_pregunta_doc")
-
-            if consultas_libres > 0:
-                st.markdown(
-                    f'<div style="font-size:0.65rem;color:#a09070;margin-bottom:0.5rem;">'
-                    f'Análisis gratuitos restantes: <strong style="color:#c9963a;">{consultas_libres}</strong></div>',
-                    unsafe_allow_html=True)
-                btn_disabled_doc = False
-            else:
-                st.markdown(
-                    '<div style="font-size:0.75rem;color:#ef4444;margin-bottom:0.5rem;">'
-                    'Has usado tus análisis gratuitos. Suscríbete para continuar.</div>',
-                    unsafe_allow_html=True)
-                btn_disabled_doc = True
-
-            if st.button("📄 Analizar Documento", use_container_width=True,
-                         type="primary", disabled=btn_disabled_doc or not doc_uploaded):
-                if doc_uploaded and get_orch_fn and get_llm_fn:
-                    import tempfile, pathlib
-                    with st.spinner("Leyendo documento…"):
-                        try:
-                            tmp_path = pathlib.Path(tempfile.mktemp(suffix=pathlib.Path(doc_uploaded.name).suffix))
-                            tmp_path.write_bytes(doc_uploaded.getvalue())
-                            orch   = get_orch_fn()
-                            result = orch.ingest(file_path=tmp_path)
-                            texto  = result.extraction.raw_text[:6000]  # primeros 6000 chars
-                            st.session_state.cl_doc_text = texto
-
-                            pregunta_efectiva = pregunta_doc.strip() or (
-                                "Explica este documento en términos simples: "
-                                "qué es, quiénes son las partes, qué te están pidiendo o informando, "
-                                "qué plazos hay, y qué debes hacer."
-                            )
-
-                            llm_prompt = (
-                                "Eres un asistente legal chileno que ayuda a personas sin formación jurídica.\n"
-                                "Explica en lenguaje claro y simple, sin tecnicismos (o explicándolos si son necesarios).\n\n"
-                                f"DOCUMENTO:\n{texto}\n\n"
-                                f"CONSULTA: {pregunta_efectiva}\n\n"
-                                "FORMATO DE RESPUESTA:\n"
-                                "1. **¿Qué es este documento?** (1 párrafo simple)\n"
-                                "2. **¿Quiénes son las partes?** (lista simple)\n"
-                                "3. **¿Qué te están diciendo o pidiendo?** (explicación clara)\n"
-                                "4. **¿Qué plazos tienes?** (si los hay)\n"
-                                "5. **¿Qué debes hacer?** (pasos concretos numerados)\n"
-                                "6. **¿A dónde ir?** (institución específica: juzgado, CAJ, Inspección del Trabajo, etc.)\n\n"
-                                "Cierra con: '⚠️ Esta es una orientación general. Para tu caso específico, consulta con un abogado.'"
-                            )
-                            llm = get_llm_fn()
-                            resp = llm.generate(llm_prompt, system=" ", max_tokens=1400)
-                            st.session_state.cl_respuesta = resp
-                            st.session_state.cl_query_count += 1
-                            st.rerun()
-
-                        except Exception as e:
-                            st.error(f"Error al procesar: {e}")
-                elif not doc_uploaded:
-                    st.warning("Primero sube un documento.")
-                elif not get_llm_fn:
-                    st.warning("Servicio no disponible.")
-
-            # Próximamente: Poder Judicial
-            st.markdown("""
-            <div style="margin-top:1.5rem;padding:0.8rem 1rem;
-                        background:rgba(59,130,246,0.06);
-                        border:1px solid rgba(59,130,246,0.18);
-                        border-radius:8px;">
-              <div style="font-size:0.7rem;font-weight:700;color:rgba(59,130,246,0.7);
-                          text-transform:uppercase;letter-spacing:0.06em;margin-bottom:0.3rem;">
-                🏛 Próximamente
-              </div>
-              <div style="font-size:0.72rem;color:#a09070;line-height:1.5;">
-                Consulta directa al <strong style="color:#c8b890;">Poder Judicial</strong>:
-                ingresa tu RUT o RIT y AntonIA te muestra el estado de tu causa,
-                demanda y contestación, también explicados en lenguaje simple.
-              </div>
-            </div>
-            """, unsafe_allow_html=True)
-
-        with col_result:
-            if st.session_state.cl_respuesta:
-                st.markdown(
-                    f'<div class="cl-answer-box">'
-                    f'{st.session_state.cl_respuesta.replace(chr(10),"<br>")}'
-                    f'</div>',
-                    unsafe_allow_html=True)
-
-                if st.button("🔄 Analizar otro documento", use_container_width=True):
-                    st.session_state.cl_respuesta = ""
-                    st.session_state.cl_doc_text  = None
-                    st.rerun()
-            else:
-                # Cómo funciona
-                st.markdown("""
-                <div style="padding:1.2rem;">
-                  <div style="font-size:0.72rem;font-weight:700;color:#a09070;
-                              text-transform:uppercase;letter-spacing:0.06em;margin-bottom:1rem;">
-                    ¿Cómo funciona?
-                  </div>
-                """, unsafe_allow_html=True)
-
-                pasos = [
-                    ("1", "Sube tu documento (PDF, Word o texto)"),
-                    ("2", "AntonIA lo lee y entiende su contenido"),
-                    ("3", "Te explica en lenguaje simple: qué es, quiénes son las partes, qué plazos tienes"),
-                    ("4", "Te dice exactamente qué hacer y a dónde ir"),
-                ]
-                for num, texto in pasos:
-                    st.markdown(f"""
-                    <div class="cl-step">
-                      <div class="cl-step-num">{num}</div>
-                      <div class="cl-step-text">{texto}</div>
-                    </div>
-                    """, unsafe_allow_html=True)
-
-                st.markdown("</div>", unsafe_allow_html=True)
-
-    # ── PLANES / PRECIOS ───────────────────────────────────────────
-    st.markdown('<hr style="border-color:rgba(201,150,58,0.1);margin:2rem 0 1.2rem;">', unsafe_allow_html=True)
-    st.markdown("""
-    <div style="text-align:center;margin-bottom:1.2rem;">
-      <div style="font-family:'Playfair Display',serif;font-size:1.1rem;font-weight:700;color:#f5f0e8;">
-        Planes de Consulta Legal
-      </div>
-      <div style="font-size:0.72rem;color:#a09070;margin-top:4px;">
-        Orientación jurídica accesible para todas las personas
-      </div>
-    </div>
-    """, unsafe_allow_html=True)
-
-    p1, p2, p3 = st.columns(3)
-    with p1:
-        st.markdown("""
-        <div class="cl-price-card">
-          <div style="font-size:0.68rem;color:#a09070;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:0.5rem;">Básico</div>
-          <div class="cl-price-amount">Gratis</div>
-          <div class="cl-price-period">3 consultas</div>
-          <hr style="border-color:rgba(201,150,58,0.12);margin:0.8rem 0;">
-          <div style="font-size:0.72rem;color:#c8b890;text-align:left;line-height:1.8;">
-            ✓ Preguntas generales<br>
-            ✓ Análisis de 1 documento<br>
-            ✓ Guía de acción básica
-          </div>
-        </div>
-        """, unsafe_allow_html=True)
-    with p2:
-        st.markdown("""
-        <div class="cl-price-card featured">
-          <div style="font-size:0.68rem;color:#c9963a;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:0.5rem;">⭐ Popular</div>
-          <div class="cl-price-amount">$4.990</div>
-          <div class="cl-price-period">/ mes · CLP</div>
-          <hr style="border-color:rgba(201,150,58,0.2);margin:0.8rem 0;">
-          <div style="font-size:0.72rem;color:#c8b890;text-align:left;line-height:1.8;">
-            ✓ 30 consultas al mes<br>
-            ✓ Análisis ilimitado de documentos<br>
-            ✓ Guía paso a paso detallada<br>
-            ✓ Acceso a jurisprudencia relacionada
-          </div>
-        </div>
-        """, unsafe_allow_html=True)
-    with p3:
-        st.markdown("""
-        <div class="cl-price-card">
-          <div style="font-size:0.68rem;color:#a09070;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:0.5rem;">Familiar</div>
-          <div class="cl-price-amount">$9.990</div>
-          <div class="cl-price-period">/ mes · CLP</div>
-          <hr style="border-color:rgba(201,150,58,0.12);margin:0.8rem 0;">
-          <div style="font-size:0.72rem;color:#c8b890;text-align:left;line-height:1.8;">
-            ✓ Consultas ilimitadas<br>
-            ✓ Hasta 5 personas<br>
-            ✓ Historial de consultas<br>
-            ✓ Conexión con abogado (próx.)
-          </div>
-        </div>
-        """, unsafe_allow_html=True)
-
-    st.markdown('<br>', unsafe_allow_html=True)
-    col_cta1, col_cta2, col_cta3 = st.columns([1, 2, 1])
-    with col_cta2:
-        st.button("💳 Suscribirse ahora (próximamente)", use_container_width=True, disabled=True)
-
-    # Disclaimer legal
-    st.markdown("""
-    <div class="cl-disclaimer">
-      ⚠️ <strong>Importante:</strong> AntonIA proporciona orientación jurídica general con fines informativos.
-      Esta información no constituye asesoría jurídica profesional ni establece una relación abogado-cliente.
-      Para su caso específico, consulte con un abogado habilitado. Si no puede costear un abogado, contacte
-      la <strong>Corporación de Asistencia Judicial (CAJ)</strong> de su región — el servicio es gratuito.
-    </div>
-    """, unsafe_allow_html=True)

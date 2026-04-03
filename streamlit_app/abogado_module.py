@@ -7,6 +7,38 @@ consulta Poder Judicial, plazos, documentos y honorarios.
 import streamlit as st
 import datetime, re, json, hashlib
 from typing import Optional
+from pathlib import Path as _Path
+import io as _io
+
+@st.cache_data(ttl=600, show_spinner=False)
+def _extract_doc_text(file_path: str) -> str:
+    """Extrae texto de PDF, DOCX o TXT. Cacheado por path."""
+    p = _Path(file_path)
+    try:
+        if p.suffix.lower() == ".pdf":
+            import pypdf
+            r = pypdf.PdfReader(str(p))
+            return "\n".join(page.extract_text() or "" for page in r.pages)
+        elif p.suffix.lower() == ".docx":
+            import docx
+            return "\n".join(par.text for par in docx.Document(str(p)).paragraphs)
+        elif p.suffix.lower() in (".txt", ".md"):
+            return p.read_text(encoding="utf-8", errors="ignore")
+    except Exception as e:
+        return f"[Error extrayendo texto: {e}]"
+    return ""
+
+def _get_library_path() -> _Path | None:
+    """Retorna la ruta a doctrina_antonia/ o None si no existe."""
+    candidates = [
+        _Path(__file__).parent.parent.parent / "doctrina_antonia",
+        _Path(__file__).parent.parent / "doctrina_antonia",
+        _Path("/sessions/epic-blissful-fermat/mnt/doctrina_antonia"),
+    ]
+    for p in candidates:
+        if p.exists() and p.is_dir():
+            return p
+    return None
 
 # ── Colores ──────────────────────────────────────────────────────────────────
 _GOLD  = "#c9963a"
@@ -38,7 +70,7 @@ _CSS = """
 }
 .abg-tab-header{font-family:'Playfair Display',serif;font-size:1.15rem;font-weight:700;
   color:#1a1813;margin-bottom:.2rem;}
-.abg-tab-sub{font-size:.78rem;color:#9a8e7e;margin-bottom:1rem;}
+.abg-tab-sub{font-size:.78rem;color:#c0b8a8;margin-bottom:1rem;}
 .abg-card{background:#fff;border:1px solid #e2dbd0;border-left:3px solid #c9963a;
   border-radius:0 8px 8px 0;padding:.75rem 1rem;margin-bottom:.6rem;
   box-shadow:0 1px 4px rgba(20,18,10,.05);}
@@ -47,7 +79,7 @@ _CSS = """
   border-radius:12px;letter-spacing:.05em;}
 .badge-activo{background:rgba(34,197,94,.12);color:#15803d;}
 .badge-pendiente{background:rgba(251,191,36,.12);color:#92400e;}
-.badge-cerrado{background:rgba(160,144,112,.12);color:#6a5a3a;}
+.badge-cerrado{background:rgba(160,144,112,.12);color:#9a8a6a;}
 .abg-plazo-urgent{background:rgba(239,68,68,.08);border-left:3px solid #ef4444;
   border-radius:0 6px 6px 0;padding:.55rem .9rem;margin-bottom:.5rem;}
 .abg-plazo-warning{background:rgba(251,191,36,.08);border-left:3px solid #fbbf24;
@@ -352,7 +384,7 @@ def render_abogado(get_llm_fn=None):
             casos = st.session_state.abg_casos
             if not casos:
                 st.markdown(
-                    '<div style="text-align:center;padding:3rem 1rem;color:#a09070;font-size:.85rem;">'
+                    '<div style="text-align:center;padding:3rem 1rem;color:#c0a880;font-size:.85rem;">'
                     '📁 Aún no hay causas registradas.<br>'
                     '<span style="font-size:.72rem;">Agrega tu primera causa a la izquierda.</span>'
                     '</div>', unsafe_allow_html=True)
@@ -376,7 +408,7 @@ def render_abogado(get_llm_fn=None):
                                 f'<div class="abg-card-title">{c["rol"]} — {c["partes"][:50]}</div>'
                                 f'<span class="abg-badge {badge_cls}">{c["estado"]}</span>'
                                 '</div>'
-                                f'<div style="font-size:.68rem;color:#a09070;margin-top:4px;">'
+                                f'<div style="font-size:.68rem;color:#c0a880;margin-top:4px;">'
                                 f'{c["materia"]} · {c["tribunal"][:40]} · ⏱ {horas_str}{cli_html}'
                                 '</div>'
                                 + notas_html +
@@ -475,7 +507,7 @@ def render_abogado(get_llm_fn=None):
                 m, s  = divmod(r, 60)
                 with col_t:
                     st.markdown(
-                        f'<div style="font-family:monospace;font-size:2.5rem;color:#9a8e7e;'
+                        f'<div style="font-family:monospace;font-size:2.5rem;color:#c0b8a8;'
                         f'text-align:center;padding:1rem;">{h:02d}:{m:02d}:{s:02d}</div>',
                         unsafe_allow_html=True)
                 with col_btn:
@@ -545,7 +577,7 @@ def render_abogado(get_llm_fn=None):
                 key=lambda x: x["fecha"]
             )
             if not plazos:
-                st.markdown('<div style="text-align:center;padding:2rem;color:#a09070;">📅 Sin plazos pendientes.</div>', unsafe_allow_html=True)
+                st.markdown('<div style="text-align:center;padding:2rem;color:#c0a880;">📅 Sin plazos pendientes.</div>', unsafe_allow_html=True)
             else:
                 hoy = datetime.date.today()
                 for i, p in enumerate(plazos):
@@ -564,7 +596,7 @@ def render_abogado(get_llm_fn=None):
                             f'<span style="font-size:.8rem;font-weight:700;color:#1a1813;">{p["tipo"]} · {p["nota"]}</span>'
                             f'<span style="font-size:.72rem;color:{color};font-weight:700;">{txt}</span>'
                             f'</div>'
-                            f'<div style="font-size:.67rem;color:#a09070;margin-top:2px;">'
+                            f'<div style="font-size:.67rem;color:#c0a880;margin-top:2px;">'
                             f'{p["fecha"]}{" " + p["hora"] if p.get("hora") else ""}'
                             f'{" · " + p["causa"] if p.get("causa") else ""}'
                             f'</div></div>', unsafe_allow_html=True)
@@ -607,7 +639,7 @@ def render_abogado(get_llm_fn=None):
                 cli_nom  = cli.get("nombre", "")
                 cli_email= cli.get("email",  "")
 
-                st.markdown(f'<div style="font-size:.74rem;color:#9a8e7e;margin:.3rem 0 .8rem;">'
+                st.markdown(f'<div style="font-size:.74rem;color:#c0b8a8;margin:.3rem 0 .8rem;">'
                             f'👤 Cliente: <strong>{cli_nom or "(sin nombre)"}</strong>'
                             f'{"  ·  📧 " + cli_email if cli_email else ""}</div>', unsafe_allow_html=True)
 
@@ -733,7 +765,7 @@ def render_abogado(get_llm_fn=None):
                         '<div style="height:320px;display:flex;flex-direction:column;'
                         'align-items:center;justify-content:center;gap:1rem;'
                         'border:1px dashed rgba(201,150,58,.2);border-radius:8px;'
-                        'color:#a09070;font-size:.82rem;text-align:center;">'
+                        'color:#c0a880;font-size:.82rem;text-align:center;">'
                         '📊<br><strong style="color:#c9963a;">Reporte diario al cliente</strong><br>'
                         'Selecciona una causa, describe las novedades<br>y AntonIA genera el reporte listo para enviar.'
                         '</div>', unsafe_allow_html=True)
@@ -745,6 +777,85 @@ def render_abogado(get_llm_fn=None):
     elif tab == "doctrina":
         st.markdown('<div class="abg-tab-header">📚 Doctrina y Jurisprudencia</div>', unsafe_allow_html=True)
         st.markdown('<div class="abg-tab-sub">Búsqueda precisa en la biblioteca de AntonIA · Sin alucinaciones — solo fuentes verificadas</div>', unsafe_allow_html=True)
+        # ── SELECTOR DE FUENTE ──────────────────────────────────────
+        _lib_path = _get_library_path()
+        _source_opts = ["🤖 Consulta IA (knowledge base)", "📚 Biblioteca Local (documentos propios)"]
+        _source = st.radio("Fuente de consulta", _source_opts, horizontal=True, key="abg_doc_source_sel")
+
+        if _source == _source_opts[1]:  # Biblioteca Local
+            if _lib_path is None:
+                st.info("📚 La biblioteca local no está disponible en esta versión. Usa 'Consulta IA' para acceder a doctrina y jurisprudencia.")
+            else:
+                ramas_disponibles = sorted([d.name for d in _lib_path.iterdir() if d.is_dir()])
+                if not ramas_disponibles:
+                    st.warning("No se encontraron carpetas en la biblioteca local.")
+                else:
+                    rama_bib = st.selectbox("Rama del Derecho", ramas_disponibles, key="bib_rama_sel")
+                    rama_path = _lib_path / rama_bib
+                    archivos_disp = sorted([
+                        f.name for f in rama_path.iterdir()
+                        if f.suffix.lower() in (".pdf", ".docx", ".txt", ".md")
+                    ])
+                    if not archivos_disp:
+                        st.warning(f"No hay documentos en '{rama_bib}'.")
+                    else:
+                        archivo_bib = st.selectbox(f"Documento ({len(archivos_disp)} disponibles)", archivos_disp, key="bib_archivo_sel")
+                        consulta_bib = st.text_area(
+                            "¿Qué quieres saber de este documento?",
+                            placeholder="Ej: Explica los requisitos de la condición resolutoria ordinaria según este autor.",
+                            height=90, key="bib_query_input")
+                        col_bib1, col_bib2 = st.columns([1, 1])
+                        with col_bib1:
+                            modo_bib = st.radio("Modo", ["Búsqueda puntual", "Resumen del documento"], key="bib_modo")
+                        with col_bib2:
+                            max_chars_bib = st.slider("Contexto (caracteres)", 5000, 40000, 16000, 1000, key="bib_maxchars")
+                        if st.button("🔍 Consultar documento", type="primary", use_container_width=True, key="bib_btn_buscar"):
+                            if not consulta_bib.strip() and modo_bib == "Búsqueda puntual":
+                                st.warning("Escribe tu consulta.")
+                            elif get_llm_fn:
+                                with st.spinner(f"Leyendo {archivo_bib}…"):
+                                    texto_doc = _extract_doc_text(str(rama_path / archivo_bib))
+                                if texto_doc.startswith("[Error"):
+                                    st.error(texto_doc)
+                                else:
+                                    ctx = texto_doc[:max_chars_bib]
+                                    if modo_bib == "Resumen del documento":
+                                        prompt_bib = (
+                                            f"Documento jurídico: '{archivo_bib}'\n"
+                                            f"Contenido ({len(ctx):,} chars):\n{ctx}\n\n"
+                                            f"Genera un resumen ejecutivo estructurado del documento con: "
+                                            f"1) Tema central y tesis del autor, "
+                                            f"2) Conceptos jurídicos clave desarrollados, "
+                                            f"3) Normas y artículos citados, "
+                                            f"4) Conclusiones principales, "
+                                            f"5) Relevancia práctica para litigantes chilenos."
+                                        )
+                                    else:
+                                        prompt_bib = (
+                                            f"Documento jurídico: '{archivo_bib}'\n"
+                                            f"Contenido:\n{ctx}\n\n"
+                                            f"Consulta del abogado: {consulta_bib}\n\n"
+                                            f"Responde basándote EXCLUSIVAMENTE en el contenido del documento. "
+                                            f"Cita los pasajes relevantes con comillas y número de sección si lo hay. "
+                                            f"Si la respuesta no está en el documento, indícalo claramente."
+                                        )
+                                    system_bib = (
+                                        "Eres AntonIA, asistente jurídico para abogados chilenos. "
+                                        "Analizas documentos jurídicos con precisión académica. "
+                                        "Citas textualmente los pasajes relevantes. "
+                                        "Usas terminología jurídica chilena vigente."
+                                    )
+                                    try:
+                                        llm = get_llm_fn()
+                                        resp_bib = llm.generate(prompt_bib, system=system_bib, max_tokens=2000)
+                                        st.markdown(f"**📄 {archivo_bib}**")
+                                        st.markdown(resp_bib)
+                                        st.caption(f"Contexto usado: {len(ctx):,} de {len(texto_doc):,} caracteres totales")
+                                    except Exception as e:
+                                        st.error(f"Error: {e}")
+                            else:
+                                st.warning("LLM no disponible.")
+            st.stop()
         col_busq, col_res = st.columns([1, 1.6])
         with col_busq:
             tipo_consulta = st.selectbox("Tipo de consulta", [
@@ -767,7 +878,7 @@ def render_abogado(get_llm_fn=None):
                 horizontal=True, key="abg_doc_nivel")
             st.markdown(
                 '<div style="background:rgba(201,150,58,0.06);border:1px solid rgba(201,150,58,0.2);'
-                'border-radius:6px;padding:0.7rem 0.9rem;font-size:0.78rem;color:#6a5a3a;line-height:1.55;">'
+                'border-radius:6px;padding:0.7rem 0.9rem;font-size:0.78rem;color:#9a8a6a;line-height:1.55;">'
                 '⚠️ <strong>Anti-alucinación:</strong> AntonIA solo cita autores y sentencias '
                 'cuando tiene certeza de su existencia. Si hay incertidumbre lo indicará.'
                 '</div>', unsafe_allow_html=True)
@@ -850,7 +961,7 @@ def render_abogado(get_llm_fn=None):
                 st.markdown(
                     '<div style="height:400px;display:flex;flex-direction:column;align-items:center;'
                     'justify-content:center;border:1px dashed rgba(201,150,58,.2);border-radius:8px;'
-                    'color:#a09070;font-size:.85rem;text-align:center;gap:0.5rem;">'
+                    'color:#c0a880;font-size:.85rem;text-align:center;gap:0.5rem;">'
                     '📚<br><strong style="color:#c9963a;font-size:1rem;">Doctrina y Jurisprudencia</strong><br>'
                     'Consulta la biblioteca jurídica de AntonIA<br>'
                     '<span style="font-size:.72rem;">Civil · Penal · Laboral · Procesal · Comercial</span>'
@@ -914,7 +1025,7 @@ def render_abogado(get_llm_fn=None):
                         })
                         st.success("✓ Guardado en Borradores")
                 else:
-                    st.markdown('<div style="height:400px;display:flex;align-items:center;justify-content:center;color:#a09070;font-size:.82rem;text-align:center;border:1px dashed rgba(201,150,58,.15);border-radius:8px;flex-direction:column;">⚖️<br>Completa el formulario para generar el escrito</div>', unsafe_allow_html=True)
+                    st.markdown('<div style="height:400px;display:flex;align-items:center;justify-content:center;color:#c0a880;font-size:.82rem;text-align:center;border:1px dashed rgba(201,150,58,.15);border-radius:8px;flex-direction:column;">⚖️<br>Completa el formulario para generar el escrito</div>', unsafe_allow_html=True)
         with sub_tabs[1]:
             col_f2, col_r2 = st.columns([1, 1.3])
             with col_f2:
@@ -950,7 +1061,7 @@ def render_abogado(get_llm_fn=None):
                     st.text_area("Contrato:", value=st.session_state.abg_cto_resultado, height=500, key="abg_cto_edit")
                     st.caption("⚠️ Borrador para revisión profesional.")
                 else:
-                    st.markdown('<div style="height:400px;display:flex;align-items:center;justify-content:center;color:#a09070;font-size:.82rem;text-align:center;border:1px dashed rgba(201,150,58,.15);border-radius:8px;flex-direction:column;">📋<br>El contrato aparecerá aquí</div>', unsafe_allow_html=True)
+                    st.markdown('<div style="height:400px;display:flex;align-items:center;justify-content:center;color:#c0a880;font-size:.82rem;text-align:center;border:1px dashed rgba(201,150,58,.15);border-radius:8px;flex-direction:column;">📋<br>El contrato aparecerá aquí</div>', unsafe_allow_html=True)
         with sub_tabs[2]:
             col_f3, col_r3 = st.columns([1, 1.3])
             with col_f3:
@@ -978,11 +1089,11 @@ def render_abogado(get_llm_fn=None):
                 if "abg_com_resultado" in st.session_state and st.session_state.abg_com_resultado:
                     st.text_area("Comunicación:", value=st.session_state.abg_com_resultado, height=400, key="abg_com_edit")
                 else:
-                    st.markdown('<div style="height:300px;display:flex;align-items:center;justify-content:center;color:#a09070;font-size:.82rem;text-align:center;border:1px dashed rgba(201,150,58,.15);border-radius:8px;flex-direction:column;">✉️<br>La comunicación aparecerá aquí</div>', unsafe_allow_html=True)
+                    st.markdown('<div style="height:300px;display:flex;align-items:center;justify-content:center;color:#c0a880;font-size:.82rem;text-align:center;border:1px dashed rgba(201,150,58,.15);border-radius:8px;flex-direction:column;">✉️<br>La comunicación aparecerá aquí</div>', unsafe_allow_html=True)
         with sub_tabs[3]:
             borradores = st.session_state.get("abg_borradores", [])
             if not borradores:
-                st.markdown('<div style="text-align:center;padding:3rem;color:#a09070;font-size:.85rem;">📁 Aún no hay borradores guardados.</div>', unsafe_allow_html=True)
+                st.markdown('<div style="text-align:center;padding:3rem;color:#c0a880;font-size:.85rem;">📁 Aún no hay borradores guardados.</div>', unsafe_allow_html=True)
             else:
                 for i, b in enumerate(reversed(borradores)):
                     with st.expander(f"📄 {b['tipo']} — {b['partes'][:40]} ({b['fecha']})"):
@@ -1057,7 +1168,7 @@ def render_abogado(get_llm_fn=None):
             else:
                 st.markdown(
                     '<div style="height:280px;display:flex;align-items:center;justify-content:center;'
-                    'color:#a09070;font-size:.82rem;text-align:center;'
+                    'color:#c0a880;font-size:.82rem;text-align:center;'
                     'border:1px dashed rgba(201,150,58,.15);border-radius:8px;">'
                     '✉️<br>El borrador del correo<br>aparecerá aquí</div>', unsafe_allow_html=True)
 
@@ -1095,7 +1206,7 @@ def render_abogado(get_llm_fn=None):
             hoy = datetime.date.today()
 
             if not tasks_pend:
-                st.markdown('<div style="text-align:center;padding:2rem;color:#a09070;">✅ Sin tareas pendientes.</div>', unsafe_allow_html=True)
+                st.markdown('<div style="text-align:center;padding:2rem;color:#c0a880;">✅ Sin tareas pendientes.</div>', unsafe_allow_html=True)
             else:
                 for i, t in enumerate(tasks_pend):
                     orig_idx = st.session_state.abg_tasks.index(t)
@@ -1112,14 +1223,14 @@ def render_abogado(get_llm_fn=None):
                         st.markdown(
                             f'<div style="padding:.3rem 0;font-size:.8rem;color:#f5f0e8;">'
                             f'{t["prio"]} {t["texto"]}'
-                            + (f'<br><span style="font-size:.65rem;color:#a09070;">{t["causa"]}</span>' if t.get("causa") else "")
+                            + (f'<br><span style="font-size:.65rem;color:#c0a880;">{t["causa"]}</span>' if t.get("causa") else "")
                             + vence_str
                             + f'</div>', unsafe_allow_html=True)
 
             if tasks_done:
                 with st.expander(f"Completadas ({len(tasks_done)})"):
                     for t in tasks_done:
-                        st.markdown(f'<div style="font-size:.75rem;color:#a09070;text-decoration:line-through;">{t["texto"]}</div>', unsafe_allow_html=True)
+                        st.markdown(f'<div style="font-size:.75rem;color:#c0a880;text-decoration:line-through;">{t["texto"]}</div>', unsafe_allow_html=True)
 
     # ═══════════════════════════════════════════════════════════════════════════
     # TAB: DOCUMENTOS
@@ -1187,7 +1298,7 @@ def render_abogado(get_llm_fn=None):
             else:
                 st.markdown(
                     '<div style="height:350px;display:flex;align-items:center;justify-content:center;'
-                    'color:#a09070;font-size:.82rem;text-align:center;'
+                    'color:#c0a880;font-size:.82rem;text-align:center;'
                     'border:1px dashed rgba(201,150,58,.15);border-radius:8px;">'
                     '📄<br>El borrador del documento<br>aparecerá aquí</div>', unsafe_allow_html=True)
 
@@ -1270,7 +1381,7 @@ def render_abogado(get_llm_fn=None):
                         f'<div style="font-size:.77rem;color:#f5f0e8;">{h["causa"][:30]} — {h["concepto"][:30]}</div>'
                         f'<div style="font-size:.77rem;color:{color};font-weight:700;">{_fmt_monto(h["monto"])}</div>'
                         f'</div>'
-                        f'<div style="font-size:.64rem;color:#a09070;">{h["estado"]} · {h["fecha"]}</div>'
+                        f'<div style="font-size:.64rem;color:#c0a880;">{h["estado"]} · {h["fecha"]}</div>'
                         f'</div>', unsafe_allow_html=True)
             elif st.session_state.abg_hon_propuesta:
                 st.markdown('<div class="abg-section-label">Propuesta generada</div>', unsafe_allow_html=True)
@@ -1280,7 +1391,7 @@ def render_abogado(get_llm_fn=None):
                     unsafe_allow_html=True)
             else:
                 st.markdown(
-                    '<div style="text-align:center;padding:3rem 1rem;color:#a09070;font-size:.85rem;">'
+                    '<div style="text-align:center;padding:3rem 1rem;color:#c0a880;font-size:.85rem;">'
                     '💰 Registra honorarios o genera una propuesta con IA.</div>', unsafe_allow_html=True)
 
             if st.session_state.abg_hon_propuesta and hons:

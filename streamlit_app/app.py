@@ -587,6 +587,22 @@ def get_clf():
 def get_orch():
     return IngestionOrchestrator()
 
+import hashlib as _hashlib
+
+@st.cache_data(ttl=7200, show_spinner=False)
+def _llm_cached(prompt_hash: str, prompt: str, system: str, max_tokens: int) -> str:
+    """Cache de respuestas LLM — clave = hash del prompt completo."""
+    prov = st.session_state.get("llm_provider", "anthropic")
+    key  = st.session_state.get("llm_key", "")
+    mod  = st.session_state.get("llm_model", "claude-3-5-haiku-20241022")
+    llm  = get_llm(prov, key, mod)
+    return llm.generate(prompt, system=system, max_tokens=max_tokens)
+
+def llm_call(prompt: str, system: str, max_tokens: int = 1200) -> str:
+    """Wrapper universal con cache. Usar en lugar de llm.generate() directo."""
+    h = _hashlib.sha256(f"{prompt}{system}{max_tokens}".encode()).hexdigest()[:16]
+    return _llm_cached(h, prompt, system, max_tokens)
+
 
 # ─────────────────────────────────────────────
 # ESTADO DE SESIÓN
@@ -762,114 +778,107 @@ with st.sidebar:
                 f'margin-top:2px;">{desc}</div></div>'
                 f'</div>',
                 unsafe_allow_html=True)
-        else:
-            if st.button(f"{icon}  {label}", key=f"ms_{sid}",
-                         use_container_width=True,
-                         on_click=set_main_section, args=(sid,),
-                         help=desc):
-                pass
-
-    # ── SUB-NAVEGACIÓN (aparece solo cuando hay sección activa) ──
-    if ms == "universidad":
-        st.markdown(
-            '<div style="margin:0.6rem 0 0.35rem;padding:0 0.1rem;">'
-            '<div style="height:1px;background:rgba(201,150,58,0.15);margin-bottom:0.5rem;"></div>'
-            '<div style="font-size:0.57rem;font-weight:700;color:rgba(201,150,58,0.45);'
-            'text-transform:uppercase;letter-spacing:0.12em;padding:0 0.1rem 0.2rem;">¿Quién eres?</div>'
-            '</div>',
-            unsafe_allow_html=True)
-
-        persona_actual = st.session_state.persona
-        col_a, col_p   = st.columns(2)
-        with col_a:
-            if persona_actual == "alumno":
+            # ── SUB-NAVEGACIÓN (aparece solo cuando hay sección activa) ──
+            if sid == "universidad":
                 st.markdown(
-                    '<div style="border:1px solid #c9963a;background:rgba(201,150,58,0.15);'
-                    'border-radius:7px;padding:0.42rem 0.3rem;text-align:center;'
-                    'font-size:0.72rem;font-weight:700;color:#e8c97a;">👨‍🎓 Alumno</div>',
+                    '<div style="margin:0.6rem 0 0.35rem;padding:0 0.1rem;">'
+                    '<div style="height:1px;background:rgba(201,150,58,0.15);margin-bottom:0.5rem;"></div>'
+                    '<div style="font-size:0.57rem;font-weight:700;color:rgba(201,150,58,0.45);'
+                    'text-transform:uppercase;letter-spacing:0.12em;padding:0 0.1rem 0.2rem;">¿Quién eres?</div>'
+                    '</div>',
                     unsafe_allow_html=True)
-            else:
-                st.button("👨‍🎓 Alumno", key="sub_alumno",
-                          use_container_width=True,
-                          on_click=set_persona, args=("alumno",))
-        with col_p:
-            if persona_actual == "profesor":
-                st.markdown(
-                    '<div style="border:1px solid #c9963a;background:rgba(201,150,58,0.15);'
-                    'border-radius:7px;padding:0.42rem 0.3rem;text-align:center;'
-                    'font-size:0.72rem;font-weight:700;color:#e8c97a;">👩‍🏫 Profesor</div>',
-                    unsafe_allow_html=True)
-            else:
-                st.button("👩‍🏫 Profesor", key="sub_profesor",
-                          use_container_width=True,
-                          on_click=set_persona, args=("profesor",))
 
-        # ── Herramientas Alumno ────────────────────────────────
-        if persona_actual == "alumno":
-            st.markdown(
-                '<div style="margin:0.5rem 0 0.25rem;">'
-                '<div style="height:1px;background:rgba(201,150,58,0.1);margin-bottom:0.4rem;"></div>'
-                '<div style="font-size:0.57rem;font-weight:700;color:rgba(201,150,58,0.45);'
-                'text-transform:uppercase;letter-spacing:0.12em;">Herramientas</div>'
-                '</div>',
-                unsafe_allow_html=True)
+                persona_actual = st.session_state.persona
+                col_a, col_p   = st.columns(2)
+                with col_a:
+                    if persona_actual == "alumno":
+                        st.markdown(
+                            '<div style="border:1px solid #c9963a;background:rgba(201,150,58,0.15);'
+                            'border-radius:7px;padding:0.42rem 0.3rem;text-align:center;'
+                            'font-size:0.72rem;font-weight:700;color:#e8c97a;">👨‍🎓 Alumno</div>',
+                            unsafe_allow_html=True)
+                    else:
+                        st.button("👨‍🎓 Alumno", key="sub_alumno",
+                                  use_container_width=True,
+                                  on_click=set_persona, args=("alumno",))
+                with col_p:
+                    if persona_actual == "profesor":
+                        st.markdown(
+                            '<div style="border:1px solid #c9963a;background:rgba(201,150,58,0.15);'
+                            'border-radius:7px;padding:0.42rem 0.3rem;text-align:center;'
+                            'font-size:0.72rem;font-weight:700;color:#e8c97a;">👩‍🏫 Profesor</div>',
+                            unsafe_allow_html=True)
+                    else:
+                        st.button("👩‍🏫 Profesor", key="sub_profesor",
+                                  use_container_width=True,
+                                  on_click=set_persona, args=("profesor",))
 
-            NAV_ALUMNO = [
-                ("🧠", "ENTRENA",                  "Quiz interactivo con IA"),
-                ("📝", "EXAMEN SIMULADO",           "Examen con nota 1-7"),
-                ("📅", "CALCULADORA PLAZOS",        "Plazos legales chilenos"),
-                ("📄", "DOCUMENTO",                "Genera contratos y escritos"),
-                ("📋", "RESUMEN EJECUTIVO",         "Resume casos y normativa"),
-                ("🔍", "ANÁLISIS",                  "Análisis jurídico profundo"),
-                ("⚖️", "JURISPRUDENCIA RELACIONADA","Jurisprudencia chilena"),
-                ("📚", "DOCTRINA RELACIONADA",      "Doctrina y artículos 2025"),
-                ("📖", "GLOSARIO LEGAL",            "Definiciones jurídicas"),
-                ("🗺️", "MAPA CONCEPTUAL",           "Visualiza conexiones"),
-                ("🎤", "ALEGATO ORAL",              "Prepara argumentos orales"),
-                ("💬", "CONSULTORÍA VIRTUAL",       "Pregunta a AntonIA"),
-                ("🏛",  "BIBLIOTECA DOCTRINA",      "Obras y artículos"),
-                ("📂", "BANCO DE CASOS",            "250+ casos reales"),
-                ("📈", "MI PROGRESO",               "Estadísticas de estudio"),
-            ]
-            for icon, label, tool_desc in NAV_ALUMNO:
-                if st.session_state.nav == label:
+                # ── Herramientas Alumno ────────────────────────────────
+                if persona_actual == "alumno":
                     st.markdown(
-                        f'<div style="margin:0.1rem 0;padding:0.5rem 0.85rem 0.5rem 0.75rem;'
-                        f'background:linear-gradient(90deg,rgba(201,150,58,0.13),rgba(201,150,58,0.03));'
-                        f'border-left:2.5px solid #c9963a;border-radius:0 7px 7px 0;">'
-                        f'<div style="font-size:0.73rem;font-weight:700;color:#e8c97a;">'
-                        f'{icon} {label}</div>'
-                        f'<div style="font-size:0.58rem;color:rgba(201,150,58,0.55);margin-top:2px;">'
-                        f'{tool_desc}</div>'
-                        f'</div>',
+                        '<div style="margin:0.5rem 0 0.25rem;">'
+                        '<div style="height:1px;background:rgba(201,150,58,0.1);margin-bottom:0.4rem;"></div>'
+                        '<div style="font-size:0.57rem;font-weight:700;color:rgba(201,150,58,0.45);'
+                        'text-transform:uppercase;letter-spacing:0.12em;">Herramientas</div>'
+                        '</div>',
                         unsafe_allow_html=True)
-                else:
-                    st.button(f"{icon}  {label}", key=f"nav_{label}",
-                              use_container_width=True,
-                              on_click=set_nav, args=(label,),
-                              help=tool_desc)
 
-        # ── Herramientas Profesor ──────────────────────────────
-        elif persona_actual == "profesor":
-            st.markdown(
-                '<div style="margin:0.5rem 0 0.25rem;">'
-                '<div style="height:1px;background:rgba(201,150,58,0.1);margin-bottom:0.4rem;"></div>'
-                '<div style="font-size:0.57rem;font-weight:700;color:rgba(201,150,58,0.45);'
-                'text-transform:uppercase;letter-spacing:0.12em;">Panel Docente</div>'
-                '</div>',
-                unsafe_allow_html=True)
-            if st.session_state.nav == "PROFESOR":
-                st.markdown(
-                    '<div style="padding:0.5rem 0.85rem 0.5rem 0.75rem;'
-                    'background:linear-gradient(90deg,rgba(201,150,58,0.13),transparent);'
-                    'border-left:2.5px solid #c9963a;border-radius:0 7px 7px 0;'
-                    'font-size:0.73rem;font-weight:700;color:#e8c97a;">'
-                    '🧑‍🏫 Herramientas Docentes</div>',
-                    unsafe_allow_html=True)
-            else:
-                st.button("🧑‍🏫 Herramientas Docentes", key="nav_prof",
-                          use_container_width=True,
-                          on_click=set_nav, args=("PROFESOR",))
+                    NAV_ALUMNO = [
+                        ("🧠", "ENTRENA",                  "Quiz interactivo con IA"),
+                        ("📝", "EXAMEN SIMULADO",           "Examen con nota 1-7"),
+                        ("📅", "CALCULADORA PLAZOS",        "Plazos legales chilenos"),
+                        ("📄", "DOCUMENTO",                "Genera contratos y escritos"),
+                        ("📋", "RESUMEN EJECUTIVO",         "Resume casos y normativa"),
+                        ("🔍", "ANÁLISIS",                  "Análisis jurídico profundo"),
+                        ("⚖️", "JURISPRUDENCIA RELACIONADA","Jurisprudencia chilena"),
+                        ("📚", "DOCTRINA RELACIONADA",      "Doctrina y artículos 2025"),
+                        ("📖", "GLOSARIO LEGAL",            "Definiciones jurídicas"),
+                        ("🗺️", "MAPA CONCEPTUAL",           "Visualiza conexiones"),
+                        ("🎤", "ALEGATO ORAL",              "Prepara argumentos orales"),
+                        ("💬", "CONSULTORÍA VIRTUAL",       "Pregunta a AntonIA"),
+                        ("🏛",  "BIBLIOTECA DOCTRINA",      "Obras y artículos"),
+                        ("📂", "BANCO DE CASOS",            "250+ casos reales"),
+                        ("📈", "MI PROGRESO",               "Estadísticas de estudio"),
+                    ]
+                    for icon, label, tool_desc in NAV_ALUMNO:
+                        if st.session_state.nav == label:
+                            st.markdown(
+                                f'<div style="margin:0.1rem 0;padding:0.5rem 0.85rem 0.5rem 0.75rem;'
+                                f'background:linear-gradient(90deg,rgba(201,150,58,0.13),rgba(201,150,58,0.03));'
+                                f'border-left:2.5px solid #c9963a;border-radius:0 7px 7px 0;">'
+                                f'<div style="font-size:0.73rem;font-weight:700;color:#e8c97a;">'
+                                f'{icon} {label}</div>'
+                                f'<div style="font-size:0.58rem;color:rgba(201,150,58,0.55);margin-top:2px;">'
+                                f'{tool_desc}</div>'
+                                f'</div>',
+                                unsafe_allow_html=True)
+                        else:
+                            st.button(f"{icon}  {label}", key=f"nav_{label}",
+                                      use_container_width=True,
+                                      on_click=set_nav, args=(label,),
+                                      help=tool_desc)
+
+                # ── Herramientas Profesor ──────────────────────────────
+                elif persona_actual == "profesor":
+                    st.markdown(
+                        '<div style="margin:0.5rem 0 0.25rem;">'
+                        '<div style="height:1px;background:rgba(201,150,58,0.1);margin-bottom:0.4rem;"></div>'
+                        '<div style="font-size:0.57rem;font-weight:700;color:rgba(201,150,58,0.45);'
+                        'text-transform:uppercase;letter-spacing:0.12em;">Panel Docente</div>'
+                        '</div>',
+                        unsafe_allow_html=True)
+                    if st.session_state.nav == "PROFESOR":
+                        st.markdown(
+                            '<div style="padding:0.5rem 0.85rem 0.5rem 0.75rem;'
+                            'background:linear-gradient(90deg,rgba(201,150,58,0.13),transparent);'
+                            'border-left:2.5px solid #c9963a;border-radius:0 7px 7px 0;'
+                            'font-size:0.73rem;font-weight:700;color:#e8c97a;">'
+                            '🧑‍🏫 Herramientas Docentes</div>',
+                            unsafe_allow_html=True)
+                    else:
+                        st.button("🧑‍🏫 Herramientas Docentes", key="nav_prof",
+                                  use_container_width=True,
+                                  on_click=set_nav, args=("PROFESOR",))
 
     # ── Pie del sidebar ──────────────────────────────────────────
     st.markdown('<div style="height:0.5rem"></div>', unsafe_allow_html=True)
@@ -1127,27 +1136,27 @@ if not _is_univ_chooser and (nav == "HOME" or st.session_state.get("main_section
 .ant-stat-l{font-size:.7rem;color:#8a7850;text-transform:uppercase;letter-spacing:.08em;margin-top:3px;}
 .ant-sec{padding:52px 20px;max-width:900px;margin:0 auto;}
 .ant-sec-t{font-family:'Playfair Display',serif;font-size:1.85rem;font-weight:800;color:#1a1813;text-align:center;margin-bottom:8px;}
-.ant-sec-s{font-size:.9rem;color:#6a5a3a;text-align:center;margin-bottom:34px;}
+.ant-sec-s{font-size:.9rem;color:#9a8a6a;text-align:center;margin-bottom:34px;}
 .ant-grid-4{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:14px;}
 .ant-card{background:#1a1520;border:1px solid rgba(201,150,58,.14);border-radius:12px;padding:22px 18px;transition:all .25s;}
 .ant-card:hover{border-color:rgba(201,150,58,.42);transform:translateY(-3px);box-shadow:0 14px 38px rgba(0,0,0,.32);}
 .ant-card-icon{font-size:1.9rem;margin-bottom:10px;}
 .ant-card-t{font-family:Inter,sans-serif;font-size:.86rem;font-weight:700;color:#f0e8d8;margin-bottom:6px;}
-.ant-card-d{font-size:.76rem;color:rgba(240,232,218,.45);line-height:1.55;}
+.ant-card-d{font-size:.76rem;color:rgba(240,232,218,.755);line-height:1.55;}
 .ant-steps{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:8px;}
 .ant-step{flex:1;min-width:155px;max-width:215px;text-align:center;padding:20px 14px;background:rgba(201,150,58,.045);border:1px solid rgba(201,150,58,.11);border-radius:10px;}
 .ant-step-n{font-family:'Playfair Display',serif;font-size:1.9rem;font-weight:900;color:var(--gold);line-height:1;}
 .ant-step-t{font-size:.86rem;font-weight:700;color:#1a1813;margin:7px 0 4px;}
-.ant-step-d{font-size:.76rem;color:#6a5a3a;line-height:1.5;}
+.ant-step-d{font-size:.76rem;color:#9a8a6a;line-height:1.5;}
 .ant-tools{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:11px;}
 .ant-tool{background:rgba(201,150,58,.035);border:1px solid rgba(201,150,58,.11);border-radius:9px;padding:15px 13px;display:flex;align-items:flex-start;gap:9px;transition:.2s;}
 .ant-tool:hover{border-color:rgba(201,150,58,.36);background:rgba(201,150,58,.065);}
 .ant-tool-icon{font-size:1.3rem;min-width:1.5rem;}
 .ant-tool-t{font-size:.8rem;font-weight:700;color:#1a1813;margin-bottom:2px;}
-.ant-tool-d{font-size:.7rem;color:#6a5a3a;line-height:1.45;}
+.ant-tool-d{font-size:.7rem;color:#9a8a6a;line-height:1.45;}
 .ant-cta{text-align:center;padding:52px 20px;background:linear-gradient(135deg,rgba(201,150,58,.07),rgba(201,150,58,.025));border-top:1px solid rgba(201,150,58,.11);}
 .ant-cta-t{font-family:'Playfair Display',serif;font-size:1.65rem;font-weight:800;color:#1a1813;margin-bottom:10px;}
-.ant-cta-s{font-size:.9rem;color:#6a5a3a;margin-bottom:26px;}
+.ant-cta-s{font-size:.9rem;color:#9a8a6a;margin-bottom:26px;}
 </style>
 
 <div class="ant-hero">
@@ -1364,7 +1373,7 @@ L1168,60 L1168,80 L1200,80 L1200,200 Z"/>
 <span style="font-family:Inter,sans-serif;font-size:.78rem;color:#c9963a;text-transform:uppercase;letter-spacing:.15em;font-weight:600;">▶ Demo interactivo</span>
 </div>
 <div style="font-family:'Playfair Display',serif;font-size:1.85rem;font-weight:800;color:#f5f0e8;text-align:center;margin-bottom:8px;">AntonIA en acción</div>
-<div style="font-size:.92rem;color:rgba(240,232,218,.5);text-align:center;margin-bottom:36px;">Descubre las funciones más poderosas del primer asistente jurídico IA para el Derecho chileno</div>
+<div style="font-size:.92rem;color:rgba(240,232,218,.78);text-align:center;margin-bottom:36px;">Descubre las funciones más poderosas del primer asistente jurídico IA para el Derecho chileno</div>
 
 <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:20px;">
 <!-- Demo 1: Quiz IA -->
@@ -1376,13 +1385,13 @@ L1168,60 L1168,80 L1200,80 L1200,200 Z"/>
 <div style="font-size:.82rem;color:#f0e8d8;line-height:1.5;">¿Cuál es el efecto de la condición resolutoria cumplida?</div>
 <div style="margin-top:10px;display:flex;flex-direction:column;gap:5px;">
 <div style="background:rgba(46,144,85,.15);border:1px solid rgba(46,144,85,.3);border-radius:4px;padding:4px 8px;font-size:.72rem;color:#4ade80;">✓ Se extingue retroactivamente la obligación</div>
-<div style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:4px;padding:4px 8px;font-size:.72rem;color:rgba(240,232,218,.5);">No tiene efectos retroactivos</div>
+<div style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:4px;padding:4px 8px;font-size:.72rem;color:rgba(240,232,218,.78);">No tiene efectos retroactivos</div>
 </div>
 </div>
 </div>
 <div style="padding:14px 16px;">
 <div style="font-size:.85rem;font-weight:700;color:#f5f0e8;margin-bottom:4px;">Quiz con IA Infinito</div>
-<div style="font-size:.76rem;color:rgba(240,232,218,.5);line-height:1.5;">Quiz adaptativo con retroalimentación jurídica detallada. Alternativas, V/F, Flashcards y casos prácticos.</div>
+<div style="font-size:.76rem;color:rgba(240,232,218,.78);line-height:1.5;">Quiz adaptativo con retroalimentación jurídica detallada. Alternativas, V/F, Flashcards y casos prácticos.</div>
 </div>
 </div>
 
@@ -1398,7 +1407,7 @@ L1168,60 L1168,80 L1200,80 L1200,200 Z"/>
 </div>
 <div style="padding:14px 16px;">
 <div style="font-size:.85rem;font-weight:700;color:#f5f0e8;margin-bottom:4px;">Análisis Jurídico Profundo</div>
-<div style="font-size:.76rem;color:rgba(240,232,218,.5);line-height:1.5;">Sube cualquier documento jurídico y AntonIA lo analiza en segundos con fundamentos del Derecho chileno.</div>
+<div style="font-size:.76rem;color:rgba(240,232,218,.78);line-height:1.5;">Sube cualquier documento jurídico y AntonIA lo analiza en segundos con fundamentos del Derecho chileno.</div>
 </div>
 </div>
 
@@ -1413,13 +1422,13 @@ L1168,60 L1168,80 L1200,80 L1200,200 Z"/>
 </div>
 <div style="padding:14px 16px;">
 <div style="font-size:.85rem;font-weight:700;color:#f5f0e8;margin-bottom:4px;">Redacción Forense con IA</div>
-<div style="font-size:.76rem;color:rgba(240,232,218,.5);line-height:1.5;">Genera demandas, contratos, escritos y comunicaciones con el formato forense chileno correcto.</div>
+<div style="font-size:.76rem;color:rgba(240,232,218,.78);line-height:1.5;">Genera demandas, contratos, escritos y comunicaciones con el formato forense chileno correcto.</div>
 </div>
 </div>
 </div>
 
 <div style="text-align:center;margin-top:30px;">
-<span style="font-family:Inter,sans-serif;font-size:.82rem;color:rgba(240,232,218,.4);">
+<span style="font-family:Inter,sans-serif;font-size:.82rem;color:rgba(240,232,218,.75);">
 Selecciona tu perfil en el panel izquierdo para comenzar · Prueba gratis sin registrarte
 </span>
 </div>
@@ -1474,6 +1483,13 @@ Anton<strong style="color:#c9963a;">IA</strong> · Mar.IA Group · LegalTech Chi
   </div>
 </div>
     """, unsafe_allow_html=True)
+    # ── Promo video (autoplay on first visit) ──
+    import pathlib as _pathlib
+    _promo_home = _pathlib.Path(__file__).parent / "static" / "promo_home.mp4"
+    if _promo_home.exists():
+       st.markdown('<div style="max-width:720px;margin:18px auto 0;border-radius:12px;overflow:hidden;border:1px solid rgba(201,150,58,.18);">', unsafe_allow_html=True)
+       st.video(str(_promo_home), autoplay=True, muted=True, loop=True)
+       st.markdown('</div>', unsafe_allow_html=True)
     st.stop()
 
 
@@ -1483,14 +1499,14 @@ if _is_univ_chooser:
 <style>
 .univ-landing{max-width:800px;margin:0 auto;padding:40px 20px;}
 .univ-title{font-family:'Playfair Display',serif;font-size:2.2rem;font-weight:800;color:#1a1813;text-align:center;margin-bottom:10px;}
-.univ-sub{font-size:1.0rem;color:#6a5a3a;text-align:center;margin-bottom:40px;}
+.univ-sub{font-size:1.0rem;color:#9a8a6a;text-align:center;margin-bottom:40px;}
 .univ-cards{display:grid;grid-template-columns:1fr 1fr;gap:24px;max-width:720px;margin:0 auto;}
 @media(max-width:600px){.univ-cards{grid-template-columns:1fr;}}
 .univ-card{background:#fff;border:1.5px solid #e2dbd0;border-radius:16px;padding:36px 28px;text-align:center;cursor:pointer;transition:all .25s ease;box-shadow:0 2px 16px rgba(20,18,10,.07);}
 .univ-card:hover{border-color:#c9963a;transform:translateY(-5px);box-shadow:0 12px 40px rgba(20,18,10,.13);}
 .univ-card-icon{font-size:3.5rem;margin-bottom:16px;}
 .univ-card-title{font-family:'Playfair Display',serif;font-size:1.4rem;font-weight:700;color:#1a1813;margin-bottom:8px;}
-.univ-card-desc{font-size:.88rem;color:#6a5a3a;line-height:1.65;margin-bottom:20px;}
+.univ-card-desc{font-size:.88rem;color:#9a8a6a;line-height:1.65;margin-bottom:20px;}
 .univ-card-feats{text-align:left;margin-top:12px;}
 .univ-card-feat{font-size:.78rem;color:#5a4e3e;padding:5px 0;border-bottom:1px solid #ede8de;display:flex;align-items:center;gap:6px;}
 .univ-card-feat:last-child{border-bottom:none;}
@@ -1695,7 +1711,7 @@ elif nav == "PREPARA TU ALEGATO":
                 f"Responde en español jurídico formal chileno."
             )
             with st.spinner("Preparando argumentos…"):
-                resp = llm.generate(prompt, system=" ", max_tokens=1200)
+                resp = llm.generate(prompt, system="Eres AntonIA, coach de litigación especializado en el Derecho chileno. Generas argumentos jurídicos sólidos, estratégicos y fundamentados en normativa vigente. Respondes en español jurídico formal chileno.", max_tokens=1200)
             st.markdown(resp)
 
     with tab_irac:
@@ -1720,7 +1736,7 @@ elif nav == "PREPARA TU ALEGATO":
                 f"Responde en español jurídico formal."
             )
             with st.spinner("Generando briefing IRAC…"):
-                resp = llm.generate(prompt, system=" ", max_tokens=1000)
+                resp = llm.generate(prompt, system="Eres AntonIA, asistente jurídico especializado en el Derecho chileno vigente. Aplicas el método IRAC con precisión académica y práctica. Citas normas chilenas reales. Respondes en español formal.", max_tokens=1000)
             st.markdown(resp)
 
     with tab_contra:
@@ -1739,7 +1755,7 @@ elif nav == "PREPARA TU ALEGATO":
                 f"Responde en español jurídico formal chileno."
             )
             with st.spinner("Analizando contraargumentos…"):
-                resp = llm.generate(prompt, system=" ", max_tokens=900)
+                resp = llm.generate(prompt, system="Eres AntonIA, abogado estratega en Derecho chileno. Analizas argumentos jurídicos, identificas debilidades y generas contraargumentos fundamentados en normas y jurisprudencia chilena. Respondes en español jurídico formal.", max_tokens=900)
             st.markdown(resp)
     st.markdown("</div>", unsafe_allow_html=True)
 
