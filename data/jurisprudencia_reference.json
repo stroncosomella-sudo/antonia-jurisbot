@@ -1,0 +1,264 @@
+{
+ "total_sentencias": 1200417,
+ "ultima_actualizacion": "2026-04-04",
+ "materias_principales": [
+  {
+   "materia": "PAGARÉ, COBRO DE",
+   "total": 67000
+  },
+  {
+   "materia": "PERJUICIOS, INDEMNIZACIÓN DE",
+   "total": 21790
+  },
+  {
+   "materia": "TRÁFICO ILÍCITO DE DROGAS",
+   "total": 14035
+  },
+  {
+   "materia": "APELACIÓN SENTENCIA DEFINITIVA",
+   "total": 10827
+  },
+  {
+   "materia": "ROBO CON INTIMIDACIÓN",
+   "total": 9560
+  },
+  {
+   "materia": "REMUNERACIONES",
+   "total": 9500
+  },
+  {
+   "materia": "RECLAMO MULTA ADMINISTRATIVA",
+   "total": 8816
+  },
+  {
+   "materia": "PESOS, COBRO DE",
+   "total": 8566
+  },
+  {
+   "materia": "FACTURA, NOTIFICACIÓN DE",
+   "total": 8480
+  },
+  {
+   "materia": "OBLIGACIÓN DE DAR, CUMPLIMIENTO",
+   "total": 8203
+  },
+  {
+   "materia": "MICROTRÁFICO",
+   "total": 8169
+  },
+  {
+   "materia": "RECARGOS",
+   "total": 8036
+  },
+  {
+   "materia": "RECLAMO MULTAS ADMINISTRATIVAS",
+   "total": 7700
+  },
+  {
+   "materia": "MINERO, PEDIMENTO (CONCESIÓN)",
+   "total": 7657
+  },
+  {
+   "materia": "ROBO CON VIOLENCIA",
+   "total": 7425
+  },
+  {
+   "materia": "PRESTACIONES",
+   "total": 7356
+  },
+  {
+   "materia": "OTROS ORDINARIOS",
+   "total": 7326
+  },
+  {
+   "materia": "HOMICIDIO",
+   "total": 7199
+  },
+  {
+   "materia": "ALIMENTOS",
+   "total": 5500
+  }
+ ],
+ "legislacion_frecuente": {
+  "PERJUICIOS, INDEMNIZACIÓN DE": [
+   {
+    "ley": "Código de Procedimiento Civil art. 186",
+    "citas": 25
+   },
+   {
+    "ley": "Código Civil art. 2314",
+    "citas": 22
+   },
+   {
+    "ley": "Código Civil art. 2329",
+    "citas": 20
+   },
+   {
+    "ley": "Código de Procedimiento Civil art. 227",
+    "citas": 5
+   },
+   {
+    "ley": "Código de Procedimiento Civil art. 187",
+    "citas": 4
+   }
+  ],
+  "ALIMENTOS": [
+   {
+    "ley": "Código Civil art. 321",
+    "citas": 43
+   },
+   {
+    "ley": "Código Civil art. 322",
+    "citas": 20
+   },
+   {
+    "ley": "Código Civil art. 323",
+    "citas": 18
+   },
+   {
+    "ley": "Ley 14.908 Abandono de Familia y Pago de Pensiones Alimenticias",
+    "citas": 10
+   },
+   {
+    "ley": "Código de Procedimiento Civil art. 148",
+    "citas": 10
+   },
+   {
+    "ley": "Ley 19.968 art. 67 (Tribunales de Familia)",
+    "citas": 13
+   }
+  ],
+  "REMUNERACIONES": [
+   {
+    "ley": "Código del Trabajo art. 477",
+    "citas": 3
+   },
+   {
+    "ley": "Código del Trabajo art. 476",
+    "citas": 3
+   },
+   {
+    "ley": "Código del Trabajo art. 162",
+    "citas": 2
+   },
+   {
+    "ley": "Código del Trabajo art. 63",
+    "citas": 2
+   }
+  ],
+  "ROBO CON INTIMIDACIÓN": [
+   {
+    "ley": "Código Penal art. 433",
+    "citas": 21
+   },
+   {
+    "ley": "Código Penal art. 438",
+    "citas": 19
+   },
+   {
+    "ley": "Código Penal art. 436 inc. 1°",
+    "citas": 17
+   },
+   {
+    "ley": "Código Procesal Penal art. 140",
+    "citas": 9
+   },
+   {
+    "ley": "Código Procesal Penal art. 149",
+    "citas": 6
+   }
+  ],
+  "HOMICIDIO": [
+   {
+    "ley": "Código Procesal Penal art. 140",
+    "citas": 8
+   },
+   {
+    "ley": "Código Penal art. 391 N° 2",
+    "citas": 7
+   },
+   {
+    "ley": "Código Procesal Penal art. 370",
+    "citas": 3
+   },
+   {
+    "ley": "Código Procesal Penal art. 155",
+    "citas": 3
+   },
+   {
+    "ley": "Código Procesal Penal art. 352",
+    "citas": 3
+   }
+  ],
+  "PAGARÉ, COBRO DE": [
+   {
+    "ley": "Código de Comercio art. 98 (pagaré)",
+    "citas": 15
+   },
+   {
+    "ley": "Ley 18.092 sobre Letras de Cambio y Pagarés",
+    "citas": 12
+   },
+   {
+    "ley": "Código de Procedimiento Civil art. 434 N° 4",
+    "citas": 10
+   }
+  ]
+ },
+ "sentencias_recientes_ejemplo": [
+  {
+   "rol": "6730-2024",
+   "tribunal": "7° Juzgado Civil de Santiago",
+   "fecha": "2026-03-31",
+   "materia": "Indemnización de perjuicios",
+   "caratulado": "JIMÉNEZ/COMUNIDAD EDIFICIO TARAPACA CENTRO (LTE)"
+  },
+  {
+   "rol": "192-2026",
+   "tribunal": "1° Juzgado Civil de Chillán",
+   "fecha": "2026-03-31",
+   "materia": "Indemnización de perjuicios"
+  },
+  {
+   "rol": "273-2026",
+   "tribunal": "Juzgado de Letras de Yungay",
+   "fecha": "2026-03-31",
+   "materia": "Alimentos, aumento"
+  },
+  {
+   "rol": "3392-2025",
+   "tribunal": "2° Juzgado del Trabajo de Santiago",
+   "fecha": "2026-03-31",
+   "materia": "Remuneraciones"
+  },
+  {
+   "rol": "877-2025",
+   "tribunal": "Juzgado del Trabajo de Valparaíso",
+   "fecha": "2026-03-31",
+   "materia": "Remuneraciones"
+  },
+  {
+   "rol": "163-2026",
+   "tribunal": "Juzgado de Familia de Temuco",
+   "fecha": "2026-03-30",
+   "materia": "Alimentos"
+  },
+  {
+   "rol": "710-2025",
+   "tribunal": "Juzgado de Familia de Talca",
+   "fecha": "2026-03-30",
+   "materia": "Alimentos"
+  },
+  {
+   "rol": "1179-2025",
+   "tribunal": "Juzgado de Familia de Puente Alto",
+   "fecha": "2026-03-30",
+   "materia": "Alimentos, cesación"
+  }
+ ],
+ "categorias": [
+  "Corte Suprema",
+  "Cortes de Apelaciones",
+  "Juzgados"
+ ]
+}

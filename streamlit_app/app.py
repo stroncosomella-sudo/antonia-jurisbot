@@ -1069,7 +1069,10 @@ if not _is_univ_chooser and (nav == "HOME" or st.session_state.get("main_section
     _promo_home = _pathlib.Path(__file__).parent / "static" / "promo_home.mp4"
     if _promo_home.exists():
        st.markdown('<div style="max-width:780px;margin:0 auto 8px;border-radius:14px;overflow:hidden;border:1px solid rgba(201,150,58,.22);box-shadow:0 8px 32px rgba(0,0,0,.3);">', unsafe_allow_html=True)
-       st.video(str(_promo_home), autoplay=True, muted=True, loop=True)
+       try:
+           st.video(str(_promo_home), autoplay=True, muted=True, loop=True)
+       except TypeError:
+           st.video(str(_promo_home))
        st.markdown('</div>', unsafe_allow_html=True)
     st.markdown("""
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -1944,95 +1947,234 @@ elif nav == "ANÁLISIS":
 
 
 # ═══════════════════════════════════════════════
-# SECCIÓN: JURISPRUDENCIA
+# SECCIÓN: JURISPRUDENCIA — Integración profunda con corpus PJUD
 # ═══════════════════════════════════════════════
 elif nav == "JURISPRUDENCIA RELACIONADA":
-    st.markdown(section_header("Jurisprudencia Relacionada"), unsafe_allow_html=True)
-    if not st.session_state.ingestion_result:
-        need_doc()
-    else:
-        st.markdown(
-            '<p style="color:#9a8e7e;font-size:0.84rem;text-align:center;margin-bottom:1rem;">'
-            'Identifica sentencias, fallos y resoluciones relevantes para el documento analizado.</p>',
-            unsafe_allow_html=True)
-        if st.button("BUSCAR JURISPRUDENCIA APLICABLE", use_container_width=True):
-            with st.spinner("Analizando jurisprudencia relevante…"):
-                try:
-                    prompt = f"""Eres un abogado especialista en jurisprudencia chilena. Analiza el texto jurídico
-y produce un informe de JURISPRUDENCIA RELACIONADA con esta estructura:
+    from jurisprudencia_service import (total_sentencias as _j_total, materias_principales as _j_materias,
+                                         legislacion_citada as _j_leg, sentencias_recientes as _j_recientes,
+                                         generar_contexto_jurisprudencial as _j_ctx)
+    st.markdown(section_header("⚖️ Jurisprudencia Relacionada"), unsafe_allow_html=True)
+
+    # Panel informativo del corpus real
+    st.markdown(
+        f'<div style="background:rgba(201,150,58,0.06);border:1px solid rgba(201,150,58,0.2);border-radius:10px;'
+        f'padding:14px 18px;margin-bottom:16px;display:flex;align-items:center;gap:14px;">'
+        f'<div style="font-size:2rem;">🏛</div>'
+        f'<div><div style="font-size:0.82rem;font-weight:700;color:#1a1813;">Corpus PJUD Real</div>'
+        f'<div style="font-size:0.76rem;color:#8a7a5e;">{_j_total():,} sentencias chilenas indexadas '
+        f'· Corte Suprema, Cortes de Apelaciones, Juzgados · Actualizado abril 2026</div></div></div>',
+        unsafe_allow_html=True)
+
+    # Explorador de materias
+    _j_tab1, _j_tab2, _j_tab3 = st.tabs(["📊 Explorar Materias", "🔍 Análisis de Documento", "📋 Sentencias Recientes"])
+
+    with _j_tab1:
+        st.markdown('<div style="font-size:0.84rem;color:#5a4e3e;margin-bottom:12px;">Las materias más frecuentes del corpus jurisprudencial chileno:</div>', unsafe_allow_html=True)
+        _j_mats = _j_materias(19)
+        _j_cols = st.columns(2)
+        for _ji, _jm in enumerate(_j_mats):
+            with _j_cols[_ji % 2]:
+                pct = _jm["total"] / _j_total() * 100
+                st.markdown(
+                    f'<div style="background:#faf8f4;border:1px solid #e8e0d2;border-radius:8px;padding:10px 14px;margin-bottom:6px;">'
+                    f'<div style="font-size:0.78rem;font-weight:700;color:#1a1813;">{_jm["materia"]}</div>'
+                    f'<div style="font-size:0.72rem;color:#8a7a5e;">{_jm["total"]:,} sentencias ({pct:.1f}%)</div></div>',
+                    unsafe_allow_html=True)
+        # Legislación citada por materia
+        st.markdown('<div style="margin-top:16px;font-size:0.84rem;font-weight:700;color:#1a1813;">Legislación más citada por materia:</div>', unsafe_allow_html=True)
+        _j_materia_sel = st.selectbox("Selecciona una materia:", [m["materia"] for m in _j_mats[:10]], key="j_mat_sel")
+        _j_leyes = _j_leg(_j_materia_sel)
+        if _j_leyes:
+            for _jl in _j_leyes:
+                st.markdown(f'<div style="font-size:0.78rem;color:#5a4e3e;padding:4px 0;">📎 **{_jl["ley"]}** — {_jl["citas"]} citas</div>', unsafe_allow_html=True)
+        else:
+            st.info("Legislación específica no disponible para esta materia. Usa el análisis de documento para obtener referencias.")
+
+    with _j_tab2:
+        if not st.session_state.ingestion_result:
+            need_doc()
+        else:
+            st.markdown(
+                '<p style="color:#9a8e7e;font-size:0.84rem;margin-bottom:12px;">'
+                'Analiza jurisprudencia relevante al documento usando datos reales del corpus PJUD.</p>',
+                unsafe_allow_html=True)
+            _j_materia_input = st.text_input("Materia principal del documento (opcional):", placeholder="Ej: indemnización, alimentos, laboral...", key="j_mat_input")
+            if st.button("BUSCAR JURISPRUDENCIA APLICABLE", use_container_width=True, key="btn_juris"):
+                with st.spinner("Cruzando con corpus de 1.2M sentencias…"):
+                    try:
+                        _j_contexto = _j_ctx(_j_materia_input or "")
+                        prompt = f"""Eres un abogado especialista en jurisprudencia chilena.
+Tienes acceso al siguiente CONTEXTO REAL del corpus jurisprudencial PJUD:
+
+{_j_contexto}
+
+Analiza el texto jurídico y produce un informe de JURISPRUDENCIA RELACIONADA:
 
 **I. JURISPRUDENCIA CITADA EN EL TEXTO**
-Lista cada sentencia mencionada con: Tribunal | Tipo de fallo | Rol | Fecha | Materia | Relevancia.
-Si no hay citas explícitas, escribir: "(no se citan sentencias en el texto)".
+Lista cada sentencia mencionada: Tribunal | Rol | Fecha | Materia | Relevancia.
+Si no hay citas explícitas: "(no se citan sentencias en el texto)".
 
-**II. JURISPRUDENCIA RELEVANTE SUGERIDA**
-Identifica los temas jurídicos del documento y sugiere qué tipos de jurisprudencia un abogado debería consultar.
-Especifica: Tribunal competente | Tipo de controversia | Por qué es relevante.
+**II. MATERIAS JURISPRUDENCIALES APLICABLES**
+Usando los datos del corpus PJUD, identifica las materias relacionadas y cuántas sentencias existen.
+Cita la legislación más aplicada según el corpus.
 
-**III. TENDENCIAS JURISPRUDENCIALES**
-¿Hay uniformidad o divergencia en los tribunales respecto a la materia del documento?
+**III. SENTENCIAS DE REFERENCIA**
+Cita las sentencias reales del corpus que aparecen arriba como referencia.
+REGLA: SOLO cita sentencias del contexto. NUNCA inventes roles.
 
-REGLA INVIOLABLE: NUNCA inventes roles de causa, fechas ni sentencias ficticias.
-Si no tienes certeza, indica: "(verificar en bases de datos Westlaw Chile, vLex, Microjuris)".
+**IV. TENDENCIAS**
+¿Hay uniformidad o divergencia en los tribunales respecto a esta materia?
 
 TEXTO A ANALIZAR:
 {doc_text()}"""
-                    st.session_state.jurisprudencia = active_llm().generate(prompt, max_tokens=2500, temperature=0.2)
-                except Exception as e:
-                    st.error(f"Error: {e}")
-        if st.session_state.jurisprudencia:
-            st.markdown(f'<div class="card" style="margin-top:1rem;">{st.session_state.jurisprudencia}</div>',
-                        unsafe_allow_html=True)
-        _mostrar_casos_relacionados(doc_text(3000), max_casos=3, key_prefix="ju")
+                        st.session_state.jurisprudencia = active_llm().generate(prompt, max_tokens=3000, temperature=0.15)
+                    except Exception as e:
+                        st.error(f"Error: {e}")
+            if st.session_state.jurisprudencia:
+                st.markdown(f'<div class="card" style="margin-top:1rem;">{st.session_state.jurisprudencia}</div>',
+                            unsafe_allow_html=True)
+            _mostrar_casos_relacionados(doc_text(3000), max_casos=3, key_prefix="ju")
+
+    with _j_tab3:
+        st.markdown('<div style="font-size:0.84rem;color:#5a4e3e;margin-bottom:12px;">Últimas sentencias incorporadas al corpus:</div>', unsafe_allow_html=True)
+        for _js in _j_recientes(8):
+            st.markdown(
+                f'<div style="background:#faf8f4;border:1px solid #e8e0d2;border-radius:8px;padding:12px 16px;margin-bottom:8px;">'
+                f'<div style="display:flex;justify-content:space-between;align-items:center;">'
+                f'<div style="font-size:0.82rem;font-weight:700;color:#1a1813;">ROL {_js["rol"]}</div>'
+                f'<div style="font-size:0.72rem;color:#c9963a;font-weight:600;">{_js["fecha"]}</div></div>'
+                f'<div style="font-size:0.76rem;color:#5a4e3e;margin-top:4px;">{_js["tribunal"]}</div>'
+                f'<div style="font-size:0.72rem;color:#8a7a5e;margin-top:2px;">{_js["materia"]}'
+                f'{" · " + _js.get("caratulado", "") if _js.get("caratulado") else ""}</div></div>',
+                unsafe_allow_html=True)
     st.markdown('</div>', unsafe_allow_html=True)
 
 
 # ═══════════════════════════════════════════════
-# SECCIÓN: DOCTRINA
+# SECCIÓN: DOCTRINA — Integración profunda con biblioteca 1,845 obras
 # ═══════════════════════════════════════════════
 elif nav == "DOCTRINA RELACIONADA":
-    st.markdown(section_header("Doctrina Relacionada"), unsafe_allow_html=True)
-    if not st.session_state.ingestion_result:
-        need_doc()
-    else:
-        st.markdown(
-            '<p style="color:#9a8e7e;font-size:0.84rem;text-align:center;margin-bottom:1rem;">'
-            'Identifica autores, obras y corrientes doctrinarias relevantes al documento.</p>',
-            unsafe_allow_html=True)
-        if st.button("BUSCAR DOCTRINA APLICABLE", use_container_width=True):
-            with st.spinner("Identificando corrientes doctrinarias…"):
-                try:
-                    prompt = f"""Eres un académico especialista en doctrina jurídica chilena. Analiza el texto
-y produce un informe de DOCTRINA JURÍDICA RELACIONADA con esta estructura:
+    from doctrina_service import (buscar_doctrina as _d_buscar, listar_areas as _d_areas,
+                                    buscar_por_autor as _d_autor, total_obras as _d_total)
+    st.markdown(section_header("📚 Doctrina Relacionada"), unsafe_allow_html=True)
+
+    # Panel informativo de la biblioteca real
+    _d_tot = _d_total()
+    _d_ar = _d_areas()
+    st.markdown(
+        f'<div style="background:rgba(201,150,58,0.06);border:1px solid rgba(201,150,58,0.2);border-radius:10px;'
+        f'padding:14px 18px;margin-bottom:16px;display:flex;align-items:center;gap:14px;">'
+        f'<div style="font-size:2rem;">📚</div>'
+        f'<div><div style="font-size:0.82rem;font-weight:700;color:#1a1813;">Biblioteca de Doctrina AntonIA</div>'
+        f'<div style="font-size:0.76rem;color:#8a7a5e;">{_d_tot:,} obras indexadas '
+        f'· {len(_d_ar)} áreas del Derecho chileno · Tratados, manuales, artículos y tesis</div></div></div>',
+        unsafe_allow_html=True)
+
+    _d_tab1, _d_tab2, _d_tab3 = st.tabs(["📊 Explorar Biblioteca", "🔍 Análisis de Documento", "🔎 Buscar Obras"])
+
+    with _d_tab1:
+        st.markdown('<div style="font-size:0.84rem;color:#5a4e3e;margin-bottom:12px;">Áreas del Derecho en la biblioteca:</div>', unsafe_allow_html=True)
+        _d_cols = st.columns(2)
+        for _di, _da in enumerate(_d_ar[:20]):
+            with _d_cols[_di % 2]:
+                pct = _da["obras"] / _d_tot * 100
+                st.markdown(
+                    f'<div style="background:#faf8f4;border:1px solid #e8e0d2;border-radius:8px;padding:10px 14px;margin-bottom:6px;">'
+                    f'<div style="font-size:0.78rem;font-weight:700;color:#1a1813;">{_da["area"]}</div>'
+                    f'<div style="font-size:0.72rem;color:#8a7a5e;">{_da["obras"]} obras ({pct:.1f}%)</div></div>',
+                    unsafe_allow_html=True)
+        # Muestra de obras por área
+        st.markdown('<div style="margin-top:16px;font-size:0.84rem;font-weight:700;color:#1a1813;">Obras por área:</div>', unsafe_allow_html=True)
+        _d_area_sel = st.selectbox("Selecciona un área:", [a["area"] for a in _d_ar], key="d_area_sel")
+        _d_obras_area = _d_buscar(area=_d_area_sel, limit=10)
+        for _do in _d_obras_area:
+            st.markdown(
+                f'<div style="font-size:0.78rem;color:#5a4e3e;padding:6px 0;border-bottom:1px solid #ede8de;">'
+                f'📎 **{_do["autor"]}** — _{_do["titulo"]}_ ({_do.get("formato", "PDF")})</div>',
+                unsafe_allow_html=True)
+
+    with _d_tab2:
+        if not st.session_state.ingestion_result:
+            need_doc()
+        else:
+            st.markdown(
+                '<p style="color:#9a8e7e;font-size:0.84rem;margin-bottom:12px;">'
+                'Analiza doctrina relevante al documento usando la biblioteca de 1,845 obras reales.</p>',
+                unsafe_allow_html=True)
+            _d_materia_input = st.text_input("Materia principal (opcional):", placeholder="Ej: responsabilidad, contratos, penal...", key="d_mat_input")
+            if st.button("BUSCAR DOCTRINA APLICABLE", use_container_width=True, key="btn_doct"):
+                with st.spinner("Cruzando con biblioteca de doctrina…"):
+                    try:
+                        # Construir contexto con obras reales de la biblioteca
+                        _d_query_obras = _d_buscar(query=_d_materia_input, limit=15) if _d_materia_input else []
+                        _d_ctx_parts = [f"BIBLIOTECA DOCTRINA ANTONIA: {_d_tot:,} obras indexadas de {len(_d_ar)} áreas.", ""]
+                        if _d_query_obras:
+                            _d_ctx_parts.append("OBRAS RELACIONADAS EN LA BIBLIOTECA:")
+                            for _dob in _d_query_obras:
+                                _d_ctx_parts.append(f"  - {_dob['autor']}: \"{_dob['titulo']}\" (Área: {_dob['area']})")
+                        else:
+                            _d_top_areas = _d_ar[:5]
+                            _d_ctx_parts.append("ÁREAS PRINCIPALES DE LA BIBLIOTECA:")
+                            for _dta in _d_top_areas:
+                                _d_ctx_parts.append(f"  - {_dta['area']}: {_dta['obras']} obras")
+                                _d_sample = _d_buscar(area=_dta["area"], limit=3)
+                                for _ds in _d_sample:
+                                    _d_ctx_parts.append(f"    · {_ds['autor']}: \"{_ds['titulo']}\"")
+                        _d_context = "\n".join(_d_ctx_parts)
+
+                        prompt = f"""Eres un académico especialista en doctrina jurídica chilena.
+Tienes acceso al siguiente CONTEXTO REAL de la biblioteca de doctrina:
+
+{_d_context}
+
+Analiza el texto jurídico y produce un informe de DOCTRINA RELACIONADA:
 
 **I. DOCTRINA CITADA EN EL TEXTO**
 Lista cada referencia doctrinaria explícita: Autor | Obra | Tesis relevante.
-Si no hay citas explícitas, escribir: "(no se cita doctrina de forma expresa en el texto)".
+Si no hay citas: "(no se cita doctrina en el texto)".
 
-**II. DOCTRINA CHILENA APLICABLE**
-Según la materia del documento, identifica cuáles de estos autores son relevantes y por qué:
-— Derecho Civil: Alessandri R., Somarriva, Vodanovic, Abeliuk, Meza Barros, Peñailillo, Corral Talciani, Barros Bourie
-— Derecho Penal: Etcheberry, Cury Urzúa, Garrido Montt, Politoff, Matus, Ramírez
-— Derecho Laboral: Thayer, Novoa, Walker Errázuriz, Gamonal
-— Derecho Constitucional: Nogueira, Silva Bascuñán, Verdugo, Zúñiga
-— Derecho Procesal: Maturana, Mosquera, Romero
-Indica SOLO autores que realmente hayan tratado esta materia.
+**II. OBRAS DE LA BIBLIOTECA APLICABLES**
+De las obras listadas en el contexto, identifica cuáles son relevantes y por qué.
+Cita SOLO obras que aparezcan en el contexto.
 
-**III. DEBATES DOCTRINARIOS**
-¿Existe controversia doctrinal sobre el tema del documento? Describe las posiciones.
+**III. AUTORES ADICIONALES RECOMENDADOS**
+Identifica autores chilenos que hayan tratado esta materia:
+Civ: Alessandri, Somarriva, Abeliuk, Meza Barros, Peñailillo, Barros Bourie
+Pen: Etcheberry, Cury, Garrido Montt, Politoff
+Lab: Thayer, Gamonal, Walker · Const: Nogueira, Silva Bascuñán
+Proc: Maturana, Mosquera · Com: Sandoval, Puga
 
-REGLA INVIOLABLE: NUNCA inventes citas, páginas ni obras inexistentes.
-Si no estás seguro de una obra específica, indicar solo el autor y área sin inventar el título.
+**IV. DEBATES DOCTRINARIOS**
+¿Existe controversia doctrinal sobre el tema? Describe posiciones.
+
+REGLA: NUNCA inventes citas, páginas ni obras inexistentes.
 
 TEXTO A ANALIZAR:
 {doc_text()}"""
-                    st.session_state.doctrina = active_llm().generate(prompt, max_tokens=2500, temperature=0.2)
-                except Exception as e:
-                    st.error(f"Error: {e}")
-        if st.session_state.doctrina:
-            st.markdown(f'<div class="card" style="margin-top:1rem;">{st.session_state.doctrina}</div>',
+                        st.session_state.doctrina = active_llm().generate(prompt, max_tokens=3000, temperature=0.15)
+                    except Exception as e:
+                        st.error(f"Error: {e}")
+            if st.session_state.doctrina:
+                st.markdown(f'<div class="card" style="margin-top:1rem;">{st.session_state.doctrina}</div>',
+                            unsafe_allow_html=True)
+            _mostrar_casos_relacionados(doc_text(3000), max_casos=3, key_prefix="do")
+
+    with _d_tab3:
+        st.markdown('<div style="font-size:0.84rem;color:#5a4e3e;margin-bottom:12px;">Busca obras por autor, título o tema:</div>', unsafe_allow_html=True)
+        _d_q = st.text_input("Buscar en la biblioteca:", placeholder="Ej: Alessandri, responsabilidad, constitucional...", key="d_search_q")
+        if _d_q:
+            _d_res = _d_buscar(query=_d_q, limit=20)
+            if _d_res:
+                st.markdown(f'<div style="font-size:0.78rem;color:#c9963a;font-weight:600;margin-bottom:8px;">{len(_d_res)} resultado(s) encontrado(s)</div>', unsafe_allow_html=True)
+                for _dr in _d_res:
+                    st.markdown(
+                        f'<div style="background:#faf8f4;border:1px solid #e8e0d2;border-radius:8px;padding:10px 14px;margin-bottom:6px;">'
+                        f'<div style="font-size:0.78rem;font-weight:700;color:#1a1813;">{_dr["autor"]}</div>'
+                        f'<div style="font-size:0.76rem;color:#5a4e3e;font-style:italic;">{_dr["titulo"]}</div>'
+                        f'<div style="font-size:0.72rem;color:#8a7a5e;">{_dr["area"]} · {_dr.get("formato", "PDF")}</div></div>',
                         unsafe_allow_html=True)
-        _mostrar_casos_relacionados(doc_text(3000), max_casos=3, key_prefix="do")
+            else:
+                st.info("No se encontraron obras para esta búsqueda. Intenta con términos más generales.")
     st.markdown('</div>', unsafe_allow_html=True)
 
 
