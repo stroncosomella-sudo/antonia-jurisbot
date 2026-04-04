@@ -60,6 +60,9 @@ def _init():
         "prof_oral_qa": [],   # [{"pregunta": str, "respuesta_esperada": str, "tiempo": str}]
         # Planificador de Clase
         "prof_plan_result": "",
+        # Jurisprudencia y Doctrina
+        "prof_jurisprudencia_result": "",
+        "prof_doctrina_result": "",
     }
     for k, v in defaults.items():
         if k not in st.session_state:
@@ -90,13 +93,15 @@ def render_profesor(get_llm_fn=None):
         ("🎙️", "oral",          "Examen Oral"),
         ("🗓️", "plan_clase",    "Plan de Clase"),
         ("📊", "notas",          "Libro Notas"),
-        ("🗂",  "banco",         "Banco Preg."),
+        ("⚖️", "jurisprudencia", "Jurispr. PJUD"),
+        ("📕", "doctrina_acad",  "Doctrina"),
         ("🤖", "chat_ia",        "Chat IA"),
         ("📈", "rendimiento",    "Rendimiento"),
         ("🔬", "investigacion",  "Investigación"),
         ("📋", "asistencia",     "Asistencia"),
         ("💬", "observaciones",  "Obs. Alumnos"),
         ("📚", "recursos",       "Recursos"),
+        ("🗂",  "banco",         "Banco Preg."),
     ]
 
     # ── Navegación en 2 filas para evitar columnas microscópicas ──
@@ -132,9 +137,11 @@ def render_profesor(get_llm_fn=None):
                     st.session_state.prof_tab = tid
                     st.rerun()
 
-    _tab_row(TABS[:6])   # Fila 1
+    _tab_row(TABS[:5])   # Fila 1
     st.markdown('<div style="height:0.3rem"></div>', unsafe_allow_html=True)
-    _tab_row(TABS[6:])   # Fila 2
+    _tab_row(TABS[5:10])   # Fila 2
+    st.markdown('<div style="height:0.3rem"></div>', unsafe_allow_html=True)
+    _tab_row(TABS[10:])   # Fila 3
 
     st.markdown('<hr style="border-color:rgba(201,150,58,0.15);margin:0.6rem 0 1.2rem;">', unsafe_allow_html=True)
 
@@ -1331,3 +1338,193 @@ def render_profesor(get_llm_fn=None):
                     st.rerun()
             with col_ctrl3:
                 st.caption(f"{len(st.session_state.chat_ia_history)} mensajes")
+
+    # ── JURISPRUDENCIA ────────────────────────────────────────────────
+    elif tab == "jurisprudencia":
+        from jurisprudencia_service import (
+            total_sentencias, materias_principales, legislacion_citada,
+            sentencias_recientes, generar_contexto_jurisprudencial
+        )
+
+        st.markdown('<div class="prof-header">⚖️ Jurisprudencia PJUD · 1.2M Sentencias</div>', unsafe_allow_html=True)
+
+        # Info banner
+        try:
+            total = total_sentencias()
+            st.markdown(
+                f'<div class="prof-card" style="background:rgba(34,197,94,0.08);border-color:rgba(34,197,94,0.2);">'
+                f'📊 <strong>{total:,}</strong> sentencias disponibles del Poder Judicial de Chile</div>',
+                unsafe_allow_html=True)
+        except:
+            st.markdown(
+                '<div class="prof-card" style="background:rgba(34,197,94,0.08);border-color:rgba(34,197,94,0.2);">'
+                '📊 Jurisprudencia del Poder Judicial disponible</div>',
+                unsafe_allow_html=True)
+
+        tabs_jur = st.tabs(["Explorar Materias", "Buscar para Clase", "Sentencias Recientes"])
+
+        # Tab 1: Explorar Materias
+        with tabs_jur[0]:
+            try:
+                materias = materias_principales(19)
+                cols = st.columns(2)
+                for idx, (materia, count) in enumerate(materias):
+                    with cols[idx % 2]:
+                        st.markdown(
+                            f'<div class="prof-card">'
+                            f'<strong>{materia}</strong><br>'
+                            f'<span style="color:#a09070;font-size:0.85rem;">{count:,} sentencias</span>'
+                            f'</div>',
+                            unsafe_allow_html=True)
+            except Exception as e:
+                st.warning(f"No se pudieron cargar las materias: {e}")
+
+        # Tab 2: Buscar para Clase
+        with tabs_jur[1]:
+            materia_input = st.text_input("Ingresa una materia jurídica", placeholder="Ej: Responsabilidad Civil, Derecho de Familia", key="prof_jur_materia")
+            if st.button("🔍 Generar Contexto para Clase", type="primary", use_container_width=True):
+                if materia_input and get_llm_fn:
+                    with st.spinner("Buscando jurisprudencia relevante…"):
+                        try:
+                            contexto = generar_contexto_jurisprudencial(materia_input)
+                            prompt_jur = (
+                                f"Eres profesor de Derecho preparando una clase sobre: {materia_input}\n\n"
+                                f"Contexto jurisprudencial:\n{contexto}\n\n"
+                                f"Elabora:\n"
+                                f"1. Síntesis de tendencias jurisprudenciales clave (2-3 puntos)\n"
+                                f"2. Casos paradigmáticos que ilustren los conceptos\n"
+                                f"3. Análisis crítico: evolución del criterio de los tribunales\n"
+                                f"4. Conexiones con la doctrina y normativa vigente\n"
+                                f"5. Preguntas para generar discusión en clase"
+                            )
+                            llm = _llm
+                            resp_jur = llm.generate(prompt_jur, system="Eres AntonIA, especialista en jurisprudencia chilena para docencia. Responde en español formal chileno.", max_tokens=1400)
+                            st.session_state.prof_jurisprudencia_result = resp_jur
+                        except Exception as e:
+                            st.error(f"Error: {e}")
+                elif not materia_input:
+                    st.warning("Ingresa una materia para buscar.")
+                elif not get_llm_fn:
+                    st.warning("LLM no disponible.")
+
+            if st.session_state.prof_jurisprudencia_result:
+                st.markdown('<div style="font-size:0.68rem;color:#a09070;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:0.5rem;">Análisis jurisprudencial generado</div>', unsafe_allow_html=True)
+                st.markdown(
+                    f'<div class="prof-card" style="font-size:0.78rem;color:#e8d8b8;line-height:1.65;max-height:600px;overflow-y:auto;">'
+                    f'{st.session_state.prof_jurisprudencia_result.replace(chr(10),"<br>")}</div>',
+                    unsafe_allow_html=True)
+
+        # Tab 3: Sentencias Recientes
+        with tabs_jur[2]:
+            try:
+                recientes = sentencias_recientes(8)
+                for sent in recientes:
+                    st.markdown(
+                        f'<div class="prof-card">'
+                        f'<strong>{sent.get("materia", "Sin materia")}</strong><br>'
+                        f'<span style="color:#a09070;font-size:0.85rem;">ROL: {sent.get("rol", "N/A")} · {sent.get("fecha", "N/A")}</span><br>'
+                        f'<span style="font-size:0.75rem;color:#c9963a;">{sent.get("resultado", "")}</span>'
+                        f'</div>',
+                        unsafe_allow_html=True)
+            except Exception as e:
+                st.warning(f"No se pudieron cargar las sentencias recientes: {e}")
+
+    # ── DOCTRINA ACADÉMICA ────────────────────────────────────────────
+    elif tab == "doctrina_acad":
+        from doctrina_service import (
+            buscar_doctrina, listar_areas, total_obras
+        )
+
+        st.markdown('<div class="prof-header">📕 Biblioteca de Doctrina · 2,827 Obras</div>', unsafe_allow_html=True)
+
+        # Info banner
+        try:
+            total_d = total_obras()
+            areas = listar_areas()
+            st.markdown(
+                f'<div class="prof-card" style="background:rgba(34,197,94,0.08);border-color:rgba(34,197,94,0.2);">'
+                f'📚 <strong>{total_d:,}</strong> obras | <strong>{len(areas)}</strong> áreas temáticas</div>',
+                unsafe_allow_html=True)
+        except:
+            st.markdown(
+                '<div class="prof-card" style="background:rgba(34,197,94,0.08);border-color:rgba(34,197,94,0.2);">'
+                '📚 Biblioteca de doctrina académica disponible</div>',
+                unsafe_allow_html=True)
+
+        tabs_doc = st.tabs(["Explorar Áreas", "Buscar Obras", "Preparar Clase con Doctrina"])
+
+        # Tab 1: Explorar Áreas
+        with tabs_doc[0]:
+            try:
+                areas = listar_areas()
+                cols = st.columns(2)
+                for idx, (area, count) in enumerate(areas):
+                    with cols[idx % 2]:
+                        st.markdown(
+                            f'<div class="prof-card">'
+                            f'<strong>{area}</strong><br>'
+                            f'<span style="color:#a09070;font-size:0.85rem;">{count} obras</span>'
+                            f'</div>',
+                            unsafe_allow_html=True)
+            except Exception as e:
+                st.warning(f"No se pudieron cargar las áreas: {e}")
+
+        # Tab 2: Buscar Obras
+        with tabs_doc[1]:
+            query_doc = st.text_input("Buscar obras doctrinales", placeholder="Ej: Responsabilidad contractual, Derechos fundamentales", key="prof_doc_query")
+            if st.button("🔎 Buscar", type="primary", use_container_width=True):
+                if query_doc:
+                    with st.spinner("Buscando en la biblioteca…"):
+                        try:
+                            results = buscar_doctrina(query=query_doc, limit=10)
+                            if results:
+                                for obra in results:
+                                    st.markdown(
+                                        f'<div class="prof-card">'
+                                        f'<strong>{obra.get("titulo", "Sin título")}</strong><br>'
+                                        f'<span style="color:#c9963a;">{obra.get("autor", "Autor desconocido")}</span><br>'
+                                        f'<span style="color:#a09070;font-size:0.85rem;">{obra.get("area", "")} · {obra.get("año", "")}</span>'
+                                        f'</div>',
+                                        unsafe_allow_html=True)
+                            else:
+                                st.info("No se encontraron obras para esa búsqueda.")
+                        except Exception as e:
+                            st.error(f"Error en búsqueda: {e}")
+                else:
+                    st.warning("Ingresa términos de búsqueda.")
+
+        # Tab 3: Preparar Clase con Doctrina
+        with tabs_doc[2]:
+            tema_doc = st.text_input("Tema de clase", placeholder="Ej: Nulidad de los Actos Jurídicos", key="prof_doc_tema")
+            if st.button("📖 Generar Contexto Doctrinal", type="primary", use_container_width=True):
+                if tema_doc and get_llm_fn:
+                    with st.spinner("Buscando obras relevantes…"):
+                        try:
+                            obras = buscar_doctrina(query=tema_doc, limit=5)
+                            obras_txt = "\n".join([f"- {o.get('titulo')}, {o.get('autor')} ({o.get('año')})" for o in obras]) if obras else "No se encontraron obras"
+                            prompt_doc = (
+                                f"Eres profesor preparando clase sobre: {tema_doc}\n\n"
+                                f"Obras doctrinales relevantes:\n{obras_txt}\n\n"
+                                f"Elabora:\n"
+                                f"1. Panorama doctrinal: principales corrientes y autores\n"
+                                f"2. Conceptos clave según la doctrina\n"
+                                f"3. Debates doctrinales relevantes en Chile\n"
+                                f"4. Crítica doctrinal a la jurisprudencia dominante\n"
+                                f"5. Actividades didácticas basadas en lecturas"
+                            )
+                            llm = _llm
+                            resp_doc = llm.generate(prompt_doc, system="Eres AntonIA, especialista en doctrina jurídica chilena para docencia. Responde en español formal chileno.", max_tokens=1400)
+                            st.session_state.prof_doctrina_result = resp_doc
+                        except Exception as e:
+                            st.error(f"Error: {e}")
+                elif not tema_doc:
+                    st.warning("Ingresa un tema para preparar la clase.")
+                elif not get_llm_fn:
+                    st.warning("LLM no disponible.")
+
+            if st.session_state.prof_doctrina_result:
+                st.markdown('<div style="font-size:0.68rem;color:#a09070;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:0.5rem;">Análisis doctrinal generado</div>', unsafe_allow_html=True)
+                st.markdown(
+                    f'<div class="prof-card" style="font-size:0.78rem;color:#e8d8b8;line-height:1.65;max-height:600px;overflow-y:auto;">'
+                    f'{st.session_state.prof_doctrina_result.replace(chr(10),"<br>")}</div>',
+                    unsafe_allow_html=True)

@@ -137,10 +137,12 @@ DEFAULTS = {
     "abg_reportes":     [],
     "abg_report_draft": "",
     "abg_pj_result":    "",
-    "abg_pj_cortes":    {},
-    "abg_pj_tribs":     {},
-    "abg_caso_sel":     None,
-    "abg_promo_seen":   False,
+    "abg_pj_cortes":      {},
+    "abg_pj_tribs":       {},
+    "abg_caso_sel":       None,
+    "abg_promo_seen":     False,
+    "abg_jurisprudencia_result": "",
+    "abg_doctrina_result": "",
 }
 
 def _init():
@@ -289,18 +291,19 @@ def render_abogado(get_llm_fn=None):
     # ── FIN VIDEO ────────────────────────────────────────────────
 
     TABS = [
-        ("📁", "casos",       "Causas"),
-        ("⏱",  "cronometro",  "Tiempo"),
-        ("📅", "plazos",      "Plazos"),
-        ("📊", "reportes",    "Reportes"),
-        ("📚", "doctrina",    "Doctrina & Jurispr."),
-        ("📝", "redaccion",   "Redactar Doc."),
-        ("✉️", "correos",     "Correos"),
-        ("📋", "pendientes",  "Pendientes"),
-        ("📄", "documentos",  "Documentos"),
-        ("💰", "honorarios",  "Honorarios"),
+        ("📁", "casos",              "Causas"),
+        ("⏱",  "cronometro",         "Tiempo"),
+        ("📅", "plazos",             "Plazos"),
+        ("📊", "reportes",           "Reportes"),
+        ("⚖️", "jurisprudencia_pjud", "Jurispr. PJUD"),
+        ("📚", "doctrina_lib",       "Doctrina"),
+        ("📝", "redaccion",          "Redactar Doc."),
+        ("✉️", "correos",            "Correos"),
+        ("📋", "pendientes",         "Pendientes"),
+        ("📄", "documentos",         "Documentos"),
+        ("💰", "honorarios",         "Honorarios"),
     ]
-    # ── Navegación en 2 filas: 5 + 5 tabs ──
+    # ── Navegación en 2 filas: 6 + 5 tabs ──
     st.markdown(f"""<style>
     [data-testid="stMainBlockContainer"] .abg-tab-active {{
         display:block;
@@ -331,9 +334,9 @@ def render_abogado(get_llm_fn=None):
                     st.session_state.abg_tab = tid
                     st.rerun()
 
-    _abg_tab_row(TABS[:5])   # Fila 1: Causas · Tiempo · Plazos · Reportes · Consulta PJ
+    _abg_tab_row(TABS[:6])   # Fila 1: Causas · Tiempo · Plazos · Reportes · Jurispr. PJUD · Doctrina
     st.markdown('<div style="height:0.3rem"></div>', unsafe_allow_html=True)
-    _abg_tab_row(TABS[5:])   # Fila 2: Correos · Pendientes · Documentos · Honorarios
+    _abg_tab_row(TABS[6:])   # Fila 2: Redactar Doc. · Correos · Pendientes · Documentos · Honorarios
 
     st.markdown('<hr style="border-color:rgba(201,150,58,.2);margin:.5rem 0 1rem;">', unsafe_allow_html=True)
     tab = st.session_state.abg_tab
@@ -789,200 +792,210 @@ def render_abogado(get_llm_fn=None):
 
 
     # ═══════════════════════════════════════════════════════════════════════════
-    # TAB: CONSULTA PODER JUDICIAL (NEW)
+    # TAB: JURISPRUDENCIA PJUD
     # ═══════════════════════════════════════════════════════════════════════════
-    elif tab == "doctrina":
-        st.markdown('<div class="abg-tab-header">📚 Doctrina y Jurisprudencia</div>', unsafe_allow_html=True)
-        st.markdown('<div class="abg-tab-sub">Búsqueda precisa en la biblioteca de AntonIA · Sin alucinaciones — solo fuentes verificadas</div>', unsafe_allow_html=True)
-        # ── SELECTOR DE FUENTE ──────────────────────────────────────
-        _lib_path = _get_library_path()
-        _source_opts = ["🤖 Consulta IA (knowledge base)", "📚 Biblioteca Local (documentos propios)"]
-        _source = st.radio("Fuente de consulta", _source_opts, horizontal=True, key="abg_doc_source_sel")
+    elif tab == "jurisprudencia_pjud":
+        st.markdown('<div class="abg-tab-header">⚖️ Jurisprudencia PJUD · Corpus Real</div>', unsafe_allow_html=True)
+        st.markdown('<div class="abg-tab-sub">1,200,417 sentencias del Poder Judicial de Chile · Análisis con contexto jurisprudencial</div>', unsafe_allow_html=True)
 
-        if _source == _source_opts[1]:  # Biblioteca Local
-            if _lib_path is None:
-                st.info("📚 La biblioteca local no está disponible en esta versión. Usa 'Consulta IA' para acceder a doctrina y jurisprudencia.")
-            else:
-                ramas_disponibles = sorted([d.name for d in _lib_path.iterdir() if d.is_dir()])
-                if not ramas_disponibles:
-                    st.warning("No se encontraron carpetas en la biblioteca local.")
-                else:
-                    rama_bib = st.selectbox("Rama del Derecho", ramas_disponibles, key="bib_rama_sel")
-                    rama_path = _lib_path / rama_bib
-                    archivos_disp = sorted([
-                        f.name for f in rama_path.iterdir()
-                        if f.suffix.lower() in (".pdf", ".docx", ".txt", ".md")
-                    ])
-                    if not archivos_disp:
-                        st.warning(f"No hay documentos en '{rama_bib}'.")
-                    else:
-                        archivo_bib = st.selectbox(f"Documento ({len(archivos_disp)} disponibles)", archivos_disp, key="bib_archivo_sel")
-                        consulta_bib = st.text_area(
-                            "¿Qué quieres saber de este documento?",
-                            placeholder="Ej: Explica los requisitos de la condición resolutoria ordinaria según este autor.",
-                            height=90, key="bib_query_input")
-                        col_bib1, col_bib2 = st.columns([1, 1])
-                        with col_bib1:
-                            modo_bib = st.radio("Modo", ["Búsqueda puntual", "Resumen del documento"], key="bib_modo")
-                        with col_bib2:
-                            max_chars_bib = st.slider("Contexto (caracteres)", 5000, 40000, 16000, 1000, key="bib_maxchars")
-                        if st.button("🔍 Consultar documento", type="primary", use_container_width=True, key="bib_btn_buscar"):
-                            if not consulta_bib.strip() and modo_bib == "Búsqueda puntual":
-                                st.warning("Escribe tu consulta.")
-                            elif get_llm_fn:
-                                with st.spinner(f"Leyendo {archivo_bib}…"):
-                                    texto_doc = _extract_doc_text(str(rama_path / archivo_bib))
-                                if texto_doc.startswith("[Error"):
-                                    st.error(texto_doc)
-                                else:
-                                    ctx = texto_doc[:max_chars_bib]
-                                    if modo_bib == "Resumen del documento":
-                                        prompt_bib = (
-                                            f"Documento jurídico: '{archivo_bib}'\n"
-                                            f"Contenido ({len(ctx):,} chars):\n{ctx}\n\n"
-                                            f"Genera un resumen ejecutivo estructurado del documento con: "
-                                            f"1) Tema central y tesis del autor, "
-                                            f"2) Conceptos jurídicos clave desarrollados, "
-                                            f"3) Normas y artículos citados, "
-                                            f"4) Conclusiones principales, "
-                                            f"5) Relevancia práctica para litigantes chilenos."
-                                        )
-                                    else:
-                                        prompt_bib = (
-                                            f"Documento jurídico: '{archivo_bib}'\n"
-                                            f"Contenido:\n{ctx}\n\n"
-                                            f"Consulta del abogado: {consulta_bib}\n\n"
-                                            f"Responde basándote EXCLUSIVAMENTE en el contenido del documento. "
-                                            f"Cita los pasajes relevantes con comillas y número de sección si lo hay. "
-                                            f"Si la respuesta no está en el documento, indícalo claramente."
-                                        )
-                                    system_bib = (
-                                        "Eres AntonIA, asistente jurídico para abogados chilenos. "
-                                        "Analizas documentos jurídicos con precisión académica. "
-                                        "Citas textualmente los pasajes relevantes. "
-                                        "Usas terminología jurídica chilena vigente."
-                                    )
-                                    try:
-                                        llm = _llm
-                                        resp_bib = llm.generate(prompt_bib, system=system_bib, max_tokens=2000)
-                                        st.markdown(f"**📄 {archivo_bib}**")
-                                        st.markdown(resp_bib)
-                                        st.caption(f"Contexto usado: {len(ctx):,} de {len(texto_doc):,} caracteres totales")
-                                    except Exception as e:
-                                        st.error(f"Error: {e}")
-                            else:
-                                st.warning("LLM no disponible.")
-            st.stop()
-        col_busq, col_res = st.columns([1, 1.6])
-        with col_busq:
-            tipo_consulta = st.selectbox("Tipo de consulta", [
-                "Doctrina sobre un tema", "Jurisprudencia chilena",
-                "Normativa vigente aplicable", "Análisis de caso con fundamentos",
-                "Comparación de posiciones doctrinales",
-            ], key="abg_doc_tipo_consulta")
-            ramo_doc = st.selectbox("Rama del Derecho", [
-                "Civil — General", "Civil — Obligaciones", "Civil — Bienes",
-                "Civil — Familia", "Civil — Sucesorio",
-                "Penal General", "Penal Especial", "Procesal Civil", "Procesal Penal",
-                "Laboral", "Comercial", "Constitucional", "Administrativo",
-            ], key="abg_doc_ramo")
-            consulta_text = st.text_area(
-                "Consulta o tema específico",
-                placeholder="Ej: Requisitos de la acción resolutoria en contratos bilaterales. Art. 1489 CC.",
-                height=120, key="abg_doc_consulta")
-            nivel_precision = st.radio("Nivel de precisión",
-                ["Resumen ejecutivo", "Análisis detallado", "Citas con fuentes"],
-                horizontal=True, key="abg_doc_nivel")
-            st.markdown(
-                '<div style="background:rgba(201,150,58,0.06);border:1px solid rgba(201,150,58,0.2);'
-                'border-radius:6px;padding:0.7rem 0.9rem;font-size:0.78rem;color:#9a8a6a;line-height:1.55;">'
-                '⚠️ <strong>Anti-alucinación:</strong> AntonIA solo cita autores y sentencias '
-                'cuando tiene certeza de su existencia. Si hay incertidumbre lo indicará.'
-                '</div>', unsafe_allow_html=True)
-            if st.button("🔍 Buscar", use_container_width=True, type="primary", key="abg_doc_search"):
-                if consulta_text.strip() and get_llm_fn:
-                    system_doc = (
-                        "Eres AntonIA, asistente jurídico para abogados chilenos. "
-                        "REGLA CRÍTICA: Solo cita autores y sentencias que existan con certeza. "
-                        "Si no tienes total certeza de una cita, usa frases como 'la doctrina mayoritaria sostiene' "
-                        "sin inventar autores ni fechas. Para jurisprudencia, solo menciona casos que conozcas "
-                        "(tribunal, rol, año). Siempre indica el artículo específico aplicable. "
-                        "Responde en español jurídico formal chileno."
-                    )
-                    nivel_map = {
-                        "Resumen ejecutivo": "Proporciona un resumen ejecutivo conciso (máx 400 palabras)",
-                        "Análisis detallado": "Proporciona un análisis detallado y completo",
-                        "Citas con fuentes": "Incluye citas relevantes con indicación de fuentes"
-                    }
-                    nivel_instr = nivel_map.get(nivel_precision, "Proporciona un análisis")
-                    type_prompts = {
-                        "Doctrina sobre un tema": (
-                            f"Rama: {ramo_doc}\nTema: {consulta_text}\n\n{nivel_instr} sobre la doctrina chilena.\n"
-                            f"Estructura: 1) Marco legal (artículos) 2) Posición doctrinal mayoritaria "
-                            f"3) Posiciones minoritarias 4) Evolución reciente 5) Conclusión práctica para litigante"
-                        ),
-                        "Jurisprudencia chilena": (
-                            f"Rama: {ramo_doc}\nTema: {consulta_text}\n\n{nivel_instr} sobre jurisprudencia chilena.\n"
-                            f"IMPORTANTE: Solo menciona jurisprudencia que conozcas con certeza.\n"
-                            f"Estructura: 1) Tendencia dominante 2) Criterios CS/CA 3) Casos paradigmáticos 4) Implicancias para litigio"
-                        ),
-                        "Normativa vigente aplicable": (
-                            f"Rama: {ramo_doc}\nMateria: {consulta_text}\n\n{nivel_instr}.\n"
-                            f"Estructura: 1) Normas principales (código + artículo) 2) Normas complementarias 3) Modificaciones recientes"
-                        ),
-                        "Análisis de caso con fundamentos": (
-                            f"Caso: {consulta_text}\nRama: {ramo_doc}\n\n{nivel_instr}. Aplica método IRAC:\n"
-                            f"I-Issue: cuestión jurídica central\nR-Rule: norma aplicable\n"
-                            f"A-Application: argumentos pro/contra\nC-Conclusion + estrategia procesal"
-                        ),
-                        "Comparación de posiciones doctrinales": (
-                            f"Tema: {consulta_text}\nRama: {ramo_doc}\n\n{nivel_instr}.\n"
-                            f"Estructura: 1) Posición mayoritaria 2) Posición minoritaria 3) Argumentos de cada una 4) Postura jurisprudencial 5) Recomendación para litigio"
-                        ),
-                    }
-                    prompt = type_prompts.get(tipo_consulta, f"Analiza: {consulta_text} en {ramo_doc}")
+        sub_tabs = st.tabs(["Explorar Corpus", "Buscar por Causa", "Legislación Citada"])
+
+        with sub_tabs[0]:
+            st.markdown("#### Materias Principales del Corpus")
+            try:
+                from jurisprudencia_service import materias_principales
+                materias = materias_principales(19)
+                cols = st.columns(2)
+                for idx, (materia, count) in enumerate(materias):
+                    with cols[idx % 2]:
+                        st.markdown(
+                            f'<div class="abg-card">'
+                            f'<div class="abg-card-title">{materia}</div>'
+                            f'<div style="font-size:0.82rem;color:#9a8a6a;margin-top:0.4rem;">'
+                            f'<strong>{count:,}</strong> sentencias'
+                            f'</div></div>',
+                            unsafe_allow_html=True)
+            except Exception as e:
+                st.warning(f"No se pudieron cargar las materias: {e}")
+
+        with sub_tabs[1]:
+            st.markdown("#### Buscar Jurisprudencia por Tema")
+            query = st.text_input("Tema o palabra clave", placeholder="Ej: compraventa, condición resolutoria, acción reivindicatoria", key="abg_jp_query")
+            if st.button("🔍 Analizar Jurisprudencia", type="primary", use_container_width=True, key="abg_jp_search"):
+                if query.strip() and _llm:
                     try:
-                        llm = _llm
-                        with st.spinner("Consultando biblioteca jurídica…"):
-                            resultado = llm.generate(prompt, system=system_doc, max_tokens=1800)
-                        if "abg_doc_results" not in st.session_state:
-                            st.session_state.abg_doc_results = []
-                        st.session_state.abg_doc_results.insert(0, {
-                            "tipo": tipo_consulta, "tema": consulta_text[:60],
-                            "ramo": ramo_doc, "resultado": resultado
-                        })
-                        st.rerun()
+                        from jurisprudencia_service import generar_contexto_jurisprudencial
+                        with st.spinner(f"Analizando jurisprudencia sobre '{query}'…"):
+                            contexto = generar_contexto_jurisprudencial(query)
+                            system_jp = (
+                                "Eres AntonIA, asistente jurídico especializado en jurisprudencia chilena. "
+                                "Analizas sentencias reales del Poder Judicial. "
+                                "Citas tribunales, roles y años con precisión. "
+                                "Estructuras el análisis de forma clara para litigantes."
+                            )
+                            prompt_jp = (
+                                f"Contexto jurisprudencial: {contexto}\n\n"
+                                f"Consulta del abogado: {query}\n\n"
+                                f"Estructura tu respuesta en: "
+                                f"1) Tendencia jurisprudencial general "
+                                f"2) Criterios de tribunales superiores "
+                                f"3) Implicancias para litigación "
+                                f"4) Riesgos y oportunidades según jurisprudencia"
+                            )
+                            resultado = _llm.generate(prompt_jp, system=system_jp, max_tokens=1800)
+                            st.session_state.abg_jurisprudencia_result = resultado
+                            st.rerun()
+                    except ImportError:
+                        st.error("Servicio de jurisprudencia no disponible")
                     except Exception as e:
                         st.error(f"Error: {e}")
                 else:
-                    st.warning("Escribe tu consulta.")
-        with col_res:
-            resultados_doc = st.session_state.get("abg_doc_results", [])
-            if resultados_doc:
-                r = resultados_doc[0]
-                st.markdown(
-                    f'<div style="background:rgba(201,150,58,0.07);border:1px solid rgba(201,150,58,0.2);'
-                    f'border-radius:8px;padding:0.6rem 0.9rem;margin-bottom:0.8rem;">'
-                    f'<div style="font-size:0.68rem;font-weight:700;color:#c9963a;text-transform:uppercase;">'
-                    f'{r["tipo"]} · {r["ramo"]}</div>'
-                    f'<div style="font-size:0.85rem;color:#3a2a10;margin-top:2px;">{r["tema"]}</div>'
-                    f'</div>', unsafe_allow_html=True)
-                st.markdown(r["resultado"])
-                if len(resultados_doc) > 1:
-                    with st.expander(f"📋 Historial ({len(resultados_doc)-1} anteriores)"):
-                        for r_prev in resultados_doc[1:5]:
-                            st.markdown(f"**{r_prev['tipo']} — {r_prev['tema']}**")
-                            st.markdown(r_prev["resultado"][:300] + "…")
-                            st.divider()
-            else:
-                st.markdown(
-                    '<div style="height:400px;display:flex;flex-direction:column;align-items:center;'
-                    'justify-content:center;border:1px dashed rgba(201,150,58,.2);border-radius:8px;'
-                    'color:#c0a880;font-size:.85rem;text-align:center;gap:0.5rem;">'
-                    '📚<br><strong style="color:#c9963a;font-size:1rem;">Doctrina y Jurisprudencia</strong><br>'
-                    'Consulta la biblioteca jurídica de AntonIA<br>'
-                    '<span style="font-size:.72rem;">Civil · Penal · Laboral · Procesal · Comercial</span>'
-                    '</div>', unsafe_allow_html=True)
+                    st.warning("Escribe una consulta")
+
+            if st.session_state.abg_jurisprudencia_result:
+                st.markdown("---")
+                st.markdown("#### Análisis de Jurisprudencia")
+                st.markdown(st.session_state.abg_jurisprudencia_result)
+
+        with sub_tabs[2]:
+            st.markdown("#### Legislación Más Citada")
+            try:
+                from jurisprudencia_service import materias_principales, legislacion_citada
+                materias = materias_principales(10)
+                materia_names = [m[0] for m in materias]
+                selected_materia = st.selectbox("Selecciona una materia", materia_names, key="abg_jp_materia_leg")
+
+                if st.button("📋 Ver Legislación Citada", use_container_width=True, key="abg_jp_leg_search"):
+                    try:
+                        with st.spinner(f"Cargando legislación para {selected_materia}…"):
+                            leyes = legislacion_citada(selected_materia)
+                            if leyes:
+                                for ley, count in leyes[:20]:
+                                    st.markdown(
+                                        f'<div class="abg-card">'
+                                        f'<div style="font-size:0.82rem;color:#3a2a10;">'
+                                        f'<strong>{ley}</strong><br>'
+                                        f'<span style="color:#9a8a6a;font-size:0.75rem;">{count} citas en sentencias</span>'
+                                        f'</div></div>',
+                                        unsafe_allow_html=True)
+                            else:
+                                st.info("No se encontró legislación para esta materia")
+                    except Exception as e:
+                        st.error(f"Error: {e}")
+            except ImportError:
+                st.error("Servicio de jurisprudencia no disponible")
+            except Exception as e:
+                st.warning(f"Error al cargar materias: {e}")
+
+    # ═══════════════════════════════════════════════════════════════════════════
+    # TAB: DOCTRINA BIBLIOTECA
+    # ═══════════════════════════════════════════════════════════════════════════
+    elif tab == "doctrina_lib":
+        st.markdown('<div class="abg-tab-header">📚 Biblioteca de Doctrina</div>', unsafe_allow_html=True)
+
+        try:
+            from doctrina_service import total_obras, listar_areas
+            total = total_obras()
+            areas_count = len(listar_areas())
+            st.markdown(f'<div class="abg-tab-sub">{total:,} obras · {areas_count} áreas del derecho</div>', unsafe_allow_html=True)
+        except:
+            st.markdown('<div class="abg-tab-sub">Biblioteca de doctrina jurídica • Búsqueda y análisis con IA</div>', unsafe_allow_html=True)
+
+        sub_tabs = st.tabs(["Explorar Biblioteca", "Buscar Obras", "Consulta con IA"])
+
+        with sub_tabs[0]:
+            st.markdown("#### Áreas de Derecho")
+            try:
+                from doctrina_service import listar_areas
+                areas = listar_areas()
+                cols = st.columns(2)
+                for idx, (area, count) in enumerate([(a, 10) for a in areas]):
+                    with cols[idx % 2]:
+                        st.markdown(
+                            f'<div class="abg-card">'
+                            f'<div class="abg-card-title">{area}</div>'
+                            f'<div style="font-size:0.82rem;color:#9a8a6a;margin-top:0.4rem;">'
+                            f'Obras disponibles'
+                            f'</div></div>',
+                            unsafe_allow_html=True)
+            except Exception as e:
+                st.info("Cargando áreas de doctrina…")
+
+        with sub_tabs[1]:
+            st.markdown("#### Buscar en la Doctrina")
+            query_doc = st.text_input("Tema o autor", placeholder="Ej: compraventa, obligaciones, Alessandri", key="abg_doc_query")
+            limit_doc = st.slider("Resultados", 5, 50, 20, key="abg_doc_limit")
+
+            if st.button("🔍 Buscar", type="primary", use_container_width=True, key="abg_doc_search_btn"):
+                if query_doc.strip():
+                    try:
+                        from doctrina_service import buscar_doctrina
+                        with st.spinner(f"Buscando '{query_doc}' en doctrina…"):
+                            resultados = buscar_doctrina(query=query_doc, limit=limit_doc)
+                            if resultados:
+                                for obra in resultados:
+                                    st.markdown(
+                                        f'<div class="abg-card">'
+                                        f'<div class="abg-card-title">{obra.get("titulo", "Sin título")}</div>'
+                                        f'<div style="font-size:0.78rem;color:#9a8a6a;">'
+                                        f'{obra.get("autor", "Autor desconocido")}<br>'
+                                        f'<span style="font-size:0.72rem;">{obra.get("area", "")}</span>'
+                                        f'</div></div>',
+                                        unsafe_allow_html=True)
+                            else:
+                                st.info("No se encontraron resultados")
+                    except ImportError:
+                        st.error("Servicio de doctrina no disponible")
+                    except Exception as e:
+                        st.error(f"Error: {e}")
+                else:
+                    st.warning("Escribe una consulta")
+
+        with sub_tabs[2]:
+            st.markdown("#### Consulta Doctrina con IA")
+            consulta_doc_ia = st.text_area(
+                "¿Qué quieres saber?",
+                placeholder="Ej: Explica la teoría de Alessandri sobre la condición resolutoria en contratos bilaterales",
+                height=100, key="abg_doc_ia_query")
+
+            if st.button("💭 Consultar con IA", type="primary", use_container_width=True, key="abg_doc_ia_search"):
+                if consulta_doc_ia.strip() and _llm:
+                    try:
+                        from doctrina_service import buscar_doctrina
+                        with st.spinner("Consultando doctrina…"):
+                            # Obtener contexto de doctrina
+                            contexto_docs = buscar_doctrina(query=consulta_doc_ia, limit=5)
+                            doc_context = "\n".join([
+                                f"- {d.get('titulo', '')}: {d.get('autor', '')}"
+                                for d in contexto_docs
+                            ]) if contexto_docs else "Doctrina general"
+
+                            system_doc_ia = (
+                                "Eres AntonIA, asistente jurídico especializado en doctrina. "
+                                "Citas autores y obras específicas cuando las conoces. "
+                                "Estructuras argumentos con claridad para abogados chilenos. "
+                                "Usas terminología jurídica vigente."
+                            )
+                            prompt_doc_ia = (
+                                f"Contexto de doctrina disponible: {doc_context}\n\n"
+                                f"Consulta del abogado: {consulta_doc_ia}\n\n"
+                                f"Proporciona un análisis fundamentado citando autores y obras específicas cuando las conozcas. "
+                                f"Estructura tu respuesta de forma clara para litigantes."
+                            )
+                            resultado_doc = _llm.generate(prompt_doc_ia, system=system_doc_ia, max_tokens=1800)
+                            st.session_state.abg_doctrina_result = resultado_doc
+                            st.rerun()
+                    except ImportError:
+                        st.error("Servicio de doctrina no disponible")
+                    except Exception as e:
+                        st.error(f"Error: {e}")
+                else:
+                    st.warning("Escribe una consulta")
+
+            if st.session_state.abg_doctrina_result:
+                st.markdown("---")
+                st.markdown("#### Análisis Doctrinal")
+                st.markdown(st.session_state.abg_doctrina_result)
 
     elif tab == "redaccion":
         st.markdown('<div class="abg-tab-header">📝 Redacción Profesional con IA</div>', unsafe_allow_html=True)
