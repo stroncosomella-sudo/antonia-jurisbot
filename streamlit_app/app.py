@@ -1504,17 +1504,6 @@ Anton<strong style="color:#c9963a;">IA</strong> · Mar.IA Group · LegalTech Chi
 
 # ── UNIVERSIDAD LANDING — Mostrar cuando el usuario aún no eligió perfil ──
 if _is_univ_chooser:
-    # ── VIDEO DE BIENVENIDA UNIVERSIDAD ─────────────────────────
-    import pathlib as _pathlib
-    _vid_univ = _pathlib.Path(__file__).parent / "static" / "promo_universidad.mp4"
-    if _vid_univ.exists():
-        st.markdown('<div style="background:#f8f5ef;padding:28px 20px 8px;text-align:center;border-bottom:1px solid rgba(201,150,58,.15);"><p style="font-family:Inter,sans-serif;font-size:.72rem;color:rgba(201,150,58,.9);text-transform:uppercase;letter-spacing:.18em;font-weight:700;margin-bottom:10px;">Conoce AntonIA Universidad</p></div>', unsafe_allow_html=True)
-        try:
-            st.video(str(_vid_univ), autoplay=True, muted=True)
-        except TypeError:
-            st.video(str(_vid_univ))
-        st.markdown('<div style="background:linear-gradient(180deg,#f8f5ef,#ffffff);padding:20px 20px 0;"></div>', unsafe_allow_html=True)
-    # ── FIN VIDEO ─────────────────────────────────────────────
     st.markdown("""
 <style>
 .univ-landing{max-width:800px;margin:0 auto;padding:40px 20px;}
