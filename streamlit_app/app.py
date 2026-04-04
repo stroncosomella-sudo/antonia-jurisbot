@@ -883,6 +883,11 @@ with st.sidebar:
                         st.button("🧑‍🏫 Herramientas Docentes", key="nav_prof",
                                   use_container_width=True,
                                   on_click=set_nav, args=("PROFESOR",))
+        else:
+            st.button(f"{icon}  {label}", key=f"ms_{sid}",
+                      use_container_width=True,
+                      on_click=set_main_section, args=(sid,),
+                      help=desc)
 
     # ── Pie del sidebar ──────────────────────────────────────────
     st.markdown('<div style="height:0.5rem"></div>', unsafe_allow_html=True)
