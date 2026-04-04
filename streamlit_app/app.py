@@ -641,12 +641,12 @@ def set_nav(page): st.session_state.nav = page
 def set_persona(p):
     st.session_state.persona = p
     defaults_nav = {
-        "alumno":   "ENTRENA",
+        "alumno":   "ALUMNO_HOME",
         "abogado":  "ABOGADO",
         "profesor": "PROFESOR",
         "consulta": "CONSULTA",
     }
-    st.session_state.nav = defaults_nav.get(p, "ENTRENA")
+    st.session_state.nav = defaults_nav.get(p, "ALUMNO_HOME")
     if p in ("alumno", "profesor"):
         st.session_state.main_section = "universidad"
         st.session_state.univ_perfil_elegido = True
@@ -671,14 +671,14 @@ def set_main_section(s):
         st.session_state.persona = "alumno"
         st.session_state.univ_perfil_elegido = True
         st.session_state.main_section = "universidad"
-        st.session_state.nav = "ENTRENA"
+        st.session_state.nav = "ALUMNO_HOME"
 
 def set_univ_perfil(p):
     """Llamado desde la Universidad landing cuando el usuario elige Alumno o Profesor."""
     st.session_state.persona = p
     st.session_state.univ_perfil_elegido = True
-    defaults_nav = {"alumno": "ENTRENA", "profesor": "PROFESOR"}
-    st.session_state.nav = defaults_nav.get(p, "ENTRENA")
+    defaults_nav = {"alumno": "ALUMNO_HOME", "profesor": "PROFESOR"}
+    st.session_state.nav = defaults_nav.get(p, "ALUMNO_HOME")
 
 
 # ─────────────────────────────────────────────
@@ -779,7 +779,7 @@ with st.sidebar:
     SECCIONES = [
         ("universidad", "🎓", "Universidad",    "Alumnos y profesores de Derecho"),
         ("abogados",    "⚖️", "Abogados",        "Herramientas para litigantes"),
-        ("consulta",    "💬", "Consulta Legal",  "Asesoría jurídica inmediata"),
+        ("consulta",    "💬", "Consulta Legal – No Abogados",  "Asesoría jurídica inmediata"),
         ("prueba",      "🆓", "Prueba Gratis",   "Explora sin registrarte"),
     ]
 
@@ -834,55 +834,8 @@ with st.sidebar:
                                   use_container_width=True,
                                   on_click=set_persona, args=("profesor",))
 
-                # ── Herramientas Alumno ────────────────────────────────
-                if persona_actual == "alumno":
-                    st.markdown(
-                        '<div style="margin:0.5rem 0 0.25rem;">'
-                        '<div style="height:1px;background:rgba(201,150,58,0.1);margin-bottom:0.4rem;"></div>'
-                        '<div style="font-size:0.57rem;font-weight:700;color:rgba(201,150,58,0.45);'
-                        'text-transform:uppercase;letter-spacing:0.12em;">Herramientas</div>'
-                        '</div>',
-                        unsafe_allow_html=True)
-
-                    for icon, label, tool_desc in NAV_ALUMNO:
-                        if st.session_state.nav == label:
-                            st.markdown(
-                                f'<div style="margin:0.1rem 0;padding:0.5rem 0.85rem 0.5rem 0.75rem;'
-                                f'background:linear-gradient(90deg,rgba(201,150,58,0.13),rgba(201,150,58,0.03));'
-                                f'border-left:2.5px solid #c9963a;border-radius:0 7px 7px 0;">'
-                                f'<div style="font-size:0.73rem;font-weight:700;color:#e8c97a;">'
-                                f'{icon} {label}</div>'
-                                f'<div style="font-size:0.58rem;color:rgba(201,150,58,0.55);margin-top:2px;">'
-                                f'{tool_desc}</div>'
-                                f'</div>',
-                                unsafe_allow_html=True)
-                        else:
-                            st.button(f"{icon}  {label}", key=f"nav_{label}",
-                                      use_container_width=True,
-                                      on_click=set_nav, args=(label,),
-                                      help=tool_desc)
-
-                # ── Herramientas Profesor ──────────────────────────────
-                elif persona_actual == "profesor":
-                    st.markdown(
-                        '<div style="margin:0.5rem 0 0.25rem;">'
-                        '<div style="height:1px;background:rgba(201,150,58,0.1);margin-bottom:0.4rem;"></div>'
-                        '<div style="font-size:0.57rem;font-weight:700;color:rgba(201,150,58,0.45);'
-                        'text-transform:uppercase;letter-spacing:0.12em;">Panel Docente</div>'
-                        '</div>',
-                        unsafe_allow_html=True)
-                    if st.session_state.nav == "PROFESOR":
-                        st.markdown(
-                            '<div style="padding:0.5rem 0.85rem 0.5rem 0.75rem;'
-                            'background:linear-gradient(90deg,rgba(201,150,58,0.13),transparent);'
-                            'border-left:2.5px solid #c9963a;border-radius:0 7px 7px 0;'
-                            'font-size:0.73rem;font-weight:700;color:#e8c97a;">'
-                            '🧑‍🏫 Herramientas Docentes</div>',
-                            unsafe_allow_html=True)
-                    else:
-                        st.button("🧑‍🏫 Herramientas Docentes", key="nav_prof",
-                                  use_container_width=True,
-                                  on_click=set_nav, args=("PROFESOR",))
+                # Herramientas se muestran en el área principal, no en el sidebar
+                pass
         else:
             st.button(f"{icon}  {label}", key=f"ms_{sid}",
                       use_container_width=True,
@@ -1368,7 +1321,6 @@ L1168,60 L1168,80 L1200,80 L1200,200 Z"/>
 <div class="ant-h1">Domina el Derecho chileno<br>con <em>Inteligencia Artificial</em></div>
 <div class="ant-sub">Tu asistente jurídico inteligente — entrena para exámenes, analiza casos, redacta documentos y consulta con la IA más avanzada del sistema legal chileno.</div>
 <div class="ant-btns">
-<span class="ant-bp">Comenzar gratis →</span>
 <span class="ant-bs">▶ Ver demo</span>
 </div>
   </div>
@@ -1492,13 +1444,39 @@ Selecciona tu perfil en el panel izquierdo para comenzar · Prueba gratis sin re
 
 <div class="ant-cta">
   <div class="ant-cta-t">¿Listo para transformar tu práctica jurídica?</div>
-  <div class="ant-cta-s">Únete a los estudiantes y profesionales que ya usan AntonIA</div>
-  <span class="ant-btn-p" style="font-size:1rem;padding:15px 36px;">Comenzar ahora →</span>
+  <div class="ant-cta-s">Selecciona tu perfil en el panel izquierdo para comenzar</div>
   <div style="margin-top:20px;font-size:.72rem;color:#9a8060;font-family:'Inter',sans-serif;">
 Anton<strong style="color:#c9963a;">IA</strong> · Mar.IA Group · LegalTech Chile
   </div>
 </div>
     """, unsafe_allow_html=True)
+
+    # ── VER DEMO: Videos de cada perfil ──────────────────────
+    st.markdown(
+        '<div style="max-width:920px;margin:20px auto 0;">'
+        '<div style="text-align:center;margin-bottom:16px;">'
+        '<span style="font-family:Inter,sans-serif;font-size:.78rem;color:#c9963a;text-transform:uppercase;letter-spacing:.15em;font-weight:600;">▶ Videos demostrativos</span>'
+        '</div></div>',
+        unsafe_allow_html=True)
+    import pathlib as _plib
+    _demo_vids = [
+        ("👨‍🎓 Alumnos", "promo_alumno.mp4"),
+        ("👩‍🏫 Profesores", "promo_profesor.mp4"),
+        ("⚖️ Abogados", "promo_abogados.mp4"),
+    ]
+    _vid_cols = st.columns(len(_demo_vids))
+    for _ci, (_vlabel, _vfile) in enumerate(_demo_vids):
+        with _vid_cols[_ci]:
+            st.markdown(f'<div style="text-align:center;font-size:.85rem;font-weight:700;color:#c9963a;margin-bottom:6px;">{_vlabel}</div>', unsafe_allow_html=True)
+            _vpath = _plib.Path(__file__).parent / "static" / _vfile
+            if _vpath.exists():
+                try:
+                    st.video(str(_vpath), autoplay=False, muted=True)
+                except TypeError:
+                    st.video(str(_vpath))
+            else:
+                st.info(f"Video {_vlabel} próximamente")
+
     st.stop()
 
 
@@ -1571,76 +1549,6 @@ if _is_univ_chooser:
     st.stop()
 
 
-# ── UNIVERSIDAD LANDING — Mostrar cuando el usuario aún no eligió perfil ──
-if (st.session_state.get("main_section") == "universidad"
-        and not st.session_state.get("univ_perfil_elegido", False)
-        and nav in ("HOME",)):
-    st.markdown("""
-<style>
-.univ-landing{max-width:800px;margin:0 auto;padding:40px 20px;}
-.univ-title{font-family:'Playfair Display',serif;font-size:2.2rem;font-weight:800;color:#1a1813;text-align:center;margin-bottom:10px;}
-.univ-sub{font-size:1.0rem;color:#6a5a3a;text-align:center;margin-bottom:40px;}
-.univ-cards{display:grid;grid-template-columns:1fr 1fr;gap:24px;max-width:720px;margin:0 auto;}
-@media(max-width:600px){.univ-cards{grid-template-columns:1fr;}}
-.univ-card{background:#fff;border:1.5px solid #e2dbd0;border-radius:16px;padding:36px 28px;text-align:center;cursor:pointer;transition:all .25s ease;box-shadow:0 2px 16px rgba(20,18,10,.07);}
-.univ-card:hover{border-color:#c9963a;transform:translateY(-5px);box-shadow:0 12px 40px rgba(20,18,10,.13);}
-.univ-card-icon{font-size:3.5rem;margin-bottom:16px;}
-.univ-card-title{font-family:'Playfair Display',serif;font-size:1.4rem;font-weight:700;color:#1a1813;margin-bottom:8px;}
-.univ-card-desc{font-size:.88rem;color:#6a5a3a;line-height:1.65;margin-bottom:20px;}
-.univ-card-feats{text-align:left;margin-top:12px;}
-.univ-card-feat{font-size:.78rem;color:#5a4e3e;padding:5px 0;border-bottom:1px solid #ede8de;display:flex;align-items:center;gap:6px;}
-.univ-card-feat:last-child{border-bottom:none;}
-.univ-badge{display:inline-block;background:rgba(201,150,58,.1);color:#8a6800;font-size:.7rem;padding:4px 14px;border-radius:20px;border:1px solid rgba(201,150,58,.25);font-weight:600;margin-top:16px;}
-</style>
-<div class="univ-landing">
-  <div class="univ-title">Universidad · Área Académica</div>
-  <div class="univ-sub">¿Cuál es tu rol? Elige tu perfil para acceder a las herramientas diseñadas para ti.</div>
-  <div class="univ-cards">
-    <div class="univ-card" id="card-alumno">
-      <div class="univ-card-icon">👨‍🎓</div>
-      <div class="univ-card-title">Soy Alumno</div>
-      <div class="univ-card-desc">Prepara tus exámenes, estudia casos reales y domina el Derecho chileno con IA adaptativa.</div>
-      <div class="univ-card-feats">
-        <div class="univ-card-feat">🧠 Quiz interactivo con IA infinito</div>
-        <div class="univ-card-feat">📝 Examen simulado con nota 1-7</div>
-        <div class="univ-card-feat">🔍 Análisis jurídico de documentos</div>
-        <div class="univ-card-feat">⚖️ Jurisprudencia y doctrina relacionada</div>
-        <div class="univ-card-feat">📂 Banco de 250+ casos reales</div>
-        <div class="univ-card-feat">📈 Progreso y estadísticas de estudio</div>
-      </div>
-      <div class="univ-badge">Acceso gratuito disponible</div>
-    </div>
-    <div class="univ-card" id="card-profesor">
-      <div class="univ-card-icon">👩‍🏫</div>
-      <div class="univ-card-title">Soy Profesor</div>
-      <div class="univ-card-desc">Prepara clases, crea evaluaciones y gestiona tu curso con herramientas docentes avanzadas.</div>
-      <div class="univ-card-feats">
-        <div class="univ-card-feat">📝 Crea evaluaciones y rúbricas con IA</div>
-        <div class="univ-card-feat">📋 Materiales didácticos automáticos</div>
-        <div class="univ-card-feat">🎙️ Banco de preguntas de examen oral</div>
-        <div class="univ-card-feat">🤖 Chat IA + búsqueda de doctrina</div>
-        <div class="univ-card-feat">📊 Libro de notas y asistencia</div>
-        <div class="univ-card-feat">🔬 Asistente de investigación jurídica</div>
-      </div>
-      <div class="univ-badge">Panel docente completo</div>
-    </div>
-  </div>
-</div>
-    """, unsafe_allow_html=True)
-
-    col1, col2, col3, col4, col5 = st.columns([1,2,1,2,1])
-    with col2:
-        if st.button("👨‍🎓  Entrar como Alumno", use_container_width=True,
-                     help="Accede al área de alumnos con quiz, casos y análisis"):
-            set_univ_perfil("alumno")
-            st.rerun()
-    with col4:
-        if st.button("👩‍🏫  Entrar como Profesor", use_container_width=True,
-                     help="Accede al panel docente con evaluaciones y herramientas"):
-            set_univ_perfil("profesor")
-            st.rerun()
-    st.stop()
-
 # ═══════════════════════════════════════════════
 # ENRUTAMIENTO POR PERFIL
 # ═══════════════════════════════════════════════
@@ -1658,14 +1566,74 @@ elif persona == "profesor" and nav not in ("QUIÉNES SOMOS", "SUSCRIPCIONES"):
 # ── Perfil: CONSULTA LEGAL (no abogados) ────────
 elif persona == "consulta" and nav not in ("QUIÉNES SOMOS", "SUSCRIPCIONES"):
     render_consulta_legal(
-        get_orch_fn=get_orch,
         get_llm_fn=lambda: get_llm(_provider_key, _api_key, _model),
     )
     st.stop()
 
-# ── Perfil: ALUMNO + páginas institucionales ────
-# Continúa con la navegación original de Alumno
+# ── Perfil: ALUMNO — Panel de herramientas ────
+# Cuando el alumno entra, muestra la grilla de herramientas en el área principal
 
+if persona == "alumno" and nav == "ALUMNO_HOME":
+    st.markdown("""
+<style>
+.alum-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px;max-width:960px;margin:0 auto;padding:20px 10px;}
+.alum-card{background:#faf8f4;border:1.5px solid #e8e0d2;border-radius:14px;padding:22px 18px;text-align:center;cursor:pointer;transition:all .22s ease;box-shadow:0 2px 10px rgba(20,18,10,.05);}
+.alum-card:hover{border-color:#c9963a;transform:translateY(-3px);box-shadow:0 8px 28px rgba(20,18,10,.1);}
+.alum-card-icon{font-size:2rem;margin-bottom:10px;}
+.alum-card-t{font-family:'Playfair Display',serif;font-size:1rem;font-weight:700;color:#1a1813;margin-bottom:6px;}
+.alum-card-d{font-size:.78rem;color:#8a7a5e;line-height:1.5;}
+</style>
+<div style="text-align:center;padding:20px 0 5px;">
+<div style="font-family:'Playfair Display',serif;font-size:1.8rem;font-weight:800;color:#1a1813;">👨‍🎓 Panel del Alumno</div>
+<div style="font-size:.92rem;color:#8a7a5e;margin-top:6px;">Selecciona la herramienta que necesitas</div>
+</div>
+    """, unsafe_allow_html=True)
+
+    # Video de alumno si existe
+    import pathlib as _pl
+    _vid_alumno = _pl.Path(__file__).parent / "static" / "promo_alumno.mp4"
+    if _vid_alumno.exists():
+        st.markdown('<div style="max-width:700px;margin:0 auto 16px;border-radius:12px;overflow:hidden;border:1px solid rgba(201,150,58,.2);">', unsafe_allow_html=True)
+        try:
+            st.video(str(_vid_alumno), autoplay=True, muted=True, loop=True)
+        except TypeError:
+            st.video(str(_vid_alumno))
+        st.markdown('</div>', unsafe_allow_html=True)
+
+    # Grilla de herramientas como botones
+    _TOOLS_ALUMNO = [
+        ("🧠", "ENTRENA", "Quiz Legal Infinito", "Alternativas, V/F, Flashcards y casos"),
+        ("📝", "EXAMEN SIMULADO", "Examen Simulado", "Examen con nota 1-7 y retroalimentación"),
+        ("📅", "CALCULADORA PLAZOS", "Calculadora de Plazos", "Plazos legales chilenos"),
+        ("📄", "DOCUMENTO", "Subir Documento", "Analiza contratos, sentencias y escritos"),
+        ("📋", "RESUMEN EJECUTIVO", "Resumen Ejecutivo", "Resume casos y normativa"),
+        ("🔍", "ANÁLISIS", "Análisis Jurídico", "Análisis profundo con fundamentos"),
+        ("⚖️", "JURISPRUDENCIA RELACIONADA", "Jurisprudencia", "Jurisprudencia chilena relacionada"),
+        ("📚", "DOCTRINA RELACIONADA", "Doctrina", "Doctrina y artículos académicos"),
+        ("📖", "GLOSARIO LEGAL", "Glosario Legal", "Definiciones jurídicas clave"),
+        ("🗺️", "MAPA CONCEPTUAL", "Mapa Conceptual", "Visualiza conexiones jurídicas"),
+        ("🎤", "ALEGATO ORAL", "Alegato Oral", "Prepara argumentos y defensas"),
+        ("💬", "CONSULTORÍA VIRTUAL", "Chat con AntonIA", "Consulta jurídica con IA"),
+        ("🏛", "BIBLIOTECA DOCTRINA", "Biblioteca", "443 obras y artículos"),
+        ("📂", "BANCO DE CASOS", "Banco de Casos", "250+ casos reales"),
+        ("📈", "MI PROGRESO", "Mi Progreso", "Estadísticas de estudio"),
+    ]
+    cols = st.columns(3)
+    for idx, (icon, nav_key, title, desc) in enumerate(_TOOLS_ALUMNO):
+        with cols[idx % 3]:
+            if st.button(f"{icon}  {title}", key=f"alum_tool_{nav_key}",
+                         use_container_width=True, help=desc):
+                st.session_state.nav = nav_key
+                st.rerun()
+
+    st.stop()
+
+
+# ── Botón "Volver al menú" para alumno en cualquier herramienta ──
+if persona == "alumno" and nav not in ("ALUMNO_HOME", "HOME", "QUIÉNES SOMOS", "SUSCRIPCIONES"):
+    if st.button("← Volver al menú de herramientas", key="back_alumno_home"):
+        st.session_state.nav = "ALUMNO_HOME"
+        st.rerun()
 
 # ═══════════════════════════════════════════════
 # SECCIÓN: DOCUMENTO (carga de archivos)
