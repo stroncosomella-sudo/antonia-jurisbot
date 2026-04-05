@@ -798,7 +798,7 @@ def render_abogado(get_llm_fn=None):
         st.markdown('<div class="abg-tab-header">⚖️ Jurisprudencia PJUD · Corpus Real</div>', unsafe_allow_html=True)
         st.markdown('<div class="abg-tab-sub">1,200,417 sentencias del Poder Judicial de Chile · Análisis con contexto jurisprudencial</div>', unsafe_allow_html=True)
 
-        sub_tabs = st.tabs(["Explorar Corpus", "Buscar por Causa", "Legislación Citada"])
+        sub_tabs = st.tabs(["Explorar Corpus", "Buscar por Causa", "Legislación Citada", "Buscar por ROL"])
 
         with sub_tabs[0]:
             st.markdown("#### Materias Principales del Corpus")
@@ -806,7 +806,8 @@ def render_abogado(get_llm_fn=None):
                 from jurisprudencia_service import materias_principales
                 materias = materias_principales(19)
                 cols = st.columns(2)
-                for idx, (materia, count) in enumerate(materias):
+                for idx, _m in enumerate(materias):
+                    materia, count = _m["materia"], _m["total"]
                     with cols[idx % 2]:
                         st.markdown(
                             f'<div class="abg-card">'
@@ -862,7 +863,7 @@ def render_abogado(get_llm_fn=None):
             try:
                 from jurisprudencia_service import materias_principales, legislacion_citada
                 materias = materias_principales(10)
-                materia_names = [m[0] for m in materias]
+                materia_names = [m["materia"] for m in materias]
                 selected_materia = st.selectbox("Selecciona una materia", materia_names, key="abg_jp_materia_leg")
 
                 if st.button("📋 Ver Legislación Citada", use_container_width=True, key="abg_jp_leg_search"):
@@ -870,7 +871,9 @@ def render_abogado(get_llm_fn=None):
                         with st.spinner(f"Cargando legislación para {selected_materia}…"):
                             leyes = legislacion_citada(selected_materia)
                             if leyes:
-                                for ley, count in leyes[:20]:
+                                for _l in leyes[:20]:
+
+                                    ley, count = _l["ley"], _l["citas"]
                                     st.markdown(
                                         f'<div class="abg-card">'
                                         f'<div style="font-size:0.82rem;color:#3a2a10;">'
@@ -886,6 +889,39 @@ def render_abogado(get_llm_fn=None):
                 st.error("Servicio de jurisprudencia no disponible")
             except Exception as e:
                 st.warning(f"Error al cargar materias: {e}")
+
+        with sub_tabs[3]:
+            st.markdown("#### Buscar Sentencia por ROL o Materia")
+            _rol_input = st.text_input("ROL de causa (ej: 6730-2024):", key="abg_rol_input")
+            _mat_search = st.text_input("O buscar por materia:", placeholder="Ej: alimentos, indemnización", key="abg_mat_search")
+            if st.button("🔎 Buscar", type="primary", use_container_width=True, key="abg_rol_search"):
+                if _rol_input.strip() or _mat_search.strip():
+                    try:
+                        from jurisprudencia_service import buscar_materia, sentencias_recientes
+                        if _rol_input.strip():
+                            _recientes = sentencias_recientes(20)
+                            _found = [s for s in _recientes if _rol_input.strip() in s.get("rol", "")]
+                            if _found:
+                                for _s in _found:
+                                    st.markdown(f'<div class="abg-card"><strong>ROL {_s["rol"]}</strong><br>'
+                                               f'<span style="font-size:0.8rem;color:#9a8a6a;">{_s["tribunal"]} · {_s["fecha"]}<br>{_s["materia"]}</span></div>',
+                                               unsafe_allow_html=True)
+                            else:
+                                st.info(f"ROL {_rol_input.strip()} no encontrado. Ver en: https://www.pjud.cl")
+                        else:
+                            _mats = buscar_materia(_mat_search)
+                            if _mats:
+                                for _m in _mats[:10]:
+                                    st.markdown(f'<div class="abg-card"><strong>{_m["materia"]}</strong><br>'
+                                               f'<span style="font-size:0.8rem;color:#9a8a6a;">{_m["total"]:,} sentencias</span></div>',
+                                               unsafe_allow_html=True)
+                            else:
+                                st.info("No se encontraron materias coincidentes.")
+                    except Exception as _e:
+                        st.error(f"Error: {_e}")
+                else:
+                    st.warning("Ingresa un ROL o materia para buscar.")
+            st.caption("[🔗 Acceso completo al PJUD](https://www.pjud.cl)")
 
     # ═══════════════════════════════════════════════════════════════════════════
     # TAB: DOCTRINA BIBLIOTECA

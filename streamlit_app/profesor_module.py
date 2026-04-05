@@ -145,6 +145,20 @@ def render_profesor(get_llm_fn=None):
 
     st.markdown('<hr style="border-color:rgba(201,150,58,0.15);margin:0.6rem 0 1.2rem;">', unsafe_allow_html=True)
 
+    # Video promocional del profesor
+    if st.session_state.prof_tab == "evaluaciones":  # Solo en tab principal
+        import pathlib as _ppl
+        _vid_prof = _ppl.Path(__file__).parent / "static" / "promo_profesor.mp4"
+        if _vid_prof.exists():
+            _vc1, _vc2, _vc3 = st.columns([1, 2, 1])
+            with _vc2:
+                st.markdown('<div style="border-radius:10px;overflow:hidden;border:1px solid rgba(201,150,58,0.25);margin-bottom:12px;">', unsafe_allow_html=True)
+                try:
+                    st.video(str(_vid_prof), autoplay=True, muted=True, loop=True)
+                except TypeError:
+                    st.video(str(_vid_prof))
+                st.markdown('</div>', unsafe_allow_html=True)
+
     tab = st.session_state.prof_tab
 
     # ── EVALUACIONES ───────────────────────────────────────────────
@@ -1361,14 +1375,15 @@ def render_profesor(get_llm_fn=None):
                 '📊 Jurisprudencia del Poder Judicial disponible</div>',
                 unsafe_allow_html=True)
 
-        tabs_jur = st.tabs(["Explorar Materias", "Buscar para Clase", "Sentencias Recientes"])
+        tabs_jur = st.tabs(["Explorar Materias", "Buscar para Clase", "Sentencias Recientes", "Buscar por ROL"])
 
         # Tab 1: Explorar Materias
         with tabs_jur[0]:
             try:
                 materias = materias_principales(19)
                 cols = st.columns(2)
-                for idx, (materia, count) in enumerate(materias):
+                for idx, _m in enumerate(materias):
+                    materia, count = _m["materia"], _m["total"]
                     with cols[idx % 2]:
                         st.markdown(
                             f'<div class="prof-card">'
@@ -1428,6 +1443,38 @@ def render_profesor(get_llm_fn=None):
                         unsafe_allow_html=True)
             except Exception as e:
                 st.warning(f"No se pudieron cargar las sentencias recientes: {e}")
+
+        with tabs_jur[3]:
+            st.markdown("#### Buscar Sentencia por ROL o Materia")
+            _p_rol = st.text_input("ROL:", placeholder="Ej: 6730-2024", key="prof_jur_rol")
+            _p_mat = st.text_input("O buscar por materia:", placeholder="Ej: alimentos, laboral", key="prof_jur_mat_search")
+            if st.button("🔎 Buscar en Corpus PJUD", type="primary", use_container_width=True, key="prof_jur_buscar"):
+                if _p_rol.strip() or _p_mat.strip():
+                    try:
+                        from jurisprudencia_service import buscar_materia, sentencias_recientes
+                        if _p_rol.strip():
+                            _rec = sentencias_recientes(20)
+                            _found = [s for s in _rec if _p_rol.strip() in s.get("rol","")]
+                            if _found:
+                                for _s in _found:
+                                    st.markdown(f'<div class="prof-card"><strong>ROL {_s["rol"]}</strong><br>'
+                                               f'<span style="font-size:0.78rem;color:#a09070;">{_s["tribunal"]} · {_s["fecha"]}<br>{_s["materia"]}</span></div>',
+                                               unsafe_allow_html=True)
+                            else:
+                                st.info(f"ROL no encontrado. Ver en [pjud.cl](https://www.pjud.cl)")
+                        else:
+                            _mats = buscar_materia(_p_mat)
+                            for _m in _mats[:10]:
+                                st.markdown(f'<div class="prof-card"><strong>{_m["materia"]}</strong><br>'
+                                           f'<span style="font-size:0.78rem;color:#a09070;">{_m["total"]:,} sentencias</span></div>',
+                                           unsafe_allow_html=True)
+                            if not _mats:
+                                st.info("No se encontraron materias.")
+                    except Exception as _e:
+                        st.error(f"Error: {_e}")
+                else:
+                    st.warning("Ingresa ROL o materia.")
+            st.caption("[🔗 PJUD completo](https://www.pjud.cl)")
 
     # ── DOCTRINA ACADÉMICA ────────────────────────────────────────────
     elif tab == "doctrina_acad":

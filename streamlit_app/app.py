@@ -1323,9 +1323,7 @@ L1168,60 L1168,80 L1200,80 L1200,200 Z"/>
 <div class="ant-label">AntonIA · Mar.IA Group · LegalTech Chile</div>
 <div class="ant-h1">Domina el Derecho chileno<br>con <em>Inteligencia Artificial</em></div>
 <div class="ant-sub">Tu asistente jurídico inteligente — entrena para exámenes, analiza casos, redacta documentos y consulta con la IA más avanzada del sistema legal chileno.</div>
-<div class="ant-btns">
-<span class="ant-bs">▶ Ver demo</span>
-</div>
+
   </div>
 </div>
 
@@ -1337,74 +1335,6 @@ L1168,60 L1168,80 L1200,80 L1200,200 Z"/>
   <div style="text-align:center"><div class="ant-stat-n">4</div><div class="ant-stat-l">Perfiles distintos</div></div>
 </div>
 
-<!-- DEMO SECTION -->
-<div style="background:#0d0b10;padding:60px 20px;border-top:1px solid rgba(201,150,58,.1);border-bottom:1px solid rgba(201,150,58,.1);">
-  <div style="max-width:920px;margin:0 auto;">
-<div style="text-align:center;margin-bottom:8px;">
-<span style="font-family:Inter,sans-serif;font-size:.78rem;color:#c9963a;text-transform:uppercase;letter-spacing:.15em;font-weight:600;">▶ Demo interactivo</span>
-</div>
-<div style="font-family:'Playfair Display',serif;font-size:1.85rem;font-weight:800;color:#f5f0e8;text-align:center;margin-bottom:8px;">AntonIA en acción</div>
-<div style="font-size:.92rem;color:rgba(240,232,218,.78);text-align:center;margin-bottom:36px;">Descubre las funciones más poderosas del primer asistente jurídico IA para el Derecho chileno</div>
-
-<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:20px;">
-<!-- Demo 1: Quiz IA -->
-<div style="background:#13101a;border:1px solid rgba(201,150,58,.18);border-radius:12px;overflow:hidden;">
-<div style="background:linear-gradient(135deg,#1a1520,#0e0c14);padding:20px;min-height:160px;position:relative;display:flex;flex-direction:column;justify-content:flex-end;">
-<div style="position:absolute;top:16px;left:16px;font-size:1.6rem;">🧠</div>
-<div style="background:#1e1b28;border:1px solid rgba(201,150,58,.2);border-radius:8px;padding:12px;">
-<div style="font-size:.68rem;color:#c9963a;font-weight:700;margin-bottom:6px;">QUIZ INTERACTIVO · Civil III</div>
-<div style="font-size:.82rem;color:#f0e8d8;line-height:1.5;">¿Cuál es el efecto de la condición resolutoria cumplida?</div>
-<div style="margin-top:10px;display:flex;flex-direction:column;gap:5px;">
-<div style="background:rgba(46,144,85,.15);border:1px solid rgba(46,144,85,.3);border-radius:4px;padding:4px 8px;font-size:.72rem;color:#4ade80;">✓ Se extingue retroactivamente la obligación</div>
-<div style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:4px;padding:4px 8px;font-size:.72rem;color:rgba(240,232,218,.78);">No tiene efectos retroactivos</div>
-</div>
-</div>
-</div>
-<div style="padding:14px 16px;">
-<div style="font-size:.85rem;font-weight:700;color:#f5f0e8;margin-bottom:4px;">Quiz con IA Infinito</div>
-<div style="font-size:.76rem;color:rgba(240,232,218,.78);line-height:1.5;">Quiz adaptativo con retroalimentación jurídica detallada. Alternativas, V/F, Flashcards y casos prácticos.</div>
-</div>
-</div>
-
-<!-- Demo 2: Análisis de Caso -->
-<div style="background:#13101a;border:1px solid rgba(201,150,58,.18);border-radius:12px;overflow:hidden;">
-<div style="background:linear-gradient(135deg,#1a1520,#0e0c14);padding:20px;min-height:160px;position:relative;display:flex;flex-direction:column;justify-content:flex-end;">
-<div style="position:absolute;top:16px;left:16px;font-size:1.6rem;">🔍</div>
-<div style="background:#1e1b28;border:1px solid rgba(201,150,58,.2);border-radius:8px;padding:12px;">
-<div style="font-size:.68rem;color:#c9963a;font-weight:700;margin-bottom:6px;">ANÁLISIS JURÍDICO · Derecho Civil</div>
-<div style="font-size:.8rem;color:#f0e8d8;font-style:italic;line-height:1.5;">"Contrato de compraventa · nulidad por objeto ilícito · Arts. 1462 y 1466 CC..."</div>
-<div style="margin-top:8px;font-size:.72rem;color:rgba(201,150,58,.8);">→ Identificó 3 argumentos clave · 2 normas aplicables · 1 tendencia jurisprudencial</div>
-</div>
-</div>
-<div style="padding:14px 16px;">
-<div style="font-size:.85rem;font-weight:700;color:#f5f0e8;margin-bottom:4px;">Análisis Jurídico Profundo</div>
-<div style="font-size:.76rem;color:rgba(240,232,218,.78);line-height:1.5;">Sube cualquier documento jurídico y AntonIA lo analiza en segundos con fundamentos del Derecho chileno.</div>
-</div>
-</div>
-
-<!-- Demo 3: Redacción -->
-<div style="background:#13101a;border:1px solid rgba(201,150,58,.18);border-radius:12px;overflow:hidden;">
-<div style="background:linear-gradient(135deg,#1a1520,#0e0c14);padding:20px;min-height:160px;position:relative;display:flex;flex-direction:column;justify-content:flex-end;">
-<div style="position:absolute;top:16px;left:16px;font-size:1.6rem;">📝</div>
-<div style="background:#1e1b28;border:1px solid rgba(201,150,58,.2);border-radius:8px;padding:12px;">
-<div style="font-size:.68rem;color:#c9963a;font-weight:700;margin-bottom:6px;">ESCRITO GENERADO · Demanda Civil</div>
-<div style="font-size:.75rem;color:rgba(240,232,218,.65);line-height:1.6;font-family:monospace;">EN LO PRINCIPAL: Demanda ordinaria...<br>PRIMER OTROSÍ: Patrocinio y poder...<br><span style="color:#c9963a;">Art. 254 CPC · Art. 1489 CC ✓</span></div>
-</div>
-</div>
-<div style="padding:14px 16px;">
-<div style="font-size:.85rem;font-weight:700;color:#f5f0e8;margin-bottom:4px;">Redacción Forense con IA</div>
-<div style="font-size:.76rem;color:rgba(240,232,218,.78);line-height:1.5;">Genera demandas, contratos, escritos y comunicaciones con el formato forense chileno correcto.</div>
-</div>
-</div>
-</div>
-
-<div style="text-align:center;margin-top:30px;">
-<span style="font-family:Inter,sans-serif;font-size:.82rem;color:rgba(240,232,218,.75);">
-Selecciona tu perfil en el panel izquierdo para comenzar · Prueba gratis sin registrarte
-</span>
-</div>
-  </div>
-</div>
 
 <div class="ant-sec">
   <div class="ant-sec-t">¿Para quién es AntonIA?</div>
@@ -1966,7 +1896,7 @@ elif nav == "JURISPRUDENCIA RELACIONADA":
         unsafe_allow_html=True)
 
     # Explorador de materias
-    _j_tab1, _j_tab2, _j_tab3 = st.tabs(["📊 Explorar Materias", "🔍 Análisis de Documento", "📋 Sentencias Recientes"])
+    _j_tab1, _j_tab2, _j_tab3, _j_tab4 = st.tabs(["📊 Explorar Materias", "🔍 Análisis de Documento", "📋 Sentencias Recientes", "🔎 Buscar Sentencia"])
 
     with _j_tab1:
         st.markdown('<div style="font-size:0.84rem;color:#5a4e3e;margin-bottom:12px;">Las materias más frecuentes del corpus jurisprudencial chileno:</div>', unsafe_allow_html=True)
@@ -2047,6 +1977,48 @@ TEXTO A ANALIZAR:
                 f'<div style="font-size:0.72rem;color:#8a7a5e;margin-top:2px;">{_js["materia"]}'
                 f'{" · " + _js.get("caratulado", "") if _js.get("caratulado") else ""}</div></div>',
                 unsafe_allow_html=True)
+
+    with _j_tab4:
+        st.markdown('<div style="font-size:0.84rem;color:#5a4e3e;margin-bottom:12px;">Busca sentencias reales del corpus PJUD por materia, ROL o palabras clave:</div>', unsafe_allow_html=True)
+        _search_col1, _search_col2 = st.columns([3, 1])
+        with _search_col1:
+            _j_search_query = st.text_input("Buscar por materia o palabras clave:", placeholder="Ej: alimentos, indemnización, pagaré...", key="j_search_query")
+        with _search_col2:
+            _j_search_limit = st.selectbox("Resultados:", [10, 20, 50], key="j_search_limit")
+        _j_search_rol = st.text_input("O buscar por ROL específico (ej: 6730-2024):", placeholder="ROL-AÑO", key="j_search_rol")
+        if st.button("🔎 BUSCAR EN CORPUS PJUD", type="primary", use_container_width=True, key="btn_search_pjud"):
+            if _j_search_query.strip() or _j_search_rol.strip():
+                with st.spinner("Consultando corpus PJUD…"):
+                    try:
+                        from jurisprudencia_service import buscar_materia, sentencias_recientes
+                        if _j_search_rol.strip():
+                            _all_recientes = _j_recientes(20)
+                            _rol_results = [s for s in _all_recientes if _j_search_rol.strip() in s.get("rol","")]
+                            if _rol_results:
+                                for _s in _rol_results:
+                                    st.markdown(f'<div style="background:#faf8f4;border:1px solid #c9963a;border-radius:8px;padding:14px 16px;margin-bottom:8px;"><div style="font-size:0.85rem;font-weight:700;color:#1a1813;">ROL {_s["rol"]}</div><div style="font-size:0.78rem;color:#5a4e3e;">{_s["tribunal"]}</div><div style="font-size:0.76rem;color:#8a7a5e;">{_s["materia"]} · {_s["fecha"]}</div></div>', unsafe_allow_html=True)
+                            else:
+                                st.info(f"ROL {_j_search_rol.strip()} no encontrado en el corpus de ejemplo.")
+                                st.markdown(f'[🔗 Buscar en PJUD](https://www.pjud.cl)', unsafe_allow_html=True)
+                        else:
+                            _found = buscar_materia(_j_search_query)
+                            _recientes_rel = [s for s in _j_recientes(20) if _j_search_query.lower() in s.get("materia","").lower()]
+                            if _found:
+                                st.markdown('<div style="font-size:0.78rem;font-weight:700;color:#1a1813;margin-bottom:8px;">📊 Materias del corpus que coinciden:</div>', unsafe_allow_html=True)
+                                for _m in _found[:8]:
+                                    pct_s = _m["total"] / _j_total() * 100
+                                    st.markdown(f'<div style="background:#faf8f4;border:1px solid #e8e0d2;border-radius:8px;padding:10px 14px;margin-bottom:6px;"><div style="font-size:0.78rem;font-weight:700;color:#1a1813;">{_m["materia"]}</div><div style="font-size:0.72rem;color:#8a7a5e;">{_m["total"]:,} sentencias ({pct_s:.1f}%)</div></div>', unsafe_allow_html=True)
+                            if _recientes_rel:
+                                for _s in _recientes_rel:
+                                    st.markdown(f'<div style="background:#faf8f4;border:1px solid #e8e0d2;border-radius:8px;padding:12px 16px;margin-bottom:6px;"><div style="font-size:0.82rem;font-weight:700;color:#1a1813;">ROL {_s["rol"]}</div><div style="font-size:0.76rem;color:#5a4e3e;">{_s["tribunal"]} · {_s["fecha"]}</div><div style="font-size:0.72rem;color:#8a7a5e;">{_s["materia"]}</div></div>', unsafe_allow_html=True)
+                            if not _found and not _recientes_rel:
+                                st.info(f"No se encontraron resultados para '{_j_search_query}'.")
+                    except Exception as _e:
+                        st.error(f"Error: {_e}")
+            else:
+                st.warning("Ingresa materia o ROL para buscar.")
+        st.markdown('<div style="margin-top:16px;padding:10px 14px;background:rgba(201,150,58,0.06);border:1px solid rgba(201,150,58,0.2);border-radius:8px;font-size:0.76rem;color:#5a4e3e;">🏛 Para acceso completo visita <a href="https://www.pjud.cl" target="_blank" style="color:#c9963a;">pjud.cl</a></div>', unsafe_allow_html=True)
+
     st.markdown('</div>', unsafe_allow_html=True)
 
 

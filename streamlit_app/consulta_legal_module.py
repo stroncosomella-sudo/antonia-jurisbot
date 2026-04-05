@@ -417,78 +417,64 @@ def render_consulta_legal(get_orch_fn=None, get_llm_fn=None):
         </div>
         """, unsafe_allow_html=True)
 
-        # Búsqueda de jurisprudencia
-        jur_query = st.text_input(
-            "Describe tu situación",
-            placeholder="Ej: me despidieron sin aviso, choque de auto, pensión alimenticia...",
-            key="cl_jur_input",
-            label_visibility="collapsed")
-
-        if consultas_libres > 0:
-            st.markdown(
-                f'<div style="font-size:0.65rem;color:#a09070;margin-bottom:0.5rem;">'
-                f'Consultas gratuitas restantes: <strong style="color:#c9963a;">{consultas_libres}</strong></div>',
-                unsafe_allow_html=True)
-            btn_disabled_jur = False
-        else:
-            st.markdown(
-                '<div style="font-size:0.75rem;color:#ef4444;margin-bottom:0.5rem;">'
-                'Has usado tus consultas gratuitas. Suscríbete para continuar.</div>',
-                unsafe_allow_html=True)
-            btn_disabled_jur = True
-
-        if st.button("🔎 BUSCAR EN TRIBUNALES", use_container_width=True,
-                     type="primary", disabled=btn_disabled_jur):
-            if jur_query and get_llm_fn:
-                with st.spinner("Buscando sentencias de los tribunales…"):
+        st.markdown("#### ⚖️ Jurisprudencia Relacionada a Tu Caso")
+        st.markdown('<div style="font-size:0.84rem;color:#5a4e3e;margin-bottom:12px;">Busca sentencias del corpus PJUD relacionadas con tu situación legal:</div>', unsafe_allow_html=True)
+        
+        _cjl_jur_query = st.text_input("Describe brevemente tu caso o ingresa la materia:", 
+                                        placeholder="Ej: despido injustificado, alimentos, arriendo...",
+                                        key="cjl_jur_query")
+        _cjl_rol = st.text_input("O ingresa un ROL específico (opcional):", placeholder="Ej: 6730-2024", key="cjl_jur_rol")
+        
+        if st.button("🔍 Buscar Jurisprudencia", type="primary", use_container_width=True, key="cjl_jur_search"):
+            if _cjl_jur_query.strip() or _cjl_rol.strip():
+                with st.spinner("Buscando sentencias relevantes…"):
                     try:
-                        # Aquí se importaría jurisprudencia_service para usar generar_contexto_jurisprudencial
-                        # Por ahora, simulamos el contexto
-                        contexto_jur = f"Búsqueda sobre: {jur_query}"
-
-                        prompt = (
-                            "Eres un asistente legal chileno que ayuda a personas sin formación jurídica.\n"
-                            "Tu tarea es explicar QUÉ HAN RESUELTO LOS TRIBUNALES sobre una situación en lenguaje simple.\n"
-                            "Nunca uses lenguaje jurídico sin explicarlo.\n\n"
-                            f"CONTEXTO DE JURISPRUDENCIA:\n{contexto_jur}\n\n"
-                            f"SITUACIÓN DEL USUARIO: {jur_query}\n\n"
-                            "INSTRUCCIONES:\n"
-                            "1. Resume las decisiones más recientes de los tribunales en lenguaje simple (2-3 párrafos)\n"
-                            "2. Explica cuál es la tendencia: ¿ganan o pierden las personas en tu situación?\n"
-                            "3. Menciona qué tipo de tribunal (Corte de Apelaciones, Juzgado, etc.) toma estas decisiones\n"
-                            "4. Indica si esto te ayuda a entender tus derechos\n"
-                            "Cierra con: '⚠️ Esta información es sobre casos similares. Tu caso es único y necesita asesoría personalizada.'"
-                        )
-                        llm = get_llm_fn()
-                        resp = llm.generate(prompt, system=" ", max_tokens=1000)
-                        st.session_state.cl_jurisprudencia_result = resp
-                        st.session_state.cl_jurisprudencia_query = jur_query
-                        st.session_state.cl_query_count += 1
-                        st.rerun()
-                    except Exception as e:
-                        st.error(f"Error: {e}")
-            elif not jur_query:
-                st.warning("Describe tu situación.")
-
-        # Mostrar resultados
-        if st.session_state.cl_jurisprudencia_result:
-            st.markdown(
-                f'<div class="cl-answer-box">'
-                f'{st.session_state.cl_jurisprudencia_result.replace(chr(10),"<br>")}'
-                f'</div>',
-                unsafe_allow_html=True)
-
-            st.markdown('<br>', unsafe_allow_html=True)
-            col_a, col_b = st.columns(2)
-            with col_a:
-                if st.button("🔄 Otra búsqueda", use_container_width=True, key="cl_jur_reset"):
-                    st.session_state.cl_jurisprudencia_result = ""
-                    st.rerun()
-            with col_b:
-                if st.button("📄 Subir mi documento", use_container_width=True, key="cl_jur_to_doc"):
-                    st.session_state.cl_modo = "documento"
-                    st.session_state.cl_jurisprudencia_result = ""
-                    st.rerun()
+                        from jurisprudencia_service import (buscar_materia, generar_contexto_jurisprudencial, 
+                                                            total_sentencias, sentencias_recientes)
+                        
+                        total = total_sentencias()
+                        st.markdown(f'<div style="background:rgba(201,150,58,0.06);border:1px solid rgba(201,150,58,0.2);border-radius:8px;padding:10px 14px;margin-bottom:12px;font-size:0.78rem;color:#5a4e3e;">📊 Corpus: <strong>{total:,}</strong> sentencias del PJUD disponibles</div>', unsafe_allow_html=True)
+                        
+                        if _cjl_rol.strip():
+                            _recientes = sentencias_recientes(20)
+                            _rol_found = [s for s in _recientes if _cjl_rol.strip() in s.get("rol","")]
+                            if _rol_found:
+                                for _s in _rol_found:
+                                    st.markdown(f'<div style="background:#faf8f4;border:1px solid #c9963a;border-radius:8px;padding:12px 16px;margin-bottom:8px;"><strong>ROL {_s["rol"]}</strong><br><span style="font-size:0.78rem;color:#5a4e3e;">{_s["tribunal"]} · {_s["fecha"]}</span><br><span style="font-size:0.74rem;color:#8a7a5e;">{_s["materia"]}</span></div>', unsafe_allow_html=True)
+                            else:
+                                st.info(f"ROL {_cjl_rol.strip()} no encontrado en el corpus de ejemplo. Búscalo directamente en [pjud.cl](https://www.pjud.cl).")
+                        
+                        if _cjl_jur_query.strip():
+                            _mats = buscar_materia(_cjl_jur_query)
+                            if _mats:
+                                st.markdown("**Materias relacionadas en el corpus:**")
+                                for _m in _mats[:5]:
+                                    pct = _m["total"] / total * 100
+                                    st.markdown(f'<div style="background:#faf8f4;border:1px solid #e8e0d2;border-radius:8px;padding:10px 14px;margin-bottom:6px;"><strong>{_m["materia"]}</strong><br><span style="font-size:0.74rem;color:#8a7a5e;">{_m["total"]:,} sentencias ({pct:.1f}% del corpus)</span></div>', unsafe_allow_html=True)
+                            
+                            # Generate AI context
+                            if get_llm_fn:
+                                _j_ctx = generar_contexto_jurisprudencial(_cjl_jur_query)
+                                llm = get_llm_fn()
+                                _j_prompt = (
+                                    f"Eres AntonIA, asistente jurídico para el ciudadano chileno.\n"
+                                    f"El usuario tiene este caso o consulta: {_cjl_jur_query}\n\n"
+                                    f"Contexto jurisprudencial del corpus PJUD:\n{_j_ctx}\n\n"
+                                    f"Explica:\n"
+                                    f"1. Qué dice la jurisprudencia chilena sobre este tipo de caso\n"
+                                    f"2. Cuáles son los resultados más comunes en tribunales\n"
+                                    f"3. Qué factores influyen en el resultado\n"
+                                    f"4. Recomendación práctica para el ciudadano\n"
+                                    f"Responde en español sencillo, sin jerga excesiva."
+                                )
+                                _j_resp = llm.generate(_j_prompt, max_tokens=1200, temperature=0.2)
+                                st.markdown("---")
+                                st.markdown("#### 📋 Análisis Jurisprudencial para Tu Caso")
+                                st.markdown(_j_resp)
+                    except Exception as _e:
+                        st.error(f"Error: {_e}")
+            else:
+                st.warning("Ingresa una descripción de tu caso o un ROL para buscar.")
 
         # Temas populares (materias principales)
         st.markdown("""
@@ -534,78 +520,41 @@ def render_consulta_legal(get_orch_fn=None, get_llm_fn=None):
         </div>
         """, unsafe_allow_html=True)
 
-        # Búsqueda de doctrina
-        doc_query = st.text_input(
-            "¿Sobre qué tema necesitas información?",
-            placeholder="Ej: herencia, divorcio, contrato de arriendo, deuda...",
-            key="cl_doc_t_input",
-            label_visibility="collapsed")
-
-        if consultas_libres > 0:
-            st.markdown(
-                f'<div style="font-size:0.65rem;color:#a09070;margin-bottom:0.5rem;">'
-                f'Consultas gratuitas restantes: <strong style="color:#c9963a;">{consultas_libres}</strong></div>',
-                unsafe_allow_html=True)
-            btn_disabled_dt = False
-        else:
-            st.markdown(
-                '<div style="font-size:0.75rem;color:#ef4444;margin-bottom:0.5rem;">'
-                'Has usado tus consultas gratuitas. Suscríbete para continuar.</div>',
-                unsafe_allow_html=True)
-            btn_disabled_dt = True
-
-        if st.button("📚 CONSULTAR DOCTRINA", use_container_width=True,
-                     type="primary", disabled=btn_disabled_dt):
-            if doc_query and get_llm_fn:
-                with st.spinner("Buscando en obras académicas…"):
+        st.markdown("#### 📚 Doctrina Jurídica Relacionada")
+        st.markdown('<div style="font-size:0.84rem;color:#5a4e3e;margin-bottom:12px;">Encuentra obras académicas relevantes para tu situación legal:</div>', unsafe_allow_html=True)
+        
+        _cjl_doc_query = st.text_input("Describe tu caso o ingresa tema jurídico:", 
+                                         placeholder="Ej: contrato de arriendo, despido, pensión alimenticia...",
+                                         key="cjl_doc_query")
+        _cjl_doc_area = st.selectbox("Área del Derecho (opcional):", ["Todas"] + ["Civil", "Laboral", "Penal", "Familia", "Comercial", "Constitucional", "Procesal"], key="cjl_doc_area")
+        
+        if st.button("📚 Buscar Doctrina", type="primary", use_container_width=True, key="cjl_doc_search"):
+            if _cjl_doc_query.strip():
+                with st.spinner("Buscando obras académicas…"):
                     try:
-                        # Aquí se importaría doctrina_service para usar buscar_doctrina
-                        # Por ahora, simulamos el contexto
-                        contexto_doc = f"Información sobre: {doc_query}"
-
-                        prompt = (
-                            "Eres un asistente legal chileno que ayuda a personas sin formación jurídica.\n"
-                            "Tu tarea es explicar QUÉ DICE LA LEY Y LOS EXPERTOS sobre un tema en lenguaje simple.\n"
-                            "Nunca uses lenguaje jurídico sin explicarlo.\n\n"
-                            f"CONTEXTO DOCTRINARIO:\n{contexto_doc}\n\n"
-                            f"TEMA DEL USUARIO: {doc_query}\n\n"
-                            "INSTRUCCIONES:\n"
-                            "1. Resume qué dice la ley sobre este tema en palabras simples (2-3 párrafos)\n"
-                            "2. Explica los puntos principales que debes saber\n"
-                            "3. Menciona qué derechos u obligaciones tienes\n"
-                            "4. Señala situaciones comunes y cómo se resuelven\n"
-                            "Cierra con: '⚠️ Esta es información general. Para tu situación específica, consulta con un profesional.'"
-                        )
-                        llm = get_llm_fn()
-                        resp = llm.generate(prompt, system=" ", max_tokens=1000)
-                        st.session_state.cl_doctrina_result = resp
-                        st.session_state.cl_doctrina_query = doc_query
-                        st.session_state.cl_query_count += 1
-                        st.rerun()
-                    except Exception as e:
-                        st.error(f"Error: {e}")
-            elif not doc_query:
-                st.warning("Escribe el tema que te interesa.")
-
-        # Mostrar resultados
-        if st.session_state.cl_doctrina_result:
-            st.markdown(
-                f'<div class="cl-answer-box">'
-                f'{st.session_state.cl_doctrina_result.replace(chr(10),"<br>")}'
-                f'</div>',
-                unsafe_allow_html=True)
-
-            st.markdown('<br>', unsafe_allow_html=True)
-            col_a, col_b = st.columns(2)
-            with col_a:
-                if st.button("🔄 Otra consulta", use_container_width=True, key="cl_doc_t_reset"):
-                    st.session_state.cl_doctrina_result = ""
-                    st.rerun()
-            with col_b:
-                if st.button("📄 Subir documento", use_container_width=True, key="cl_doc_t_to_doc"):
-                    st.session_state.cl_modo = "documento"
-                    st.session_state.cl_doctrina_result = ""
-                    st.rerun()
+                        from doctrina_service import buscar_doctrina, total_obras
+                        total_d = total_obras()
+                        st.markdown(f'<div style="background:rgba(201,150,58,0.06);border:1px solid rgba(201,150,58,0.2);border-radius:8px;padding:10px 14px;margin-bottom:12px;font-size:0.78rem;color:#5a4e3e;">📚 Biblioteca: <strong>{total_d:,}</strong> obras académicas indexadas</div>', unsafe_allow_html=True)
+                        
+                        area_filter = None if _cjl_doc_area == "Todas" else _cjl_doc_area
+                        resultados = buscar_doctrina(query=_cjl_doc_query, area=area_filter, limit=10)
+                        
+                        if resultados:
+                            st.markdown(f"**{len(resultados)} obras encontradas:**")
+                            for _obra in resultados:
+                                st.markdown(
+                                    f'<div style="background:#faf8f4;border:1px solid #e8e0d2;border-radius:8px;padding:12px 16px;margin-bottom:8px;">'
+                                    f'<div style="font-size:0.84rem;font-weight:700;color:#1a1813;">{_obra.get("titulo","Sin título")}</div>'
+                                    f'<div style="font-size:0.76rem;color:#5a4e3e;">{_obra.get("autor","Autor desconocido")}</div>'
+                                    f'<div style="font-size:0.72rem;color:#c9963a;">{_obra.get("area","")}</div>'
+                                    f'</div>',
+                                    unsafe_allow_html=True)
+                        else:
+                            st.info("No se encontraron obras para esta búsqueda. Prueba con términos más generales.")
+                    except Exception as _e:
+                        st.error(f"Error: {_e}")
+            else:
+                st.warning("Ingresa una descripción para buscar.")
 
         # Áreas temáticas
         st.markdown("""
