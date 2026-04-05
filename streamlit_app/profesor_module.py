@@ -1505,12 +1505,13 @@ def render_profesor(get_llm_fn=None):
             try:
                 areas = listar_areas()
                 cols = st.columns(2)
-                for idx, (area, count) in enumerate(areas):
+                for idx, _a in enumerate(areas):
+                    area_name, area_count = _a["area"], _a["obras"]
                     with cols[idx % 2]:
                         st.markdown(
                             f'<div class="prof-card">'
-                            f'<strong>{area}</strong><br>'
-                            f'<span style="color:#a09070;font-size:0.85rem;">{count} obras</span>'
+                            f'<strong>{area_name}</strong><br>'
+                            f'<span style="color:#a09070;font-size:0.85rem;">{area_count} obras</span>'
                             f'</div>',
                             unsafe_allow_html=True)
             except Exception as e:
